@@ -19,7 +19,7 @@ RUN apt-get update \
     # psycopg2 dependencies
     && apt-get install -y libpq-dev \
     # Additional dependencies \
-    && apt-get install -y telnet netcat \
+    && apt-get install telnet netcat-openbsd netcat-traditional inetutils-telnet \
     # Install curl and vim
     && apt-get install -y curl vim \
     # cleaning up unused files
