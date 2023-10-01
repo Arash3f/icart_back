@@ -10,7 +10,6 @@ repos:
     hooks:
         -   id: check-symlinks
         -   id: destroyed-symlinks
-#        -   id: requirements-txt-fixer
         -   id: check-merge-conflict
         -   id: check-json
         -   id: check-added-large-files
@@ -29,8 +28,8 @@ repos:
     rev: '1.6.0'
     hooks:
     -   id: poetry-check
-#    -   id: poetry-lock
-#    -   id: poetry-export
+    -   id: poetry-lock
+    -   id: poetry-export
 
 -   repo: https://github.com/asottile/add-trailing-comma
     # ? Automatically add trailing commas to calls and literals
