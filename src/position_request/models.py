@@ -11,7 +11,7 @@ from src.database.base_class import Base, BaseMixin
 class PositionRequestType(enum.Enum):
     AGENT = "AGENT"
     ORGANIZATION = "ORGANIZATION"
-    ACCEPTOR = "ACCEPTOR"
+    MERCHANT = "MERCHANT"
 
 
 # ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict
 
 from src.auth.schema import UserBase
-from src.contract.schema import ContractBase, ContractCreate
+from src.contract.schema import ContractBase
 from src.location.schema import LocationBase
 from src.position_request.models import (
     PositionRequestStatusType,
@@ -22,7 +22,7 @@ class PositionRequestBase(BaseModel):
 class PositionRequestCreate(BaseModel):
     requester_user_name: str | None = None
     target_position: PositionRequestType
-    contract: ContractCreate
+    # contract: ContractCreate
     location_id: uuid.UUID
 
 

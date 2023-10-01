@@ -1,20 +1,29 @@
-from typing import List
+from typing import List,Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import (APIRouter,
+                      Depends,
+                      UploadFile,
+                      Form,
+                      File)
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.capital_transfer.crud import capital_transfer as capital_transfer_crud
 from src.capital_transfer.models import CapitalTransfer, CapitalTransferEnum
 from src.capital_transfer.schema import (
     CapitalTransferCreate,
-    CapitalTransferInDB,
     CapitalTransferRead,
 )
+from src.transaction.crud import transaction as transaction_crud
 from src.schema import IDRequest
 from src.user.models import User
 from src.wallet.crud import wallet as wallet_crud
-
+from src.wallet.models import Wallet
+from src.transaction.schema import TransactionCreate
+from src.permission import permission_codes as permission
+from src.utils.minio_client import MinioClient
+from src.core.config import settings
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/capital_transfer", tags=["capital_transfer"])
 
@@ -24,7 +33,7 @@ router = APIRouter(prefix="/capital_transfer", tags=["capital_transfer"])
 async def find_capital_transfer(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(deps.get_current_user(permission.VIEW_CAPITAL_TRANSFER)),
     obj_data: IDRequest,
 ) -> CapitalTransferRead:
     """
@@ -61,7 +70,7 @@ async def find_capital_transfer(
 async def get_capital_transfer(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(deps.get_current_user(permission.VIEW_CAPITAL_TRANSFER)),
     skip: int = 0,
     limit: int = 20,
 ) -> List[CapitalTransferRead]:
@@ -94,7 +103,7 @@ async def get_capital_transfer(
 async def get_capital_transfer_list_my(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(deps.get_current_user(permission.VIEW_CAPITAL_TRANSFER)),
     skip: int = 0,
     limit: int = 20,
 ) -> List[CapitalTransferRead]:
@@ -137,8 +146,11 @@ async def get_capital_transfer_list_my(
 async def create_capital_transfer(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
-    create_data: CapitalTransferCreate,
+    minio:MinioClient=Depends(deps.minio_auth),
+    current_user: User = Depends(deps.get_current_user(permission.CREATE_CAPITAL_TRANSFER)),
+    transfer_type:Annotated[CapitalTransferEnum,Form()],
+    value: Annotated[float,Form()],
+    transfer_file: Annotated[UploadFile,File()],
 ) -> CapitalTransferRead:
     """
     ! Create CapitalTransfer with permission
@@ -167,7 +179,20 @@ async def create_capital_transfer(
         db=db,
         user_id=current_user.id,
     )
-    data = CapitalTransferInDB(**create_data.model_dump(), receiver_id=wallet.id)
+    uploaded_file = minio.client.put_object(
+        object_name=transfer_file.filename,
+        data=transfer_file.file,
+        bucket_name=settings.MINIO_DEFAULT_BUCKET,
+        length=-1,
+        part_size=10 * 1024 * 1024)
+    create_data = CapitalTransferCreate(
+        
+    )
+    data = CapitalTransferCreate(file_version_id=uploaded_file.version_id,
+                                 transfer_type=transfer_type,
+                                 value=value,
+                                 receiver_id=wallet.id,
+                                 file_name=transfer_file.filename)
     capital_transfer = await capital_transfer_crud.create(db=db, obj_in=data)
 
     return capital_transfer
@@ -175,11 +200,11 @@ async def create_capital_transfer(
 
 # ---------------------------------------------------------------------------
 @router.put(path="/approve", response_model=CapitalTransferRead)
-async def update_position_request(
+async def approve_capital_transfer(
     *,
-    db=Depends(deps.get_db),
+    db:AsyncSession=Depends(deps.get_db),
     obj_data: IDRequest,
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(deps.get_current_user(permission.APPROVE_CAPITAL_TRANSFER)),
 ) -> CapitalTransferRead:
     """
     ! Approve CapitalTransfer
@@ -209,13 +234,30 @@ async def update_position_request(
     )
 
     obj_current.finish = True
-    wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
+    receiver_wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
+    admin_wallet = await db.execute(select(Wallet).where(Wallet.user_id == current_user.id))
+    admin_wallet = admin_wallet.scalar_one_or_none()
+    admin_wallet.cash_balance -= obj_current.value
+    
     # Todo: Create Transaction
     if obj_current.transfer_type == CapitalTransferEnum.Credit:
-        wallet.credit_balance += obj_current.value
+        receiver_wallet.credit_balance += obj_current.value
     elif obj_current.transfer_type == CapitalTransferEnum.Cash:
-        wallet.cash_balance += obj_current.value
+        receiver_wallet.cash_balance += obj_current.value
 
+    transaction_create = TransactionCreate(value=obj_current.value,
+                                           receiver_id=obj_current.receiver_id,
+                                           transferor_id=admin_wallet.id,
+                                           value_type=obj_current.transfer_type,
+                                           value=obj_current.value,
+                                           text="Capital Transfer")
+    await transaction_crud.create(db=db,obj_in=transaction_create)
+    db.add(receiver_wallet)
+    await db.commit()
+    await db.refresh(receiver_wallet)
+    db.add(admin_wallet)
+    await db.commit()
+    await db.refresh(admin_wallet)
     db.add(obj_current)
     await db.commit()
     await db.refresh(obj_current)
