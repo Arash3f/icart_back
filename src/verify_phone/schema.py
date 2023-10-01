@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -27,19 +26,7 @@ class VerifyPhoneNumberRequestIn(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-class VerifyPhoneFilterOrderFild(Enum):
-    pass
-
-
-# ---------------------------------------------------------------------------
-class VerifyPhoneFilterOrderBy(BaseModel):
-    desc: list[VerifyPhoneFilterOrderFild] = []
-    asc: list[VerifyPhoneFilterOrderFild] = []
-
-
-# ---------------------------------------------------------------------------
 class VerifyPhoneFilter(BaseModel):
     return_all: bool | None = None
     expiration_code_at: datetime | None | bool = None
     phone_number: str | bool | None = None
-    order_by: VerifyPhoneFilterOrderBy | None = None

@@ -19,7 +19,7 @@ RUN apt-get update \
     # psycopg2 dependencies
     && apt-get install -y libpq-dev \
     # Additional dependencies \
-    && apt-get install telnet netcat-openbsd netcat-traditional inetutils-telnet \
+    && apt-get install -y telnet netcat \
     # Install curl and vim
     && apt-get install -y curl vim \
     # cleaning up unused files
@@ -31,7 +31,7 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=${POETRY_HOME} pyt
     chmod a+x /opt/poetry/bin/poetry
 
 WORKDIR $PYSETUP_PATH
-COPY poetry.lock ../pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
 RUN poetry install --no-root --only main
 
 COPY compose/api/entrypoint /entrypoint
