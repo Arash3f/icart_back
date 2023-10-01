@@ -82,7 +82,7 @@ async def get_contract(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list/my", response_model=List[ContractRead])
+@router.get(path="/my", response_model=List[ContractRead])
 async def get_my_contract_list(
     *,
     db=Depends(deps.get_db),

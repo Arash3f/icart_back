@@ -1,29 +1,38 @@
 [tool.poetry]
-name = "icart-backend"
+name = "icart"
 version = "0.1.0"
 description = ""
-authors = ["arash3f <arash.alfooneh@gmail.com>"]
+authors = ["Maziar <maziarmozafarpour96@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.103.1"
-uvicorn = "^0.23.2"
-alembic = "^1.12.0"
-pydantic-extra-types = "^2.1.0"
-pydantic-settings = "^2.0.3"
-python-jose = "^3.3.0"
-passlib = "^1.7.4"
-minio = "^7.1.16"
-asyncpg = "^0.28.0"
-sqlalchemy = "^2.0.21"
-python-multipart = "^0.0.6"
-orjson = "^3.9.7"
-requests = "^2.31.0"
-kavenegar = "^1.1.2"
-psycopg2-binary = "^2.9.8"
+fastapi = "^0.101.1"
+uvicorn = {version = "^0.23.2", extras = ["standard"]}
 gunicorn = "^21.2.0"
+python-multipart = "^0.0.6"
+email-validator = "^2.0.0.post2"
+pydantic-extra-types = "^2.0.0"
+phonenumbers = "^8.13.19"
+jdatetime = "^4.1.1"
+python-dotenv = "^1.0.0"
+orjson = "^3.9.5"
+sqlalchemy = "^2.0.20"
+asyncpg = "^0.28.0"
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+passlib = {version = "^1.7.4", extras = ["bcrypt"]}
+alembic = "^1.11.3"
+pydantic-settings = "^2.0.3"
+psycopg2-binary = "^2.9.7"
+minio = "^7.1.16"
+smsir-python = "^1.0.7"
+requests = "^2.31.0"
 
+
+[[tool.poetry.source]]
+name = "mirrors"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+priority = "default"
 
 [build-system]
 requires = ["poetry-core"]
