@@ -1,0 +1,42 @@
+version: '3.3'
+
+services:
+  api:
+    container_name: icart-back-api
+    env_file:
+      - ".env"
+    build:
+      dockerfile: Dockerfile
+    restart: always
+    command: /start
+    volumes:
+      - ./:/src
+    ports:
+      - "8001:8000"
+    depends_on:
+      - database
+
+  database:
+    image: postgres:15-alpine
+    container_name: icart-back-database
+    restart: always
+    env_file:
+      - ".env"
+    user: root
+    volumes:
+      - icart_back_database_data:/var/lib/postgresql/data/
+    ports:
+      - "5434:5432"
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    env_file:
+      - ".env"
+    container_name: icart-back-minio
+    command: "server /data --address ':9000' --console-address ':9090'"
+    ports:
+      - "9090:9090"
+
+volumes:
+  icart_back_database_data:

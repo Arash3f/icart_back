@@ -1,0 +1,46 @@
+version: '3.3'
+
+services:
+  nginx-prod:
+    container_name: icart-back-nginx-prod
+    build: compose/nginx
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    depends_on:
+      - api-prod
+
+  api-prod:
+    container_name: icart-back-api-prod
+    build:
+      dockerfile: prod.Dockerfile
+    restart: always
+    command: /start_prod
+    volumes:
+      - .:/app
+    env_file: '.env.prod'
+    depends_on:
+      - database-prod
+
+  database-prod:
+    image: postgres:15-alpine
+    container_name: icart-back-database-prod
+    restart: always
+    env_file: '.env.prod'
+    user: root
+    volumes:
+      - icart_back_database_prod_data:/var/lib/postgresql/data/
+    ports:
+      - "5433:5432"
+
+  minio-prod:
+    image: minio/minio:latest
+    restart: always
+    env_file:
+      - ".env.prod"
+    container_name: icart-back-minio-prod
+    command: "server /data --address ':9000' --console-address ':9090'"
+
+volumes:
+  icart_back_database_prod_data:

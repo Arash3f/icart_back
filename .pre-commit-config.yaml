@@ -1,0 +1,76 @@
+repos:
+-   repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v2.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+        -   id: check-symlinks
+        -   id: destroyed-symlinks
+#        -   id: requirements-txt-fixer
+        -   id: check-merge-conflict
+        -   id: check-json
+        -   id: check-added-large-files
+        -   id: detect-private-key
+        -   id: check-yaml
+        -   id: check-toml
+        -   id: check-xml
+        -   id: check-executables-have-shebangs
+        -   id: end-of-file-fixer
+        -   id: trailing-whitespace
+        -   id: fix-byte-order-marker
+        -   id: check-case-conflict
+        -   id: mixed-line-ending
+
+-   repo: https://github.com/python-poetry/poetry
+    rev: '1.6.0'
+    hooks:
+    -   id: poetry-check
+    -   id: poetry-lock
+#    -   id: poetry-export
+
+-   repo: https://github.com/asottile/add-trailing-comma
+    # ? Automatically add trailing commas to calls and literals
+    rev: v3.1.0
+    hooks:
+        -   id: add-trailing-comma
+
+-   repo: https://github.com/PyCQA/isort
+    # ? sort imports alphabetically and automatically separate into sections and by type
+    rev: 5.12.0
+    hooks:
+        -   id: isort
+            exclude: database.base.py
+            args: [ --split-on-trailing-comma ]
+
+-   repo: https://github.com/codespell-project/codespell
+    # ? Fix common misspellings in text files
+    rev: v2.2.4
+    hooks:
+        -   id: codespell
+            args:
+                - --ignore-words-list
+                - "selectin"
+
+-   repo: https://github.com/asottile/pyupgrade
+    # ? Automatically upgrade syntax for newer versions
+    rev: v3.11.0
+    hooks:
+        -   id: pyupgrade
+
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    # ? Python linter
+    rev: v0.0.275
+    hooks:
+        -   id: ruff
+            exclude: database.base.py
+            args:
+                - --fix
+
+-   repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+        -   id: black
