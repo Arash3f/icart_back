@@ -56,12 +56,15 @@ class User(Base, BaseMixin):
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"), nullable=True)
     agent = relationship(Agent, foreign_keys=[agent_id], lazy="selectin")
 
-    organization_id = Column(
+    self_organization_id = Column(
         UUID(as_uuid=True),
         ForeignKey("organization.id"),
         nullable=True,
     )
-    organization = relationship(Organization, foreign_keys=[organization_id])
+    self_organization = relationship(Organization, foreign_keys=[self_organization_id])
+
+    organization_id = Column(UUID(as_uuid=True),ForeignKey("organization.id"),nullable=True)
+    organization = relationship(Organization,foreign_keys=[organization_id],back_populates="users")
 
     wallet = relationship(Wallet, uselist=False, back_populates="user", lazy="selectin")
 

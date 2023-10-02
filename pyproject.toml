@@ -1,31 +1,28 @@
 [tool.poetry]
-name = "icart-backend"
+name = "icarts-back"
 version = "0.1.0"
 description = ""
-authors = ["arash3f <arash.alfooneh@gmail.com>"]
+authors = ["maziar <maziarmozafarpour96@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^2.4.2"
 fastapi = "^0.103.2"
 requests = "^2.31.0"
 smsir-python = "^1.0.7"
 kavenegar = "^1.1.2"
 sqlalchemy = "^2.0.21"
-python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-uvicorn = {extras = ["standard"], version = "^0.23.2"}
+minio = "^7.1.17"
+uvicorn = {version = "^0.23.2", extras = ["standard"]}
+alembic = "^1.12.0"
+pydantic = "^2.4.2"
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+orjson = "^3.9.7"
+python-multipart = "^0.0.6"
+passlib = {version = "^1.7.4", extras = ["bcrypt"]}
+asyncpg = "^0.28.0"
 pydantic-settings = "^2.0.3"
-psycopg2-binary = "^2.9.7"
-minio = "^7.1.16"
-smsir-python = "^1.0.7"
-requests = "^2.31.0"
 
-
-[[tool.poetry.source]]
-name = "mirrors"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-priority = "default"
 
 [build-system]
 requires = ["poetry-core"]

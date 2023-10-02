@@ -63,7 +63,7 @@ class Setting(BaseSettings):
 # ---------------------------------------------------------------------------
 class DevSetting(Setting):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=".env.sample",
         case_sensitive=True,
         env_file_encoding="utf-8",
     )
