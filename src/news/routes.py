@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from src import deps
 from src.news.crud import news as news_crud
-from src.news.schema import NewsCreate, NewsRead, NewsUpdate
+from src.news.schema import NewsCreate, NewsRead, NewsShortRead, NewsUpdate
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
@@ -129,7 +129,7 @@ async def find_news(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_NEWS]),
+        deps.get_current_user(),
     ),
     obj_data: IDRequest,
 ) -> NewsRead:
@@ -161,16 +161,16 @@ async def find_news(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[NewsRead])
+@router.get(path="/list", response_model=List[NewsShortRead])
 async def get_news_list(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_NEWS]),
+        deps.get_current_user(),
     ),
     skip: int = 0,
     limit: int = 20,
-) -> List[NewsRead]:
+) -> List[NewsShortRead]:
     """
     ! Get All News
 

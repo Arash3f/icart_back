@@ -1,12 +1,11 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select
+from sqlalchemy import and_, select
 
 from src import deps
-from src.auth.exception import AccessDeniedException
 from src.permission import permission_codes as permission
-from src.schema import DeleteResponse, IDRequest
+from src.schema import DeleteResponse, IDRequest, VerifyUserDep
 from src.user.crud import user as user_crud
 from src.user.models import User
 from src.user_message.crud import user_message as user_message_crud
@@ -15,7 +14,7 @@ from src.user_message.schema import (
     UserMessageCreate,
     UserMessageFilter,
     UserMessageRead,
-    UserMessageUpdate,
+    UserMessageShortRead,
 )
 
 # ---------------------------------------------------------------------------
@@ -99,56 +98,12 @@ async def create_user_message(
 
 
 # ---------------------------------------------------------------------------
-@router.put(path="/update_status", response_model=UserMessageRead)
-async def update_user_message(
-    *,
-    db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
-    update_data: UserMessageUpdate,
-) -> UserMessageRead:
-    """
-    ! Update User Message's Status
-
-    Parameters
-    ----------
-    db
-        Target database connection
-    current_user
-        Requester User
-    update_data
-        Necessary data for update user_message's status
-
-    Returns
-    -------
-    obj
-        Updated user_message
-
-    Raises
-    ------
-    UserMessageNotFoundException
-    AccessDeniedException
-    """
-    # * Verify user_message existence
-    obj = await user_message_crud.verify_existence(
-        db=db,
-        user_message_id=update_data.where.id,
-    )
-    if obj.user_id == current_user.id:
-        obj.status = True
-        await db.commit()
-        await db.refresh(obj)
-    else:
-        raise AccessDeniedException()
-    return obj
-
-
-# ---------------------------------------------------------------------------
 @router.post(path="/find", response_model=UserMessageRead)
 async def get_user_message(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_USER_MESSAGE]),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_TICKET]),
     ),
     obj_data: IDRequest,
 ) -> UserMessageRead:
@@ -159,8 +114,8 @@ async def get_user_message(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
+    verify_data
+        user's verified data
     obj_data
         Target UserMessage's ID
 
@@ -174,12 +129,22 @@ async def get_user_message(
     UserMessageNotFoundException
     """
     # * Verify user_message existence
-    obj = await user_message_crud.verify_existence(db=db, user_message_id=obj_data.id)
-    return obj
+    message = await user_message_crud.verify_existence(
+        db=db,
+        user_message_id=obj_data.id,
+    )
+    # * Have permissions
+    if not verify_data.is_valid:
+        message.status = True
+        db.add(message)
+        await db.commit()
+        await db.refresh(message)
+
+    return message
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[UserMessageRead])
+@router.post(path="/list", response_model=List[UserMessageShortRead])
 async def get_user_message_list(
     *,
     db=Depends(deps.get_db),
@@ -189,7 +154,7 @@ async def get_user_message_list(
     filter_data: UserMessageFilter,
     skip: int = 0,
     limit: int = 20,
-) -> List[UserMessageRead]:
+) -> List[UserMessageShortRead]:
     """
     ! Get All User Message
 
@@ -213,10 +178,12 @@ async def get_user_message_list(
     """
     # * Prepare filter fields
     filter_data.status = (
-        UserMessage.stasus == filter_data.status if filter_data.status else False
+        UserMessage.status == filter_data.status
+        if filter_data.status is not None
+        else True
     )
     # * Add filter fields
-    query = select(UserMessage).filter(or_(filter_data.return_all, filter_data.stasus))
+    query = select(UserMessage).filter(and_(filter_data.status))
     # * Find All user message with filters
     message_list = await user_message_crud.get_multi(
         db=db,
@@ -228,7 +195,7 @@ async def get_user_message_list(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/my", response_model=List[UserMessageRead])
+@router.post(path="/my", response_model=List[UserMessageShortRead])
 async def get_user_message_list_my(
     *,
     db=Depends(deps.get_db),
@@ -236,7 +203,7 @@ async def get_user_message_list_my(
     filter_data: UserMessageFilter,
     skip: int = 0,
     limit: int = 20,
-) -> List[UserMessageRead]:
+) -> List[UserMessageShortRead]:
     """
     ! Get All User Message
 
@@ -259,14 +226,15 @@ async def get_user_message_list_my(
         List of user message
     """
     # * Prepare filter fields
-
     filter_data.status = (
-        UserMessage.stasus == filter_data.status if filter_data.stasus else False
+        UserMessage.status == filter_data.status
+        if filter_data.status is not None
+        else True
     )
 
     query = select(UserMessage).where(UserMessage.user_id == current_user.id)
     # * Add filter fields
-    query = query.filter(or_(filter_data.return_all, filter_data.stasus))
+    query = query.filter(and_(filter_data.status))
     # * Find All user message with filters
     obj_list = await user_message_crud.get_multi(
         db=db,

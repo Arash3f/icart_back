@@ -33,6 +33,13 @@ class UserMessageRead(UserMessageBase):
 
 
 # ---------------------------------------------------------------------------
+class UserMessageShortRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    status: bool
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class UserMessageFilter(BaseModel):
-    return_all: bool | None = None
     status: bool | None = None

@@ -30,6 +30,13 @@ class NewsRead(NewsBase):
 
 
 # ---------------------------------------------------------------------------
+class NewsShortRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class NewsFilter(BaseModel):
     return_all: bool | None = None
     title: str | None | bool = None

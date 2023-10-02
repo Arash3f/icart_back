@@ -68,7 +68,6 @@ CREATE_SITE_MEDIA = 161
 UPDATE_SITE_MEDIA = 162
 DELETE_SITE_MEDIA = 163
 # ---------------------------------------------------------------------------
-VIEW_NEWS = 170
 CREATE_NEWS = 171
 UPDATE_NEWS = 172
 DELETE_NEWS = 173

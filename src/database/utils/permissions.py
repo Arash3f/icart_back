@@ -19,7 +19,6 @@ permissions_in: list[PermissionCreate] = [
     ),
     PermissionCreate(name="حذف پیام های کاربران", code=permission.DELETE_USER_MESSAGE),
     # ! NEWS
-    PermissionCreate(name="مشاهده اخبار", code=permission.VIEW_NEWS),
     PermissionCreate(name="ساخت خبر", code=permission.CREATE_NEWS),
     PermissionCreate(name="ویرایش اخبار", code=permission.UPDATE_NEWS),
     PermissionCreate(name="حذف اخبار", code=permission.DELETE_NEWS),
