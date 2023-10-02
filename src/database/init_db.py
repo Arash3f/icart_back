@@ -101,7 +101,6 @@ async def init_db(db: AsyncSession) -> None:
                     parent_id = parent_created.id
                 else:
                     parent_id = parent_location_exist.id
-            print(parent_id)
             create_location_data: LocationCreate = LocationCreate(
                 name=location.name,
                 parent_id=parent_id,

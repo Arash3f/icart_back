@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 2675d3d51702
+Revision ID: 1c759aa9ce5e
 Revises:
-Create Date: 2023-09-29 22:45:08.233806
+Create Date: 2023-10-01 15:26:15.790569
 
 """
 from typing import Sequence, Union
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "2675d3d51702"
+revision: str = "1c759aa9ce5e"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -70,6 +70,21 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_credit_id"), "credit", ["id"], unique=True)
     op.create_table(
+        "crypto",
+        sa.Column("name", sa.String(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_crypto_id"), "crypto", ["id"], unique=True)
+    op.create_index(op.f("ix_crypto_name"), "crypto", ["name"], unique=True)
+    op.create_table(
         "fee",
         sa.Column("limit", sa.Integer(), nullable=False),
         sa.Column("percentage", sa.Integer(), nullable=True),
@@ -106,9 +121,26 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_important_data_id"), "important_data", ["id"], unique=True)
     op.create_table(
+        "location",
+        sa.Column("name", sa.String(), nullable=False),
+        sa.Column("parent_id", sa.UUID(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["parent_id"], ["location.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_location_id"), "location", ["id"], unique=True)
+    op.create_index(op.f("ix_location_name"), "location", ["name"], unique=True)
+    op.create_table(
         "news",
-        sa.Column("title", sa.String(), nullable=True),
-        sa.Column("text", sa.Text(), nullable=True),
+        sa.Column("title", sa.String(), nullable=False),
+        sa.Column("text", sa.Text(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -124,7 +156,7 @@ def upgrade() -> None:
     op.create_table(
         "permission",
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("code", sa.Integer(), nullable=True),
+        sa.Column("code", sa.Integer(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -154,33 +186,10 @@ def upgrade() -> None:
     op.create_index(op.f("ix_role_id"), "role", ["id"], unique=True)
     op.create_index(op.f("ix_role_name"), "role", ["name"], unique=False)
     op.create_table(
-        "transaction2",
-        sa.Column(
-            "type",
-            sa.Enum("aaa", name="transactionreasonenum22"),
-            nullable=False,
-        ),
-        sa.Column(
-            "type2",
-            sa.Enum("aaa", name="transactionreasonenum33"),
-            nullable=False,
-        ),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
-        ),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_transaction2_id"), "transaction2", ["id"], unique=True)
-    op.create_table(
         "verify_phone",
-        sa.Column("phone_number", sa.String(), nullable=True),
-        sa.Column("verify_code", sa.Integer(), nullable=True),
-        sa.Column("expiration_code_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("phone_number", sa.String(), nullable=False),
+        sa.Column("verify_code", sa.Integer(), nullable=False),
+        sa.Column("expiration_code_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -216,22 +225,15 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["ability_id"],
-            ["ability.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["agent_id"],
-            ["agent.id"],
-        ),
+        sa.ForeignKeyConstraint(["ability_id"], ["ability.id"]),
+        sa.ForeignKeyConstraint(["agent_id"], ["agent.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_agent_ability_id"), "agent_ability", ["id"], unique=True)
     op.create_table(
-        "location",
-        sa.Column("name", sa.String(), nullable=True),
-        sa.Column("parent_id", sa.UUID(), nullable=True),
+        "agent_location",
         sa.Column("agent_id", sa.UUID(), nullable=True),
+        sa.Column("location_id", sa.UUID(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -240,18 +242,11 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["agent_id"],
-            ["agent.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["parent_id"],
-            ["location.id"],
-        ),
+        sa.ForeignKeyConstraint(["agent_id"], ["agent.id"]),
+        sa.ForeignKeyConstraint(["location_id"], ["location.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_location_id"), "location", ["id"], unique=True)
-    op.create_index(op.f("ix_location_name"), "location", ["name"], unique=True)
+    op.create_index(op.f("ix_agent_location_id"), "agent_location", ["id"], unique=True)
     op.create_table(
         "organization",
         sa.Column("name", sa.String(), nullable=True),
@@ -265,10 +260,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["agent_id"],
-            ["agent.id"],
-        ),
+        sa.ForeignKeyConstraint(["agent_id"], ["agent.id"]),
         sa.ForeignKeyConstraint(["user_organization_id"], ["user.id"], use_alter=True),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -291,14 +283,8 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["permission_id"],
-            ["permission.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["role_id"],
-            ["role.id"],
-        ),
+        sa.ForeignKeyConstraint(["permission_id"], ["permission.id"]),
+        sa.ForeignKeyConstraint(["role_id"], ["role.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -320,10 +306,12 @@ def upgrade() -> None:
         sa.Column("is_valid", sa.Boolean(), nullable=True),
         sa.Column("one_time_password", sa.Integer(), nullable=True),
         sa.Column("expiration_password_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("phone_number", sa.String(), nullable=True),
         sa.Column("role_id", sa.UUID(), nullable=True),
         sa.Column("credit_id", sa.UUID(), nullable=True),
         sa.Column("agent_id", sa.UUID(), nullable=True),
         sa.Column("organization_id", sa.UUID(), nullable=True),
+        sa.Column("location_id", sa.UUID(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -332,18 +320,10 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["agent_id"],
-            ["agent.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["credit_id"],
-            ["credit.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["organization_id"],
-            ["organization.id"],
-        ),
+        sa.ForeignKeyConstraint(["agent_id"], ["agent.id"]),
+        sa.ForeignKeyConstraint(["credit_id"], ["credit.id"]),
+        sa.ForeignKeyConstraint(["location_id"], ["location.id"]),
+        sa.ForeignKeyConstraint(["organization_id"], ["organization.id"]),
         sa.ForeignKeyConstraint(["role_id"], ["role.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -360,7 +340,7 @@ def upgrade() -> None:
         op.f("ix_user_one_time_password"),
         "user",
         ["one_time_password"],
-        unique=True,
+        unique=False,
     )
     op.create_index(op.f("ix_user_username"), "user", ["username"], unique=True)
     op.create_table(
@@ -377,14 +357,8 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["agent_id"],
-            ["agent.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["user.id"],
-        ),
+        sa.ForeignKeyConstraint(["agent_id"], ["agent.id"]),
+        sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_merchant_id"), "merchant", ["id"], unique=True)
@@ -414,22 +388,10 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["creator_id"],
-            ["user.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["location_id"],
-            ["location.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["next_approve_user_id"],
-            ["user.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["requester_user_id"],
-            ["user.id"],
-        ),
+        sa.ForeignKeyConstraint(["creator_id"], ["user.id"]),
+        sa.ForeignKeyConstraint(["location_id"], ["location.id"]),
+        sa.ForeignKeyConstraint(["next_approve_user_id"], ["user.id"]),
+        sa.ForeignKeyConstraint(["requester_user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -438,6 +400,35 @@ def upgrade() -> None:
         ["id"],
         unique=True,
     )
+    op.create_table(
+        "ticket",
+        sa.Column("title", sa.String(), nullable=False),
+        sa.Column("importance", sa.Integer(), nullable=True),
+        sa.Column(
+            "type",
+            sa.Enum("TECHNICAL", "SALES", name="tickettype"),
+            nullable=False,
+        ),
+        sa.Column(
+            "position",
+            sa.Enum("OPEN", "IN_PROGRESS", "CLOSE", name="ticketposition"),
+            nullable=True,
+        ),
+        sa.Column("number", sa.Integer(), nullable=False),
+        sa.Column("creator_id", sa.UUID(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["creator_id"], ["user.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_ticket_id"), "ticket", ["id"], unique=True)
+    op.create_index(op.f("ix_ticket_number"), "ticket", ["number"], unique=True)
     op.create_table(
         "user_message",
         sa.Column("title", sa.String(), nullable=True),
@@ -452,10 +443,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["user.id"],
-        ),
+        sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_user_message_id"), "user_message", ["id"], unique=True)
@@ -464,12 +452,7 @@ def upgrade() -> None:
         sa.Column("cash_balance", sa.Integer(), nullable=True),
         sa.Column("credit_balance", sa.Integer(), nullable=True),
         sa.Column("number", sa.String(), nullable=True),
-        sa.Column("name", sa.String(), nullable=True),
-        sa.Column("dynamic_password", sa.Integer(), nullable=True),
-        sa.Column("dynamic_password_exp", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("phone_number", sa.String(), nullable=True),
         sa.Column("user_id", sa.UUID(), nullable=True),
-        sa.Column("parent_id", sa.UUID(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -478,14 +461,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["parent_id"],
-            ["wallet.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["user.id"],
-        ),
+        sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_wallet_id"), "wallet", ["id"], unique=True)
@@ -510,10 +486,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["receiver_id"],
-            ["wallet.id"],
-        ),
+        sa.ForeignKeyConstraint(["receiver_id"], ["wallet.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -522,6 +495,33 @@ def upgrade() -> None:
         ["id"],
         unique=True,
     )
+    op.create_table(
+        "card",
+        sa.Column("number", sa.String(), nullable=True),
+        sa.Column("cvv2", sa.Integer(), nullable=False),
+        sa.Column("expiration_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("password", sa.String(), nullable=False),
+        sa.Column("dynamic_password", sa.Integer(), nullable=True),
+        sa.Column("dynamic_password_exp", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "type",
+            sa.Enum("CREDIT", "GOLD", "BLUE", "PLATINUM", name="cardenum"),
+            nullable=False,
+        ),
+        sa.Column("wallet_id", sa.UUID(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["wallet_id"], ["wallet.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_card_id"), "card", ["id"], unique=True)
+    op.create_index(op.f("ix_card_number"), "card", ["number"], unique=True)
     op.create_table(
         "contract",
         sa.Column("number", sa.String(), nullable=True),
@@ -540,10 +540,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["position_request_id"],
-            ["position_request.id"],
-        ),
+        sa.ForeignKeyConstraint(["position_request_id"], ["position_request.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_contract_id"), "contract", ["id"], unique=True)
@@ -568,14 +565,8 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["merchant_id"],
-            ["merchant.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["parent_id"],
-            ["invoice.id"],
-        ),
+        sa.ForeignKeyConstraint(["merchant_id"], ["merchant.id"]),
+        sa.ForeignKeyConstraint(["parent_id"], ["invoice.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -585,6 +576,83 @@ def upgrade() -> None:
         unique=True,
     )
     op.create_index(op.f("ix_invoice_id"), "invoice", ["id"], unique=True)
+    op.create_table(
+        "pos",
+        sa.Column("token", sa.String(), nullable=True),
+        sa.Column("merchant_id", sa.UUID(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["merchant_id"], ["merchant.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_pos_id"), "pos", ["id"], unique=True)
+    op.create_index(op.f("ix_pos_token"), "pos", ["token"], unique=True)
+    op.create_table(
+        "ticket_message",
+        sa.Column("text", sa.Text(), nullable=False),
+        sa.Column("creator_id", sa.UUID(), nullable=False),
+        sa.Column("ticket_id", sa.UUID(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["creator_id"], ["user.id"]),
+        sa.ForeignKeyConstraint(["ticket_id"], ["ticket.id"]),
+        sa.PrimaryKeyConstraint("creator_id", "id"),
+    )
+    op.create_index(op.f("ix_ticket_message_id"), "ticket_message", ["id"], unique=True)
+    op.create_table(
+        "transaction",
+        sa.Column("value", sa.Float(), nullable=False),
+        sa.Column("text", sa.String(), nullable=False),
+        sa.Column(
+            "value_type",
+            sa.Enum("CASH", "CREDIT", name="transactionvaluetype"),
+            nullable=False,
+        ),
+        sa.Column("receiver_id", sa.UUID(), nullable=False),
+        sa.Column("transferor_id", sa.UUID(), nullable=False),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["receiver_id"], ["wallet.id"]),
+        sa.ForeignKeyConstraint(["transferor_id"], ["wallet.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_transaction_id"), "transaction", ["id"], unique=True)
+    op.create_table(
+        "user_crypto",
+        sa.Column("amount", sa.Float(), nullable=True),
+        sa.Column("wallet_id", sa.UUID(), nullable=True),
+        sa.Column("crypto_id", sa.UUID(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["crypto_id"], ["crypto.id"]),
+        sa.ForeignKeyConstraint(["wallet_id"], ["wallet.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_user_crypto_id"), "user_crypto", ["id"], unique=True)
     op.create_table(
         "terminal",
         sa.Column("number", sa.String(), nullable=False),
@@ -598,59 +666,37 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["invoice_id"],
-            ["invoice.id"],
-        ),
+        sa.ForeignKeyConstraint(["invoice_id"], ["invoice.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_terminal_id"), "terminal", ["id"], unique=True)
     op.create_index(op.f("ix_terminal_number"), "terminal", ["number"], unique=True)
-    op.create_table(
-        "transaction",
-        sa.Column("value", sa.Float(), nullable=False),
-        sa.Column("receiver_id", sa.UUID(), nullable=False),
-        sa.Column("transferor_id", sa.UUID(), nullable=False),
-        sa.Column("invoice_id", sa.UUID(), nullable=False),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
-        ),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["invoice_id"],
-            ["invoice.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["receiver_id"],
-            ["wallet.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["transferor_id"],
-            ["wallet.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_transaction_id"), "transaction", ["id"], unique=True)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f("ix_transaction_id"), table_name="transaction")
-    op.drop_table("transaction")
     op.drop_index(op.f("ix_terminal_number"), table_name="terminal")
     op.drop_index(op.f("ix_terminal_id"), table_name="terminal")
     op.drop_table("terminal")
+    op.drop_index(op.f("ix_user_crypto_id"), table_name="user_crypto")
+    op.drop_table("user_crypto")
+    op.drop_index(op.f("ix_transaction_id"), table_name="transaction")
+    op.drop_table("transaction")
+    op.drop_index(op.f("ix_ticket_message_id"), table_name="ticket_message")
+    op.drop_table("ticket_message")
+    op.drop_index(op.f("ix_pos_token"), table_name="pos")
+    op.drop_index(op.f("ix_pos_id"), table_name="pos")
+    op.drop_table("pos")
     op.drop_index(op.f("ix_invoice_id"), table_name="invoice")
     op.drop_index(op.f("ix_invoice_icart_number"), table_name="invoice")
     op.drop_table("invoice")
     op.drop_index(op.f("ix_contract_number"), table_name="contract")
     op.drop_index(op.f("ix_contract_id"), table_name="contract")
     op.drop_table("contract")
+    op.drop_index(op.f("ix_card_number"), table_name="card")
+    op.drop_index(op.f("ix_card_id"), table_name="card")
+    op.drop_table("card")
     op.drop_index(op.f("ix_capital_transfer_id"), table_name="capital_transfer")
     op.drop_table("capital_transfer")
     op.drop_index(op.f("ix_wallet_number"), table_name="wallet")
@@ -658,6 +704,9 @@ def downgrade() -> None:
     op.drop_table("wallet")
     op.drop_index(op.f("ix_user_message_id"), table_name="user_message")
     op.drop_table("user_message")
+    op.drop_index(op.f("ix_ticket_number"), table_name="ticket")
+    op.drop_index(op.f("ix_ticket_id"), table_name="ticket")
+    op.drop_table("ticket")
     op.drop_index(op.f("ix_position_request_id"), table_name="position_request")
     op.drop_table("position_request")
     op.drop_index(op.f("ix_merchant_number"), table_name="merchant")
@@ -675,17 +724,14 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_organization_name"), table_name="organization")
     op.drop_index(op.f("ix_organization_id"), table_name="organization")
     op.drop_table("organization")
-    op.drop_index(op.f("ix_location_name"), table_name="location")
-    op.drop_index(op.f("ix_location_id"), table_name="location")
-    op.drop_table("location")
+    op.drop_index(op.f("ix_agent_location_id"), table_name="agent_location")
+    op.drop_table("agent_location")
     op.drop_index(op.f("ix_agent_ability_id"), table_name="agent_ability")
     op.drop_table("agent_ability")
     op.drop_index(op.f("ix_verify_phone_verify_code"), table_name="verify_phone")
     op.drop_index(op.f("ix_verify_phone_phone_number"), table_name="verify_phone")
     op.drop_index(op.f("ix_verify_phone_id"), table_name="verify_phone")
     op.drop_table("verify_phone")
-    op.drop_index(op.f("ix_transaction2_id"), table_name="transaction2")
-    op.drop_table("transaction2")
     op.drop_index(op.f("ix_role_name"), table_name="role")
     op.drop_index(op.f("ix_role_id"), table_name="role")
     op.drop_table("role")
@@ -695,10 +741,16 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_news_title"), table_name="news")
     op.drop_index(op.f("ix_news_id"), table_name="news")
     op.drop_table("news")
+    op.drop_index(op.f("ix_location_name"), table_name="location")
+    op.drop_index(op.f("ix_location_id"), table_name="location")
+    op.drop_table("location")
     op.drop_index(op.f("ix_important_data_id"), table_name="important_data")
     op.drop_table("important_data")
     op.drop_index(op.f("ix_fee_id"), table_name="fee")
     op.drop_table("fee")
+    op.drop_index(op.f("ix_crypto_name"), table_name="crypto")
+    op.drop_index(op.f("ix_crypto_id"), table_name="crypto")
+    op.drop_table("crypto")
     op.drop_index(op.f("ix_credit_id"), table_name="credit")
     op.drop_table("credit")
     op.drop_index(op.f("ix_agent_id"), table_name="agent")

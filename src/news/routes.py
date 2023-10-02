@@ -206,9 +206,6 @@ async def get_news_list(
             filter_data.title,
         ),
     )
-    # * Prepare order fields
-    if filter_data.order_by:
-        pass
     # * Find All agent with filters
     obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

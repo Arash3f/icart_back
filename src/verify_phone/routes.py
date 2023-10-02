@@ -130,9 +130,6 @@ async def read_permissions_list(
             filter_data.phone_number,
         ),
     )
-    # * Prepare order fields
-    if filter_data.order_by:
-        pass
     obj_list = await verify_phone_crud.get_multi(
         db=db,
         skip=skip,

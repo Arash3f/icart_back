@@ -242,9 +242,6 @@ async def get_location(
             filter_data.is_main,
         ),
     )
-    # * Prepare order fields
-    if filter_data.order_by:
-        pass
     # * Find All agent with filters
     obj_list = await location_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 
