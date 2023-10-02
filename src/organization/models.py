@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, String
+from sqlalchemy import TEXT, UUID, Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from src.database.base_class import Base, BaseMixin
@@ -21,5 +21,23 @@ class Organization(Base, BaseMixin):
         lazy="selectin",
     )
 
+    contract_number = Column(String, nullable=True)
+    signatory_name = Column(String, nullable=True)
+    signatory_position = Column(String, nullable=True)
+    employees_number = Column(Integer)
+
+    address = Column(TEXT, nullable=True)
+
+    location_id = Column(UUID(as_uuid=True), ForeignKey("location.id"), nullable=True)
+    location = relationship(
+        "Location",
+        foreign_keys=[location_id],
+        back_populates="organizations",
+    )
+
+    users = relationship("User", back_populates="organization")
+
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"))
     agent = relationship("Agent", foreign_keys=[agent_id])
+
+    profit_rate = Column(Float, nullable=True)

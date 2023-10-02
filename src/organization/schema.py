@@ -31,7 +31,16 @@ class OrganizationRead(OrganizationBase):
 
     created_at: datetime
     updated_at: datetime | None
+    contract_number: str | None = None
+    signatory_name: str | None = None
+    signatory_position: str | None = None
+    employees_number: str | None = None
 
+    address: str | None = None
     # ! Relation
-    user_organization: UserRead
     location: LocationRead
+
+
+# ---------------------------------------------------------------------------
+class OrganizationReadWithUser(OrganizationRead):
+    user_organization: UserRead
