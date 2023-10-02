@@ -13,18 +13,11 @@ class ContractBase(BaseModel):
     employees_number: int | None = None
     model_config = ConfigDict(extra="forbid")
 
-    file_version_id: str | None = None
-    file_name: str | None = None
+    
 
 
 # ---------------------------------------------------------------------------
-class ContractCreate(BaseModel):
-    number: str
-    name: str | None = None
-    signatory_name: str
-    signatory_position: str
-    employees_number: int
-
+class ContractCreate(ContractBase):
     file_version_id: str | None = None
     file_name: str | None = None
 

@@ -12,6 +12,12 @@ class WalletBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class WalletUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    cash_balance: int | None = None
+    credit_balance: int | None = None
+# ---------------------------------------------------------------------------
 class WalletRead(WalletBase):
     id: uuid.UUID
     cash_balance: int

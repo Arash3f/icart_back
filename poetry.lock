@@ -103,6 +103,11 @@ files = [
 docs = ["Sphinx (>=5.3.0,<5.4.0)", "sphinx-rtd-theme (>=1.2.2)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)"]
 test = ["flake8 (>=5.0,<6.0)", "uvloop (>=0.15.3)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "mirrors"
+
 [[package]]
 name = "bcrypt"
 version = "4.0.1"
@@ -881,6 +886,11 @@ files = [
     {file = "pyasn1-0.5.0.tar.gz", hash = "sha256:97b7290ca68e62a832558ec3976f15cbf911bf5d7c7039d8b861c2a0ece69fde"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "mirrors"
+
 [[package]]
 name = "pycparser"
 version = "2.21"
@@ -1529,4 +1539,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "a26e0aa2ba3d1eaa586b94c52dc1c8a01d24d55e20a7e00b28233d3ea5b5fe98"
+content-hash = "cfd16e8d392190418c86597cea8282305dfb23b02a43de5516c7a8430891610f"
