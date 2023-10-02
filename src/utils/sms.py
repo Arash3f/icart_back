@@ -156,3 +156,34 @@ def send_verify_phone_sms(
     )
     requests.get(url)
     return True
+
+
+def send_welcome_sms(
+    phone_number: str,
+    full_name: str,
+) -> bool:
+    """
+    ! Send welcome sms
+
+    Parameters
+    ----------
+    phone_number
+        User phone number
+    full_name
+        User full name
+
+    Returns
+    -------
+
+    """
+    receptor = phone_number
+    token = full_name
+    template = "icart-welcome"
+
+    url = base_url + "receptor={}&token={}&template={}".format(
+        receptor,
+        token,
+        template,
+    )
+    requests.get(url)
+    return True

@@ -27,6 +27,4 @@ class VerifyPhoneNumberRequestIn(BaseModel):
 
 # ---------------------------------------------------------------------------
 class VerifyPhoneFilter(BaseModel):
-    return_all: bool | None = None
-    expiration_code_at: datetime | None | bool = None
     phone_number: str | bool | None = None

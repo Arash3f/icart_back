@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -48,7 +48,7 @@ async def verify_user(
     # * Generate dynamic code
     code = await verify_phone_crud.generate_dynamic_code(db=db)
     # * Find phone number
-    find_phone_numer = await verify_phone_crud.find_by_phone_number(
+    verify = await verify_phone_crud.find_by_phone_number(
         db=db,
         phone_number=phone_number,
     )
@@ -56,31 +56,26 @@ async def verify_user(
     expiration_code_at = datetime.now() + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
     )
-    if find_phone_numer:
-        find_phone_numer.verify_code = code
-        find_phone_numer.expiration_code_at = expiration_code_at
-        db.add(find_phone_numer)
-    else:
+    if not verify:
         verify = VerifyPhone()
         verify.phone_number = phone_number
-        verify.verify_code = code
-        verify.expiration_code_at = expiration_code_at
-        db.add(verify)
 
-    await db.commit()
+    verify.verify_code = code
+    verify.expiration_code_at = expiration_code_at
     # ! Send SMS to phone number
     send_verify_phone_sms(
         phone_number=phone_number,
         code=code,
         exp_time=expiration_code_at,
     )
-
+    db.add(verify)
+    await db.commit()
     return ResultResponse(result="Code sent successfully")
 
 
 # ---------------------------------------------------------------------------
-@router.get("/list", response_model=list[VerifyPhoneRead])
-async def read_permissions_list(
+@router.post("/list", response_model=list[VerifyPhoneRead])
+async def verify_phone_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
@@ -112,24 +107,14 @@ async def read_permissions_list(
         List of verify phone
     """
     # * Prepare filter fields
-    filter_data.expiration_code_at = (
-        (VerifyPhone.expiration_code_at >= filter_data.expiration_code_at)
-        if filter_data.expiration_code_at
-        else False
-    )
     filter_data.phone_number = (
-        (
-            VerifyPhone.phone_number.contain(filter_data.phone_number)
-            >= filter_data.phone_number
-        )
+        (VerifyPhone.phone_number.contains(filter_data.phone_number))
         if filter_data.phone_number
-        else False
+        else True
     )
     # * Add filter fields
     query = select(VerifyPhone).filter(
-        or_(
-            filter_data.return_all,
-            filter_data.expiration_code_at,
+        and_(
             filter_data.phone_number,
         ),
     )

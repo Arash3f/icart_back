@@ -26,7 +26,7 @@ from src.role.crud import role as role_crud
 from src.schema import ResultResponse
 from src.user.crud import user as user_crud
 from src.user.models import User
-from src.utils.sms import send_one_time_password_sms
+from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
 from src.wallet.models import Wallet
 
@@ -299,6 +299,13 @@ async def register(
     db.add(wallet)
     await db.commit()
     await db.refresh(created_user)
+
+    # * Send Register SMS
+    send_welcome_sms(
+        phone_number=phone_number,
+        # todo: change to user full name
+        full_name=created_user.username,
+    )
 
     return ResultResponse(result="User Created Successfully")
 
