@@ -37,7 +37,7 @@ async def find_capital_transfer(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user(permission.VIEW_CAPITAL_TRANSFER),
+        deps.get_current_user_with_permissions([permission.VIEW_CAPITAL_TRANSFER]),
     ),
     obj_data: IDRequest,
 ) -> CapitalTransferRead:
@@ -76,7 +76,7 @@ async def get_capital_transfer(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user(permission.VIEW_CAPITAL_TRANSFER),
+        deps.get_current_user_with_permissions([permission.VIEW_CAPITAL_TRANSFER]),
     ),
     skip: int = 0,
     limit: int = 20,
@@ -111,7 +111,7 @@ async def get_capital_transfer_list_my(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user(permission.VIEW_CAPITAL_TRANSFER),
+        deps.get_current_user_with_permissions([permission.VIEW_CAPITAL_TRANSFER]),
     ),
     skip: int = 0,
     limit: int = 20,
@@ -157,7 +157,7 @@ async def create_capital_transfer(
     db=Depends(deps.get_db),
     minio: MinioClient = Depends(deps.minio_auth),
     current_user: User = Depends(
-        deps.get_current_user(permission.CREATE_CAPITAL_TRANSFER),
+        deps.get_current_user_with_permissions([permission.CREATE_CAPITAL_TRANSFER]),
     ),
     transfer_type: Annotated[CapitalTransferEnum, Form()],
     value: Annotated[float, Form()],
@@ -217,7 +217,7 @@ async def approve_capital_transfer(
     db: AsyncSession = Depends(deps.get_db),
     obj_data: IDRequest,
     current_user: User = Depends(
-        deps.get_current_user(permission.APPROVE_CAPITAL_TRANSFER),
+        deps.get_current_user_with_permissions([permission.APPROVE_CAPITAL_TRANSFER]),
     ),
 ) -> CapitalTransferRead:
     """
