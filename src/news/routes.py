@@ -1,12 +1,10 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select
 
 from src import deps
 from src.news.crud import news as news_crud
-from src.news.models import News
-from src.news.schema import NewsCreate, NewsFilter, NewsRead, NewsUpdate
+from src.news.schema import NewsCreate, NewsRead, NewsUpdate
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
@@ -170,7 +168,6 @@ async def get_news_list(
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.VIEW_NEWS]),
     ),
-    filter_data: NewsFilter,
     skip: int = 0,
     limit: int = 20,
 ) -> List[NewsRead]:
@@ -187,25 +184,11 @@ async def get_news_list(
         Pagination skip
     limit
         Pagination limit
-    filter_data
-        Filter data
 
     Returns
     -------
     obj_list
         List of ability
     """
-    # * Prepare filter fields
-    filter_data.title = (
-        (News.title.contain(filter_data.title)) if filter_data.title else False
-    )
-    # * Add filter fields
-    query = select(News).filter(
-        or_(
-            filter_data.return_all,
-            filter_data.title,
-        ),
-    )
-    # * Find All agent with filters
-    obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
+    obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit)
     return obj_list

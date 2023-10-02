@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -12,12 +12,16 @@ from src.schema import VerifyUserDep
 from src.ticket.crud import ticket as ticket_crud
 from src.ticket.models import Ticket
 from src.ticket.schema import (
+    TicketComplexRead,
     TicketCreate,
     TicketCreateData,
     TicketRead,
+    TicketReadV2,
     TicketUpdate,
 )
 from src.ticket_message.crud import ticket_message as ticket_message_crud
+from src.ticket_message.crud import update_ticket_message_status
+from src.ticket_message.models import TicketMessage, TicketMessagePosition
 from src.ticket_message.schema import TicketMessageInDB
 from src.user.models import User
 
@@ -59,7 +63,7 @@ async def read_my_tickets(
 
 
 # ---------------------------------------------------------------------------
-@router.get("/list", response_model=List[TicketRead])
+@router.get("/list", response_model=List[TicketReadV2])
 async def read_tickets(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -68,28 +72,34 @@ async def read_tickets(
     ),
     skip: int = 0,
     limit: int = 5,
-) -> List[TicketRead]:
-    """
-    ! Get All tickets
+) -> List[TicketReadV2]:
+    query = (
+        select(
+            Ticket,
+            func.count(TicketMessage.user_status),
+            func.count(TicketMessage.supporter_status),
+        )
+        .join(TicketMessage)
+        .group_by(Ticket.id)
+        .select_from(Ticket)
+    )
+    res: List[TicketReadV2] = []
 
-    Parameters
-    ----------
-    db
-        Target database connection
-    current_user
-        Requester User
-    skip
-        Pagination skip
-    limit
-        Pagination limit
+    response = await db.execute(query)
+    obj_list = response.all()
+    for i in obj_list:
+        buf = i._mapping
+        obj = TicketReadV2(
+            title=buf["Ticket"].title,
+            type=buf["Ticket"].type,
+            id=buf["Ticket"].id,
+            unread_user=buf["count"],
+            unread_supporter=buf["count_1"],
+            updated_at=buf["Ticket"].updated_at,
+        )
+        res.append(obj)
 
-    Returns
-    -------
-    my_tickets
-        All ticket list
-    """
-    my_tickets = await ticket_crud.get_multi(db=db, skip=skip, limit=limit)
-    return my_tickets
+    return res
 
 
 # ---------------------------------------------------------------------------
@@ -128,16 +138,21 @@ async def create_ticket(
     ticket = await ticket_crud.create(db=db, obj_in=create_ticket)
 
     create_message = TicketMessageInDB(
+        type=TicketMessagePosition.USER,
+        user_status=True,
+        supporter_status=False,
         text=create_data.text,
         ticket_id=ticket.id,
         creator_id=current_user.id,
     )
     await ticket_message_crud.create(db=db, obj_in=create_message)
+
+    await db.refresh(ticket)
     return ticket
 
 
 # ---------------------------------------------------------------------------
-@router.get("/find", response_model=TicketRead)
+@router.get("/find", response_model=TicketComplexRead)
 async def read_my_ticket_by_id(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -145,7 +160,7 @@ async def read_my_ticket_by_id(
         deps.is_user_have_permission([permission.VIEW_TICKET]),
     ),
     ticket_id: UUID,
-) -> TicketRead:
+) -> TicketComplexRead:
     """
     ! Find Ticket
 
@@ -173,14 +188,29 @@ async def read_my_ticket_by_id(
         # ? Verify ticket existence
         ticket = await ticket_crud.verify_existence(db=db, ticket_id=ticket_id)
 
+        # ! Update Message Status
+        await update_ticket_message_status(
+            db=db,
+            user_read=False,
+            ticket=ticket,
+        )
+
         return ticket
     # * Verify ticket creator
     else:
+        print(ticket_id)
+
         # ? Verify ticket existence
         ticket = await ticket_crud.verify_existence(db=db, ticket_id=ticket_id)
 
         is_creator = ticket.creator_id == verify_data.user.id
         if is_creator:
+            # ! Update Message Status
+            await update_ticket_message_status(
+                db=db,
+                user_read=True,
+                ticket=ticket,
+            )
             return ticket
         else:
             raise AccessDeniedException()
