@@ -20,15 +20,8 @@ class CapitalTransferBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-class CapitalTransferCreate(BaseModel):
-    file_version_id: str | None = None
-    transfer_type: CapitalTransferEnum
-    value: float
-
-
-# ---------------------------------------------------------------------------
-class CapitalTransferInDB(CapitalTransferCreate):
-    receiver_id: uuid.UUID | None = None
+class CapitalTransferCreate(CapitalTransferBase):
+    pass
 
 
 # ---------------------------------------------------------------------------

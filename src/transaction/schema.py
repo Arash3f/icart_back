@@ -17,17 +17,13 @@ class TransactionBase(BaseModel):
 # ---------------------------------------------------------------------------
 class TransactionCreate(TransactionBase):
     # ! Relation
-    receiver_number: str
-    transferor_number: str
+    receiver_id: str
+    transferor_id: str
 
 
 # ---------------------------------------------------------------------------
-class TransactionRead(TransactionBase):
+class TransactionRead(TransactionCreate):
     id: UUID
-
-    # ! Relations
-    receiver_id: UUID
-    transferor_id: UUID
 
 
 # ---------------------------------------------------------------------------

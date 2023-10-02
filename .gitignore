@@ -132,3 +132,6 @@ dmypy.json
 
 # Redis
 *.rdb
+
+# Vs Code
+.vscode/
