@@ -2,11 +2,14 @@ from random import randint
 from typing import Type
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
-from src.verify_phone.exception import VerifyPhoneNotFoundException
+from src.verify_phone.exception import (
+    IncorrectCodeException,
+    VerifyPhoneNotFoundException,
+)
 from src.verify_phone.models import VerifyPhone
 
 
@@ -100,6 +103,48 @@ class VerifyPhoneCRUD(BaseCRUD[VerifyPhone, None, None]):
         )
 
         found_item = response.scalar_one_or_none()
+        return found_item
+
+    async def verify_with_verify_code(
+        self,
+        *,
+        db: AsyncSession,
+        phone_number: str,
+        verify_code: int,
+    ) -> Type[VerifyPhone]:
+        """
+        ! Verify Phone code with code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        verify_code
+            Target verify code
+        phone_number
+            Target phone number
+
+        Returns
+        -------
+        found_item
+            Found Item
+
+        Raises
+        ------
+        IncorrectCodeException
+        """
+        response = await db.execute(
+            select(self.model).where(
+                and_(
+                    self.model.phone_number == phone_number,
+                    self.model.verify_code == verify_code,
+                ),
+            ),
+        )
+
+        found_item = response.scalar_one_or_none()
+        if not found_item:
+            raise IncorrectCodeException()
         return found_item
 
     async def generate_dynamic_code(self, *, db: AsyncSession) -> int:

@@ -53,24 +53,27 @@ async def verify_user(
         phone_number=phone_number,
     )
     # ? Update verify phone
+    expiration_code_at = datetime.now() + timedelta(
+        minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
+    )
     if find_phone_numer:
         find_phone_numer.verify_code = code
-        find_phone_numer.expiration_code_at = datetime.now() + timedelta(
-            minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
-        )
+        find_phone_numer.expiration_code_at = expiration_code_at
         db.add(find_phone_numer)
     else:
         verify = VerifyPhone()
         verify.phone_number = phone_number
         verify.verify_code = code
-        verify.expiration_code_at = datetime.now() + timedelta(
-            minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
-        )
+        verify.expiration_code_at = expiration_code_at
         db.add(verify)
 
     await db.commit()
     # ! Send SMS to phone number
-    send_verify_phone_sms(phone_number=phone_number, code=code)
+    send_verify_phone_sms(
+        phone_number=phone_number,
+        code=code,
+        exp_time=expiration_code_at,
+    )
 
     return ResultResponse(result="Code sent successfully")
 

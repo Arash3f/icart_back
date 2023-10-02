@@ -32,8 +32,45 @@ def send_dynamic_password_sms(
     """
     receptor = phone_number
     token = dynamic_password
-    token2 = exp_time
+    token2 = exp_time.strftime("%I:%M")
     template = "dynami-password"
+
+    url = base_url + "receptor={}&token={}&token2={}&template={}".format(
+        receptor,
+        token,
+        token2,
+        template,
+    )
+    requests.get(url)
+    return True
+
+
+def send_one_time_password_sms(
+    phone_number: str,
+    one_time_password: int,
+    exp_time: datetime,
+) -> bool:
+    """
+    ! Send one time password
+
+    Parameters
+    ----------
+    phone_number
+        User phone number
+    one_time_password
+        User one time password
+    exp_time
+        Exp time
+
+    Returns
+    -------
+    res
+        result of operation
+    """
+    receptor = phone_number
+    token = one_time_password
+    token2 = exp_time.strftime("%I:%M")
+    template = "one-time-password"
 
     url = base_url + "receptor={}&token={}&token2={}&template={}".format(
         receptor,
@@ -88,6 +125,7 @@ def send_decrease_money_sms(
 def send_verify_phone_sms(
     phone_number: str,
     code: int,
+    exp_time: datetime,
 ) -> bool:
     """
     ! Send verify phone code
@@ -98,14 +136,23 @@ def send_verify_phone_sms(
         User phone number
     code
         Phone verify code
+    exp_time
+        Exp time
 
     Returns
     -------
 
     """
     receptor = phone_number
+    token = code
+    token2 = exp_time.strftime("%I:%M")
     template = "verify-phone"
 
-    url = base_url + "receptor={}&token={}&template={}".format(receptor, code, template)
+    url = base_url + "receptor={}&token={}&token2={}&template={}".format(
+        receptor,
+        token,
+        token2,
+        template,
+    )
     requests.get(url)
     return True

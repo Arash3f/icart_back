@@ -35,7 +35,7 @@ class Organization(Base, BaseMixin):
         back_populates="organizations",
     )
 
-    users = relationship("User", back_populates="organization")
+    # users = relationship("User", back_populates="organization")
 
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"))
     agent = relationship("Agent", foreign_keys=[agent_id])

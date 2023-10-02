@@ -14,18 +14,21 @@ from src.auth.exception import (
 )
 from src.auth.schema import (
     AccessToken,
+    ForgetPasswordIn,
     OneTimePasswordRequestIn,
     UserRegisterIn,
     VerifyUsernameAndNationalCode,
 )
 from src.core.config import settings
-from src.core.security import generate_access_token, hash_password
+from src.core.security import hash_password
 from src.credit.models import Credit
 from src.role.crud import role as role_crud
 from src.schema import ResultResponse
 from src.user.crud import user as user_crud
 from src.user.models import User
+from src.utils.sms import send_one_time_password_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -68,22 +71,15 @@ async def login(
     )
     if not user:
         raise IncorrectUsernameOrPasswordException()
-    if not user.is_active:
+    elif not user.is_active:
         raise InactiveUserException()
-
-    access_token_expire_time = timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)
-    role = await role_crud.get(db=db, item_id=user.role.id)
-
-    token = generate_access_token(
-        data={"username": user.username, "role": role.name},
-        expire_delta=access_token_expire_time,
-    )
-    access_token: AccessToken = AccessToken(access_token=token, token_type="bearer")
+    # * Generate Access Token
+    access_token = await auth_crud.generate_access_token(user=user)
     return access_token
 
 
 @router.post("/login/one_time_password")
-async def login_for_access_token(
+async def login_one_time_password(
     *,
     db: AsyncSession = Depends(deps.get_db),
     login_form: OAuth2PasswordRequestForm = Depends(),
@@ -110,25 +106,17 @@ async def login_for_access_token(
     InactiveUserException
         User Is Inactive
     """
-    user = await auth_crud.authenticate_v2(
+    user = await auth_crud.authenticate_by_one_time_password(
         db=db,
         username=login_form.username,
         password=login_form.password,
     )
-
     if not user:
         raise IncorrectUsernameOrPasswordException()
-    if not user.is_active:
+    elif not user.is_active:
         raise InactiveUserException()
-
-    access_token_expire_time = timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)
-    role = await role_crud.get(db=db, id=user.role_id)
-
-    token = generate_access_token(
-        data={"user_name": user.user_name, "role": role.name},
-        expire_delta=access_token_expire_time,
-    )
-    access_token: AccessToken = AccessToken(access_token=token, token_type="bearer")
+    # * Generate Access Token
+    access_token = await auth_crud.generate_access_token(user=user)
     return access_token
 
 
@@ -138,13 +126,13 @@ async def login_for_access_token(
     response_model=ResultResponse,
     status_code=200,
 )
-async def current_user(
+async def request_one_time_password(
     *,
     db: AsyncSession = Depends(deps.get_db),
     request_data: OneTimePasswordRequestIn,
 ) -> ResultResponse:
     """
-    ! Request one time password
+    ! Request for one time password
 
     Parameters
     ----------
@@ -162,13 +150,13 @@ async def current_user(
     ------
     UserNotFoundException
     """
-    username = request_data.username
-
-    # ? Generate dynamic password
     one_time_password = randint(100000, 999999)
-    # ? Find user
-    user = await user_crud.verify_existence_by_username(db=db, username=username)
-    # ? Update user data
+    # * Find user
+    user = await user_crud.verify_existence_by_username(
+        db=db,
+        username=request_data.username,
+    )
+    # * Update user data
     user.one_time_password = one_time_password
     user.expiration_password_at = datetime.now() + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
@@ -176,8 +164,12 @@ async def current_user(
     db.add(user)
     await db.commit()
     # ? Send SMS to user's phone
-    # send_one_time_password_sms(phone_number=user.phone_number, code=one_time_password)
-
+    print(user.phone_number)
+    send_one_time_password_sms(
+        phone_number=user.phone_number,
+        one_time_password=one_time_password,
+        exp_time=user.expiration_password_at,
+    )
     return ResultResponse(result="Code sent successfully")
 
 
@@ -207,6 +199,8 @@ async def verify_register_data(
     ------
     UsernameIsDuplicatedException
     """
+    # todo: verify phone number and national code with web server
+
     await user_crud.verify_not_existence_by_username_and_national_code(
         db=db,
         username=request_data.username,
@@ -222,7 +216,7 @@ async def verify_register_data(
     status_code=status.HTTP_201_CREATED,
     response_model=ResultResponse,
 )
-async def register_user(
+async def register(
     *,
     db: AsyncSession = Depends(deps.get_db),
     register_data: UserRegisterIn,
@@ -261,6 +255,7 @@ async def register_user(
         db=db,
         phone_number=phone_number,
     )
+    # ? Verify phone number code
     if (
         not verify_code_number
         or verify_code_number.verify_code != verify_code
@@ -276,25 +271,60 @@ async def register_user(
     )
 
     # ? Create User
-    created_user = User()
-    created_user.username = phone_number
-    created_user.password = hash_password(register_data.password)
-    created_user.role_id = role.id
-    created_user.first_name = register_data.first_name
-    created_user.last_name = register_data.last_name
-    created_user.national_code = register_data.national_code
+    created_user = User(
+        username=phone_number,
+        password=hash_password(register_data.password),
+        role_id=role.id,
+        first_name=register_data.first_name,
+        last_name=register_data.last_name,
+        national_code=register_data.national_code,
+        phone_number=phone_number,
+    )
 
     # ? Create Credit
-    credit = Credit()
-    credit.user = created_user
+    credit = Credit(
+        user=created_user,
+    )
 
-    # todo:  Create Credit 2
-    # credit = Credit()
-    # credit.user = created_user
+    # ? Create Wallet
+    wallet_number = randint(100000, 999999)
+    wallet = Wallet(
+        user=created_user,
+        number=wallet_number,
+    )
+    credit.user = created_user
 
     db.add(created_user)
     db.add(credit)
+    db.add(wallet)
     await db.commit()
     await db.refresh(created_user)
 
     return ResultResponse(result="User Created Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post("/forget/password", response_model=ResultResponse, status_code=200)
+async def forget_password(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    request_data: ForgetPasswordIn,
+) -> ResultResponse:
+    user = await user_crud.find_by_username_and_national_code(
+        db=db,
+        username=request_data.phone_number,
+        national_code=request_data.national_code,
+    )
+
+    verify_phone_crud.verify_with_verify_code(
+        db=db,
+        phone_number=request_data.phone_number,
+        verify_code=request_data.code,
+    )
+
+    user.password = hash_password(request_data.password)
+
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return ResultResponse(result="password updated successfully")

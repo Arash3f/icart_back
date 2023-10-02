@@ -68,11 +68,11 @@ class User(Base, BaseMixin):
         ForeignKey("organization.id"),
         nullable=True,
     )
-    organization = relationship(
-        Organization,
-        foreign_keys=[organization_id],
-        back_populates="users",
-    )
+    # organization = relationship(
+    #     "Organization",
+    #     foreign_keys=[organization_id],
+    #     back_populates="users",
+    # )
 
     wallet = relationship(Wallet, uselist=False, back_populates="user", lazy="selectin")
 

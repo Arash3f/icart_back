@@ -18,3 +18,18 @@ class VerifyPhoneNotFoundException(HTTPException):
             "english_message": "Verify Phone Not Found!",
         }
         self.headers = None
+
+
+class IncorrectCodeException(HTTPException):
+    """
+    ? Exception When Code is Incorrect
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 2901,
+            "english_message": "Code Is Incorrect!",
+            "persian_message": "کد نامعتبر است!",
+        }
+        self.headers = None

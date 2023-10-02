@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, Integer, String
+from sqlalchemy import UUID, Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from src.capital_transfer.models import CapitalTransfer
@@ -12,7 +12,7 @@ class Wallet(Base, BaseMixin):
 
     cash_balance = Column(Integer, default=0)
     credit_balance = Column(Integer, default=0)
-    number = Column(String, unique=True, index=True)
+    number = Column(Integer, unique=True, index=True)
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))

@@ -228,6 +228,46 @@ class UserCRUD(BaseCRUD[User, None, None]):
 
         return obj
 
+    async def find_by_username_and_national_code(
+        self,
+        *,
+        db: AsyncSession,
+        username=str,
+        national_code=str,
+    ) -> Type[User]:
+        """
+        ! Find with username & national code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        username
+            Target User's username
+        national_code
+            Target User's national_code
+        Returns
+        -------
+        user
+            Found user
+
+        Raises
+        -----
+        UserNotFoundException
+            can not find user with this id
+        """
+        response = await db.execute(
+            select(self.model).where(
+                and_(User.username == username, User.national_code == national_code),
+            ),
+        )
+
+        user = response.scalar_one_or_none()
+        if not user:
+            raise UsernameIsDuplicatedException()
+
+        return user
+
 
 # ---------------------------------------------------------------------------
 user = UserCRUD(User)

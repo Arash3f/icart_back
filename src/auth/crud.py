@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.security import verify_password
+from src.auth.schema import AccessToken
+from src.core.config import settings
+from src.core.security import generate_access_token, verify_password
 from src.database.base_crud import BaseCRUD
 from src.user.crud import user as user_crud
 from src.user.models import User
@@ -34,11 +38,13 @@ class AuthCRUD(BaseCRUD[User, None, None]):
         user = await user_crud.find_by_username(db=db, username=username)
         if not user:
             return None
-        if not verify_password(password, user.password):
+        # * Verify password
+        verify_pass = verify_password(password, user.password)
+        if not verify_pass:
             return None
         return user
 
-    async def authenticate_v2(
+    async def authenticate_by_one_time_password(
         self,
         db: AsyncSession,
         username: str,
@@ -64,9 +70,37 @@ class AuthCRUD(BaseCRUD[User, None, None]):
         user: User | None = await user_crud.get_by_username(db=db, username=username)
         if not user:
             return None
-        if not user.one_time_password == password:
+        # * Verify password
+        verify_pass = user.one_time_password == password
+        if not verify_pass:
             return None
         return user
+
+    async def generate_access_token(
+        self,
+        user: User,
+    ) -> AccessToken:
+        """
+        ! Generate access token for user
+
+        Parameters
+        ----------
+        user
+            Target user
+
+        Returns
+        -------
+        access_token
+            User access token
+        """
+        access_token_expire_time = timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)
+
+        token = generate_access_token(
+            data={"username": user.username, "role": user.role.name},
+            expire_delta=access_token_expire_time,
+        )
+        access_token: AccessToken = AccessToken(access_token=token, token_type="bearer")
+        return access_token
 
 
 # ---------------------------------------------------------------------------

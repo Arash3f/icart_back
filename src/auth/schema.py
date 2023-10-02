@@ -42,3 +42,11 @@ class VerifyUsernameAndNationalCode(BaseModel):
 class UserInDB(UserBase):
     password: str
     role_id: UUID
+
+
+# ---------------------------------------------------------------------------
+class ForgetPasswordIn(BaseModel):
+    phone_number: str
+    national_code: str
+    password: str
+    code: int
