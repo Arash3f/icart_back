@@ -44,7 +44,32 @@ class TicketUpdate(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class TicketReadV2(BaseModel):
+    id: uuid.UUID
+    title: str
+    type: TicketType
+    unread_user: int | None = None
+    unread_supporter: int | None = None
+
+    updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
 class TicketRead(TicketBase):
+    id: uuid.UUID
+    position: TicketPosition
+    number: int
+
+    created_at: datetime
+    updated_at: datetime | None
+
+    # ! Relations
+    creator_id: uuid.UUID
+    messages: List[TicketMessageRead]
+
+
+# ---------------------------------------------------------------------------
+class TicketComplexRead(TicketBase):
     id: uuid.UUID
     position: TicketPosition
     number: int
