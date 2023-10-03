@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import case, func, not_, select
+from sqlalchemy import case, desc, func, not_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -68,7 +68,7 @@ async def read_my_tickets(
         .join(TicketMessage)
         .group_by(Ticket.id)
         .select_from(Ticket)
-        .order_by(Ticket.created_at, Ticket.updated_at)
+        .order_by(desc(Ticket.created_at), desc(Ticket.updated_at))
     )
     res: List[TicketReadV2] = []
 
@@ -111,7 +111,7 @@ async def read_tickets(
         .join(TicketMessage)
         .group_by(Ticket.id)
         .select_from(Ticket)
-        .order_by(Ticket.created_at, Ticket.updated_at)
+        .order_by(desc(Ticket.created_at), desc(Ticket.updated_at))
     )
     res: List[TicketReadV2] = []
 
