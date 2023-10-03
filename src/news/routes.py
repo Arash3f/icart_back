@@ -1,9 +1,11 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select, desc
 
 from src import deps
 from src.news.crud import news as news_crud
+from src.news.models import News
 from src.news.schema import NewsCreate, NewsRead, NewsShortRead, NewsUpdate
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest
@@ -190,5 +192,6 @@ async def get_news_list(
     obj_list
         List of ability
     """
-    obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit)
+    query = select(News).order_by(desc(News.created_at))
+    obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

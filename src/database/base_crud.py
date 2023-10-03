@@ -100,7 +100,7 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         if query is None:
             query = select(self.model).offset(skip).limit(limit)
-        response = await db.execute(query)
+        response = await db.execute(query.offset(skip).limit(limit))
         obj_list = response.scalars().all()
 
         return obj_list

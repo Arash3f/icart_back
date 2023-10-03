@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, desc
 
 from src import deps
 from src.permission import permission_codes as permission
@@ -148,8 +148,8 @@ async def get_user_message(
 async def get_user_message_list(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_USER_MESSAGE]),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_USER_MESSAGE]),
     ),
     filter_data: UserMessageFilter,
     skip: int = 0,
@@ -162,8 +162,8 @@ async def get_user_message_list(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
+    verify_data
+        user's verified data
     skip
         Pagination skip
     limit
@@ -176,6 +176,11 @@ async def get_user_message_list(
     message_list
         List of user message
     """
+    query = select(UserMessage)
+    # * Not Have permissions
+    if not verify_data.is_valid:
+        query = query.where(UserMessage.user_id == verify_data.user.id)
+
     # * Prepare filter fields
     filter_data.status = (
         UserMessage.status == filter_data.status
@@ -183,7 +188,9 @@ async def get_user_message_list(
         else True
     )
     # * Add filter fields
-    query = select(UserMessage).filter(and_(filter_data.status))
+    query = query.filter(and_(filter_data.status)).order_by(
+        desc(UserMessage.created_at),
+    )
     # * Find All user message with filters
     message_list = await user_message_crud.get_multi(
         db=db,
@@ -192,54 +199,3 @@ async def get_user_message_list(
         query=query,
     )
     return message_list
-
-
-# ---------------------------------------------------------------------------
-@router.post(path="/my", response_model=List[UserMessageShortRead])
-async def get_user_message_list_my(
-    *,
-    db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
-    filter_data: UserMessageFilter,
-    skip: int = 0,
-    limit: int = 20,
-) -> List[UserMessageShortRead]:
-    """
-    ! Get All User Message
-
-    Parameters
-    ----------
-    db
-        Target database connection
-    current_user
-        Requester User
-    skip
-        Pagination skip
-    limit
-        Pagination limit
-    filter_data
-        Filter data
-
-    Returns
-    -------
-    obj_list
-        List of user message
-    """
-    # * Prepare filter fields
-    filter_data.status = (
-        UserMessage.status == filter_data.status
-        if filter_data.status is not None
-        else True
-    )
-
-    query = select(UserMessage).where(UserMessage.user_id == current_user.id)
-    # * Add filter fields
-    query = query.filter(and_(filter_data.status))
-    # * Find All user message with filters
-    obj_list = await user_message_crud.get_multi(
-        db=db,
-        skip=skip,
-        limit=limit,
-        query=query,
-    )
-    return obj_list

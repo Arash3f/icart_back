@@ -77,4 +77,10 @@ async def user_create_message(
         creator_id=verify_data.user.id,
     )
     new_message = await ticket_message_crud.create(db=db, obj_in=create_data)
+
+    # ? Update ticket's updated_at ( use for ordering )
+    ticket.updated_at = new_message.created_at
+    db.add(ticket)
+    await db.commit()
+
     return new_message

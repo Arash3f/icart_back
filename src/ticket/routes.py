@@ -111,7 +111,8 @@ async def read_tickets(
         .join(TicketMessage)
         .group_by(Ticket.id)
         .select_from(Ticket)
-        .order_by(desc(Ticket.created_at), desc(Ticket.updated_at))
+        # .order_by(desc(Ticket.created_at))
+        .order_by(desc(Ticket.updated_at))
     )
     res: List[TicketReadV2] = []
 
@@ -168,6 +169,9 @@ async def create_ticket(
     )
     ticket = await ticket_crud.create(db=db, obj_in=create_ticket)
 
+    ticket.updated_at = ticket.created_at
+    db.add(ticket)
+
     create_message = TicketMessageInDB(
         type=TicketMessagePosition.USER,
         user_status=True,
@@ -178,6 +182,7 @@ async def create_ticket(
     )
     await ticket_message_crud.create(db=db, obj_in=create_message)
 
+    await db.commit()
     await db.refresh(ticket)
     return ticket
 
