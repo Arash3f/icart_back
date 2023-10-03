@@ -12,7 +12,7 @@ from src.ticket_message.schema import TicketMessageRead
 # ---------------------------------------------------------------------------
 class TicketBase(BaseModel):
     title: str
-    importance: conint(ge=1, le=4)
+    importance: conint(ge=1, le=4) = 1
     type: TicketType
     model_config = ConfigDict(extra="forbid")
 

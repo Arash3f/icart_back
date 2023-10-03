@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -30,14 +30,14 @@ router = APIRouter(prefix="/ticket", tags=["ticket"])
 
 
 # ---------------------------------------------------------------------------
-@router.get("/my", response_model=List[TicketRead])
+@router.get("/my", response_model=List[TicketReadV2])
 async def read_my_tickets(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
     skip: int = 0,
     limit: int = 5,
-) -> List[TicketRead]:
+) -> List[TicketReadV2]:
     """
     ! Get All my tickets
 
@@ -57,9 +57,35 @@ async def read_my_tickets(
     my_tickets
         All my ticket list
     """
-    query = select(Ticket).where(Ticket.creator_id == current_user.id)
-    my_tickets = await ticket_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
-    return my_tickets
+    # todo: Clean this code
+    query = (
+        select(
+            Ticket,
+            func.count(case((TicketMessage.user_status, -1))),
+            func.count(case((TicketMessage.supporter_status, -1))),
+        )
+        .where(Ticket.creator_id == current_user.id)
+        .join(TicketMessage)
+        .group_by(Ticket.id)
+        .select_from(Ticket)
+    )
+    res: List[TicketReadV2] = []
+
+    response = await db.execute(query)
+    obj_list = response.all()
+    for i in obj_list:
+        buf = i._mapping
+        obj = TicketReadV2(
+            title=buf["Ticket"].title,
+            type=buf["Ticket"].type,
+            id=buf["Ticket"].id,
+            unread_user=buf["count"],
+            unread_supporter=buf["count_1"],
+            updated_at=buf["Ticket"].updated_at,
+        )
+        res.append(obj)
+
+    return res
 
 
 # ---------------------------------------------------------------------------
@@ -73,11 +99,12 @@ async def read_tickets(
     skip: int = 0,
     limit: int = 5,
 ) -> List[TicketReadV2]:
+    # todo: Clean this code
     query = (
         select(
             Ticket,
-            func.count(TicketMessage.user_status),
-            func.count(TicketMessage.supporter_status),
+            func.count(case((TicketMessage.user_status, -1))),
+            func.count(case((TicketMessage.supporter_status, -1))),
         )
         .join(TicketMessage)
         .group_by(Ticket.id)
@@ -198,8 +225,6 @@ async def read_my_ticket_by_id(
         return ticket
     # * Verify ticket creator
     else:
-        print(ticket_id)
-
         # ? Verify ticket existence
         ticket = await ticket_crud.verify_existence(db=db, ticket_id=ticket_id)
 
