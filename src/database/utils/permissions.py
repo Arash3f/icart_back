@@ -98,6 +98,14 @@ permissions_in: list[PermissionCreate] = [
         code=permission.DELETE_ORGANIZATION,
     ),
     # ! CAPITAL TRANSFER
+    PermissionCreate(
+        name="می تواند انتقال ها را ببیند",
+        code=permission.VIEW_CAPITAL_TRANSFER,
+    ),
+    PermissionCreate(
+        name="می تواند انتقال ها را تایید کند ",
+        code=permission.APPROVE_CAPITAL_TRANSFER,
+    ),
     # ! POSITION REQUEST
     # ! ABILITY
     # ! AUTH

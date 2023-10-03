@@ -162,5 +162,6 @@ def minio_auth() -> MinioClient:
         default_bucket=settings.MINIO_DEFAULT_BUCKET,
         site_media_bucket=settings.MINIO_SITE_MEDIA_BUCKET,
         profile_image_bucket=settings.MINIO_PROFILE_IMAGE_BUCKET,
+        capital_transfer_media_bucket=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
     )
     return minio_client

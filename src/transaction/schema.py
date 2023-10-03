@@ -17,8 +17,8 @@ class TransactionBase(BaseModel):
 # ---------------------------------------------------------------------------
 class TransactionCreate(TransactionBase):
     # ! Relation
-    receiver_id: str
-    transferor_id: str
+    receiver_id: UUID
+    transferor_id: UUID
 
 
 # ---------------------------------------------------------------------------

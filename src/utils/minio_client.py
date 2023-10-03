@@ -22,6 +22,7 @@ class MinioClient:
         default_bucket: str,
         site_media_bucket: str,
         profile_image_bucket: str,
+        capital_transfer_media_bucket: str,
     ):
         self.minio_url = url
         self.access_key = access_key
@@ -32,7 +33,14 @@ class MinioClient:
             secret_key=self.secret_key,
             secure=False,
         )
-        self.make_bucket([default_bucket, site_media_bucket, profile_image_bucket])
+        self.make_bucket(
+            [
+                default_bucket,
+                site_media_bucket,
+                profile_image_bucket,
+                capital_transfer_media_bucket,
+            ],
+        )
 
     def make_bucket(self, buckets: list[str]) -> bool:
         for bucket in buckets:

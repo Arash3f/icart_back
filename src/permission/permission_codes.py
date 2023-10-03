@@ -33,8 +33,7 @@ APPROVE_POSITION_REQUEST = 62
 VIEW_CONTRACT = 70
 # ---------------------------------------------------------------------------
 VIEW_CAPITAL_TRANSFER = 80
-CREATE_CAPITAL_TRANSFER = 81
-APPROVE_CAPITAL_TRANSFER = 82
+APPROVE_CAPITAL_TRANSFER = 81
 # ---------------------------------------------------------------------------
 VIEW_LOCATION = 90
 CREATE_LOCATION = 91
@@ -88,9 +87,6 @@ VIEW_IMPORTANT_DATA = 210
 UPDATE_IMPORTANT_DATA = 212
 # ---------------------------------------------------------------------------
 VIEW_USER_TOKEN = 220
-# ---------------------------------------------------------------------------
-VIEW_CAPITAL_TRANSFER = 230
-UPDATE_CAPITAL_TRANSFER = 231
 # ---------------------------------------------------------------------------
 VIEW_FEE = 240
 CREATE_FEE = 241

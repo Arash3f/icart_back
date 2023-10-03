@@ -15,6 +15,7 @@ from src.fee.routes import router as fee_router
 from src.important_data.routes import router as important_data_router
 from src.invoice.routes import router as invoice_router
 from src.location.routes import router as location_router
+from src.media.routes import router as media_router
 from src.merchant.routes import router as merchant_router
 from src.news.routes import router as news_router
 from src.organization.routes import router as organization_router
@@ -64,6 +65,7 @@ def create_fastapi_app():
     app.include_router(user_crypto_router)
     app.include_router(crypto_router)
     app.include_router(wallet_router)
+    app.include_router(media_router)
     app.add_middleware(
         middleware_class=CORSMiddleware,
         allow_origins=["*"],

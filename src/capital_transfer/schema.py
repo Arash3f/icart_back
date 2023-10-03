@@ -17,11 +17,12 @@ class CapitalTransferBase(BaseModel):
 
     # ! Relations
     receiver_id: uuid.UUID | None = None
+    transaction_id: uuid.UUID | None = None
 
 
 # ---------------------------------------------------------------------------
 class CapitalTransferCreate(CapitalTransferBase):
-    pass
+    code: int
 
 
 # ---------------------------------------------------------------------------
@@ -33,6 +34,7 @@ class CapitalTransferUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 class CapitalTransferRead(CapitalTransferBase):
     id: uuid.UUID
+    code: int
     finish: bool
 
     created_at: datetime

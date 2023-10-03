@@ -38,13 +38,13 @@ repos:
     hooks:
         -   id: add-trailing-comma
 
--   repo: https://github.com/PyCQA/isort
-    # ? sort imports alphabetically and automatically separate into sections and by type
-    rev: 5.12.0
-    hooks:
-        -   id: isort
-            exclude: database.base.py
-            args: [ --split-on-trailing-comma ]
+#-   repo: https://github.com/PyCQA/isort
+#    # ? sort imports alphabetically and automatically separate into sections and by type
+#    rev: 5.12.0
+#    hooks:
+#        -   id: isort
+#            exclude: database.base.py
+#            args: [ --split-on-trailing-comma ]
 
 -   repo: https://github.com/codespell-project/codespell
     # ? Fix common misspellings in text files
