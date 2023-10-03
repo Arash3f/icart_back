@@ -4,7 +4,6 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
-    Integer,
     String,
 )
 from sqlalchemy.orm import relationship
@@ -30,7 +29,7 @@ class User(Base, BaseMixin):
     subscribe_newsletter = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_valid = Column(Boolean, default=False)
-    one_time_password = Column(Integer, index=True, nullable=True)
+    one_time_password = Column(String, nullable=True)
     expiration_password_at = Column(DateTime(timezone=True), nullable=True)
     phone_number = Column(String, unique=False)
 

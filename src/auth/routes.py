@@ -106,12 +106,14 @@ async def login_one_time_password(
     InactiveUserException
         User Is Inactive
     """
+    current_time = datetime.now(tz=timezone.utc)
+
     user = await auth_crud.authenticate_by_one_time_password(
         db=db,
         username=login_form.username,
         password=login_form.password,
     )
-    if not user:
+    if not user or user.expiration_password_at < current_time:
         raise IncorrectUsernameOrPasswordException()
     elif not user.is_active:
         raise InactiveUserException()
@@ -157,17 +159,16 @@ async def request_one_time_password(
         username=request_data.username,
     )
     # * Update user data
-    user.one_time_password = one_time_password
+    user.one_time_password = hash_password(str(one_time_password))
     user.expiration_password_at = datetime.now() + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
     )
     db.add(user)
     await db.commit()
     # ? Send SMS to user's phone
-    print(user.phone_number)
     send_one_time_password_sms(
         phone_number=user.phone_number,
-        one_time_password=one_time_password,
+        one_time_password=str(one_time_password),
         exp_time=user.expiration_password_at,
     )
     return ResultResponse(result="Code sent successfully")

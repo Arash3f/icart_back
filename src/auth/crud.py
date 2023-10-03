@@ -71,7 +71,7 @@ class AuthCRUD(BaseCRUD[User, None, None]):
         if not user:
             return None
         # * Verify password
-        verify_pass = user.one_time_password == password
+        verify_pass = verify_password(password, user.one_time_password)
         if not verify_pass:
             return None
         return user

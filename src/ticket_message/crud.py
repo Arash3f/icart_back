@@ -40,6 +40,7 @@ async def update_ticket_message_status(
         where = TicketMessage.creator_id == ticket.creator_id
         values["user_status"] = True
     else:
+        # todo: This code not work correctly for admin ?!?
         where = TicketMessage.creator_id != ticket.creator_id
         values["supporter_status"] = True
 
