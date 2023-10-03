@@ -303,8 +303,7 @@ async def register(
     # * Send Register SMS
     send_welcome_sms(
         phone_number=phone_number,
-        # todo: change to user full name
-        full_name=created_user.username,
+        full_name="{} {}".format(created_user.first_name, created_user.last_name),
     )
 
     return ResultResponse(result="User Created Successfully")

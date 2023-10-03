@@ -67,7 +67,7 @@ class AuthCRUD(BaseCRUD[User, None, None]):
         user
             Found user or None
         """
-        user: User | None = await user_crud.get_by_username(db=db, username=username)
+        user: User | None = await user_crud.find_by_username(db=db, username=username)
         if not user:
             return None
         # * Verify password
