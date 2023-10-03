@@ -52,6 +52,7 @@ class TicketReadV2(BaseModel):
     unread_supporter: int | None = None
 
     updated_at: datetime | None
+    created_at: datetime | None
 
 
 # ---------------------------------------------------------------------------

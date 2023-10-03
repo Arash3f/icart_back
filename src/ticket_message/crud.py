@@ -1,4 +1,4 @@
-from sqlalchemy import update
+from sqlalchemy import and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
@@ -31,24 +31,20 @@ async def update_ticket_message_status(
     response
         Result of operation
     """
-    query = update(TicketMessage).where(TicketMessage.ticket_id == ticket.id)
-    values = {
-        "user_status": TicketMessage.user_status,
-        "supporter_status": TicketMessage.supporter_status,
-    }
-    if user_read:
-        where = TicketMessage.creator_id == ticket.creator_id
-        values["user_status"] = True
-    else:
-        # todo: This code not work correctly for admin ?!?
-        where = TicketMessage.creator_id != ticket.creator_id
-        values["supporter_status"] = True
-
-    query = query.where(
-        where,
-    ).values(
-        values,
+    query = update(TicketMessage).where(
+        and_(
+            TicketMessage.ticket_id == ticket.id,
+            TicketMessage.creator_id == ticket.creator_id,
+        ),
     )
+    if user_read:
+        query = query.values(
+            {"user_status": True},
+        )
+    else:
+        query = query.values(
+            {"supporter_status": True},
+        )
 
     await db.execute(query)
     await db.commit()

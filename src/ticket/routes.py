@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, not_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -61,13 +61,14 @@ async def read_my_tickets(
     query = (
         select(
             Ticket,
-            func.count(case((TicketMessage.user_status, -1))),
-            func.count(case((TicketMessage.supporter_status, -1))),
+            func.count(case((not_(TicketMessage.user_status), 1))),
+            func.count(case((not_(TicketMessage.supporter_status), 1))),
         )
         .where(Ticket.creator_id == current_user.id)
         .join(TicketMessage)
         .group_by(Ticket.id)
         .select_from(Ticket)
+        .order_by(Ticket.created_at, Ticket.updated_at)
     )
     res: List[TicketReadV2] = []
 
@@ -82,6 +83,7 @@ async def read_my_tickets(
             unread_user=buf["count"],
             unread_supporter=buf["count_1"],
             updated_at=buf["Ticket"].updated_at,
+            created_at=buf["Ticket"].created_at,
         )
         res.append(obj)
 
@@ -103,12 +105,13 @@ async def read_tickets(
     query = (
         select(
             Ticket,
-            func.count(case((TicketMessage.user_status, -1))),
-            func.count(case((TicketMessage.supporter_status, -1))),
+            func.count(case((not_(TicketMessage.user_status), 1))),
+            func.count(case((not_(TicketMessage.supporter_status), 1))),
         )
         .join(TicketMessage)
         .group_by(Ticket.id)
         .select_from(Ticket)
+        .order_by(Ticket.created_at, Ticket.updated_at)
     )
     res: List[TicketReadV2] = []
 
@@ -123,6 +126,7 @@ async def read_tickets(
             unread_user=buf["count"],
             unread_supporter=buf["count_1"],
             updated_at=buf["Ticket"].updated_at,
+            created_at=buf["Ticket"].created_at,
         )
         res.append(obj)
 

@@ -36,6 +36,7 @@ class Ticket(Base, BaseMixin):
         back_populates="ticket",
         lazy="selectin",
         cascade="all, delete-orphan",
+        order_by="desc(TicketMessage.created_at)",
     )
 
     creator_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
