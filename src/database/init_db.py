@@ -1,8 +1,11 @@
+from random import randint
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.schema import UserInDB
 from src.core.config import settings
 from src.core.security import hash_password
+from src.credit.models import Credit
 from src.database.utils.locations import location_in
 from src.database.utils.permissions import permissions_in
 from src.important_data.crud import important_data as important_data_crud
@@ -14,6 +17,7 @@ from src.role.crud import role as role_crud
 from src.role.crud import role_permission as role_permission_crud
 from src.role.schema import RoleCreate, RolePermissionCreate
 from src.user.crud import user as user_crud
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 admin_role = RoleCreate(name="ادمین")
@@ -64,9 +68,24 @@ async def init_db(db: AsyncSession) -> None:
             national_code=settings.ADMIN_NATIONAL_CODE,
             role_id=role_admin.id,
         )
-        await user_crud.create(db=db, obj_in=admin_in_db)
-        # todo: Generate Wallet
-        # todo: Generate Credit
+        created_user = await user_crud.create(db=db, obj_in=admin_in_db)
+
+        # ? Create Credit
+        credit = Credit(
+            user=created_user,
+        )
+
+        # ? Create Wallet
+        wallet_number = randint(100000, 999999)
+        wallet = Wallet(
+            user=created_user,
+            number=wallet_number,
+        )
+        credit.user = created_user
+
+        db.add(credit)
+        db.add(wallet)
+        await db.commit()
 
     # ! Generate all project permissions
     for perm in permissions_in:

@@ -1,4 +1,4 @@
-from sqlalchemy import and_, update
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
@@ -32,10 +32,7 @@ async def update_ticket_message_status(
         Result of operation
     """
     query = update(TicketMessage).where(
-        and_(
-            TicketMessage.ticket_id == ticket.id,
-            TicketMessage.creator_id == ticket.creator_id,
-        ),
+        TicketMessage.ticket_id == ticket.id,
     )
     if user_read:
         query = query.values(

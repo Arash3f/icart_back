@@ -81,7 +81,7 @@ async def find_capital_transfer(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[CapitalTransferRead])
+@router.post(path="/list", response_model=List[CapitalTransferRead])
 async def get_capital_transfer(
     *,
     db=Depends(deps.get_db),
