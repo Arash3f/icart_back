@@ -12,7 +12,7 @@ from src.database.base_crud import BaseCRUD
 
 
 # ---------------------------------------------------------------------------
-async def update_interest_rates(*, target_agent: Agent, db: AsyncSession) -> Agent:
+async def update_profit_rate(*, target_agent: Agent, db: AsyncSession) -> Agent:
     """
     ! Update Agent Interest rates
 
@@ -33,10 +33,10 @@ async def update_interest_rates(*, target_agent: Agent, db: AsyncSession) -> Age
     response = await db.execute(select(Ability))
     all_agent_ability_count = len(response.scalars().all())
     # * Calculate interest rates
-    new_interest_rates = (len(target_agent.abilities) * 100) / all_agent_ability_count
-    target_agent.interest_rates = new_interest_rates
+    new_profit_rate = (len(target_agent.abilities) * 100) / all_agent_ability_count
+    target_agent.profit_rate = new_profit_rate
     # * Check agent main field
-    if new_interest_rates == 100:
+    if new_profit_rate == 100:
         target_agent.is_main = True
     else:
         target_agent.is_main = False
@@ -113,7 +113,7 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
 
     async def update_auto_data(self, *, db: AsyncSession) -> bool:
         """
-        ! Update All Agent interest_rates And calculate is_main
+        ! Update All Agent profit_rate And calculate is_main
 
         Parameters
         ----------
@@ -137,18 +137,16 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
             # * Calculate interest rates
             agent_ability_count = len(agen.abilities)
             if agent_ability_count:
-                new_interest_rates = (
-                    agent_ability_count * 100
-                ) / all_agent_ability_count
+                new_profit_rate = (agent_ability_count * 100) / all_agent_ability_count
             else:
-                new_interest_rates = 0
+                new_profit_rate = 0
             # * Update Agent Is_Main field
-            if new_interest_rates == 100:
+            if new_profit_rate == 100:
                 agen.is_main = True
             else:
                 agen.is_main = False
 
-            agen.interest_rates = new_interest_rates
+            agen.profit_rate = new_profit_rate
             mappings.append(agent.__dict__)
 
         await db.run_sync(

@@ -106,14 +106,30 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند انتقال ها را تایید کند ",
         code=permission.APPROVE_CAPITAL_TRANSFER,
     ),
+    # ! CONTRACT
+    PermissionCreate(
+        name="می تواند قرارداد ها را ببیند",
+        code=permission.VIEW_CONTRACT,
+    ),
     # ! POSITION REQUEST
+    PermissionCreate(
+        name="می تواند درخواست های سمت اضافه کند",
+        code=permission.CREATE_POSITION_REQUEST,
+    ),
+    PermissionCreate(
+        name="می تواند درخواست های سمت را ببیند",
+        code=permission.VIEW_POSITION_REQUEST,
+    ),
+    PermissionCreate(
+        name="می تواند درخواست های سمت را تایید کند",
+        code=permission.APPROVE_POSITION_REQUEST,
+    ),
     # ! ABILITY
     # ! AUTH
     # ! CONTRACT
     # ! CREDIT
     # ! IMPORTANT DATA
     # ! INVOICE
-    # ! LOCATION
     # ! MERCHANT
     # ! NEWS
     # ! TERMINAL

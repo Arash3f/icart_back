@@ -33,3 +33,18 @@ class ApproveAccessDeniedException(HTTPException):
             "english_message": "You are not allowed to approve the request!",
         }
         self.headers = None
+
+
+class PositionRequestClosedException(HTTPException):
+    """
+    ? Exception When position request is closed
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 1402,
+            "persian_message": "درخواست مورد نظر بسته شده است!",
+            "english_message": "The position request is closed!",
+        }
+        self.headers = None

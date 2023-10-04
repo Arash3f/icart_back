@@ -13,10 +13,16 @@ class Agent(Base, BaseMixin):
     __tablename__ = "agent"
 
     is_main = Column(Boolean, default=False)
-    interest_rates = Column(Float, default=0)
+    profit_rate = Column(Float, default=0)
 
     # # ! Relations
-    # todo: relation problem
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"), nullable=True)
+    parent = relationship(
+        "Agent",
+        back_populates="children",
+        remote_side="Agent.id",
+        lazy="selectin",
+    )
 
     agent_user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", use_alter=True))
     agent_user = relationship("User", foreign_keys=[agent_user_id], lazy="selectin")
@@ -31,6 +37,8 @@ class Agent(Base, BaseMixin):
         back_populates="agents",
         lazy="selectin",
     )
+
+    children = relationship("Agent", back_populates="parent")
 
     locations = relationship(
         Location,

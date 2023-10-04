@@ -5,6 +5,7 @@ from starlette.responses import StreamingResponse
 
 from src import deps
 from src.capital_transfer.crud import capital_transfer as capital_transfer_crud
+from src.contract.crud import contract as contract_crud
 from src.core.config import settings
 from src.schema import IDRequest
 from src.utils.minio_client import MinioClient
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 @router.post(path="/capital_transfer/find")
-async def get_merchant(
+async def get_capital_transfer_media(
     *,
     db=Depends(deps.get_db),
     minio: MinioClient = Depends(deps.minio_auth),
@@ -48,6 +49,47 @@ async def get_merchant(
 
     media_file = minio.client.get_object(
         bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
+        object_name=obj.file_name,
+        version_id=obj.file_version_id,
+    )
+    return StreamingResponse(io.BytesIO(media_file.read()), media_type="image/png")
+
+
+@router.post(path="/contract/find")
+async def get_contract_media(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    contract: IDRequest,
+):
+    """
+    ! Find Contract Image
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    contract
+        Target contract id
+
+    Returns
+    -------
+    res
+        found File
+
+    Raises
+    ------
+    CapitalTransferNotFoundException
+    """
+    obj = await contract_crud.verify_existence(
+        db=db,
+        contract_id=contract.id,
+    )
+
+    media_file = minio.client.get_object(
+        bucket_name=settings.MINIO_CONTRACT_BUCKET,
         object_name=obj.file_name,
         version_id=obj.file_version_id,
     )

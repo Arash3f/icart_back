@@ -66,7 +66,7 @@ async def update_agent(
     await db.commit()
 
     # ? update agent interest and main filed
-    agent = await agent_crud.update_agents_interest_rates(
+    agent = await agent_crud.update_agents_profit_rate(
         db=db,
         target_agent=obj_current,
     )
@@ -157,14 +157,14 @@ async def get_agent_list(
             # * Add filter fields
             if field == AgentFilterOrderFild.is_main:
                 query = query.order_by(Agent.is_main.desc())
-            elif field == AgentFilterOrderFild.interest_rates:
-                query = query.order_by(Agent.interest_rates.desc())
+            elif field == AgentFilterOrderFild.profit_rate:
+                query = query.order_by(Agent.profit_rate.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == AgentFilterOrderFild.is_main:
                 query = query.order_by(Agent.is_main.asc())
-            elif field == AgentFilterOrderFild.interest_rates:
-                query = query.order_by(Agent.interest_rates.asc())
+            elif field == AgentFilterOrderFild.profit_rate:
+                query = query.order_by(Agent.profit_rate.asc())
     # * Find All agent with filters
     agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 

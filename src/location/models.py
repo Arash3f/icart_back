@@ -28,6 +28,8 @@ class Location(Base, BaseMixin):
 
     organizations = relationship("Organization", back_populates="location")
 
+    merchants = relationship("Merchant", back_populates="location")
+
     requests = relationship(PositionRequest, back_populates="location")
 
     children = relationship("Location", back_populates="parent")

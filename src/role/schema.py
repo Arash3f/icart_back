@@ -61,7 +61,5 @@ class RoleFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class RoleFilter(BaseModel):
-    return_all: bool | None = None
     name: str | None | bool = None
-    name2: str | None | bool = None
     order_by: RoleFilterOrderBy | None = None

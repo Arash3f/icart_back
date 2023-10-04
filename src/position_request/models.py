@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import UUID, Boolean, Column, Enum, ForeignKey
+from sqlalchemy import UUID, Boolean, Column, Enum, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
@@ -30,6 +30,7 @@ class PositionRequest(Base, BaseMixin):
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,
     )
+    code = Column(Integer, unique=True, index=True, nullable=True)
 
     # ! Relations
     contract = relationship(

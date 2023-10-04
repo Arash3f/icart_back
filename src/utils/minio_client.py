@@ -23,6 +23,7 @@ class MinioClient:
         site_media_bucket: str,
         profile_image_bucket: str,
         capital_transfer_media_bucket: str,
+        contract_media: str,
     ):
         self.minio_url = url
         self.access_key = access_key
@@ -39,6 +40,7 @@ class MinioClient:
                 site_media_bucket,
                 profile_image_bucket,
                 capital_transfer_media_bucket,
+                contract_media,
             ],
         )
 

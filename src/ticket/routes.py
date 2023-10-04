@@ -30,23 +30,25 @@ router = APIRouter(prefix="/ticket", tags=["ticket"])
 
 
 # ---------------------------------------------------------------------------
-@router.get("/my", response_model=List[TicketReadV2])
+@router.get("/list", response_model=List[TicketReadV2])
 async def read_my_tickets(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_USER_MESSAGE]),
+    ),
     skip: int = 0,
     limit: int = 5,
 ) -> List[TicketReadV2]:
     """
-    ! Get All my tickets
+    ! Get All tickets
 
     Parameters
     ----------
     db
         Target database connection
-    current_user
-        Requester User
+    verify_data
+        user's verified data
     skip
         Pagination skip
     limit
@@ -64,56 +66,14 @@ async def read_my_tickets(
             func.count(case((not_(TicketMessage.user_status), 1))),
             func.count(case((not_(TicketMessage.supporter_status), 1))),
         )
-        .where(Ticket.creator_id == current_user.id)
         .join(TicketMessage)
         .group_by(Ticket.id)
         .select_from(Ticket)
         .order_by(desc(Ticket.created_at), desc(Ticket.updated_at))
     )
-    res: List[TicketReadV2] = []
-
-    response = await db.execute(query)
-    obj_list = response.all()
-    for i in obj_list:
-        buf = i._mapping
-        obj = TicketReadV2(
-            title=buf["Ticket"].title,
-            type=buf["Ticket"].type,
-            id=buf["Ticket"].id,
-            unread_user=buf["count"],
-            unread_supporter=buf["count_1"],
-            updated_at=buf["Ticket"].updated_at,
-            created_at=buf["Ticket"].created_at,
-        )
-        res.append(obj)
-
-    return res
-
-
-# ---------------------------------------------------------------------------
-@router.get("/list", response_model=List[TicketReadV2])
-async def read_tickets(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_TICKET]),
-    ),
-    skip: int = 0,
-    limit: int = 5,
-) -> List[TicketReadV2]:
-    # todo: Clean this code
-    query = (
-        select(
-            Ticket,
-            func.count(case((not_(TicketMessage.user_status), 1))),
-            func.count(case((not_(TicketMessage.supporter_status), 1))),
-        )
-        .join(TicketMessage)
-        .group_by(Ticket.id)
-        .select_from(Ticket)
-        # .order_by(desc(Ticket.created_at))
-        .order_by(desc(Ticket.updated_at))
-    )
+    # * Not Have permissions
+    if not verify_data.is_valid:
+        query = query.where(Ticket.creator_id == verify_data.user.id)
     res: List[TicketReadV2] = []
 
     response = await db.execute(query)

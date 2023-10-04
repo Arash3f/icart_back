@@ -189,14 +189,11 @@ async def get_roles_list(
     """
     # * Prepare filter fields
     filter_data.name = (
-        Role.name.contains(filter_data.name) if filter_data.name else False
-    )
-    filter_data.name2 = (
-        Role.name.contains(filter_data.name2) if filter_data.name2 else False
+        Role.name.contains(filter_data.name) if filter_data.name is not None else True
     )
     # * Add filter fields
     query = select(Role).filter(
-        or_(filter_data.return_all, filter_data.name, filter_data.name2),
+        or_(filter_data.name),
     )
     # * Prepare order fields
     if filter_data.order_by:

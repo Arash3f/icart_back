@@ -7,8 +7,9 @@ from src import deps
 from src.contract.crud import contract as contract_crud
 from src.contract.models import Contract
 from src.contract.schema import ContractRead
-from src.schema import IDRequest
+from src.schema import IDRequest, VerifyUserDep
 from src.user.models import User
+from src.permission import permission_codes as permission
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/contract", tags=["contract"])
@@ -54,7 +55,9 @@ async def find_contract(
 async def get_contract(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_CONTRACT]),
+    ),
     skip: int = 0,
     limit: int = 20,
 ) -> List[ContractRead]:
@@ -65,8 +68,8 @@ async def get_contract(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
+    verify_data
+        user's verified data
     skip
         Pagination skip
     limit
@@ -77,41 +80,11 @@ async def get_contract(
     obj_list
         List of ability
     """
-    obj_list = await contract_crud.get_multi(db=db, skip=skip, limit=limit)
-    return obj_list
-
-
-# ---------------------------------------------------------------------------
-@router.get(path="/my", response_model=List[ContractRead])
-async def get_my_contract_list(
-    *,
-    db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
-    skip: int = 0,
-    limit: int = 20,
-) -> List[ContractRead]:
-    """
-    ! Get All My Contract
-
-    Parameters
-    ----------
-    db
-        Target database connection
-    current_user
-        Requester User
-    skip
-        Pagination skip
-    limit
-        Pagination limit
-
-    Returns
-    -------
-    obj_list
-        List of ability
-
-    """
-    query = select(Contract).where(
-        Contract.position_request.requester_user_id == current_user.id,
-    )
+    query = select(Contract)
+    # * Not Have permissions
+    if not verify_data.is_valid:
+        query = query.where(
+            Contract.position_request.requester_user_id == verify_data.user.id,
+        )
     obj_list = await contract_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

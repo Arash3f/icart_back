@@ -30,7 +30,7 @@ class AgentUpdate(BaseModel):
 class AgentRead(AgentBase):
     id: uuid.UUID
     is_main: bool
-    interest_rates: float
+    profit_rate: float
 
     created_at: datetime
     updated_at: datetime | None
@@ -38,7 +38,7 @@ class AgentRead(AgentBase):
 
 # ---------------------------------------------------------------------------
 class AgentFilterOrderFild(Enum):
-    interest_rates = "interest_rates"
+    profit_rate = "profit_rate"
     is_main = "is_main"
 
 

@@ -11,6 +11,8 @@ class ContractBase(BaseModel):
     signatory_name: str | None = None
     signatory_position: str | None = None
     employees_number: int | None = None
+    file_version_id: str | None = None
+    file_name: str | None = None
     model_config = ConfigDict(extra="forbid")
 
 

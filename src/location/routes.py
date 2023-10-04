@@ -20,44 +20,6 @@ from src.user.models import User
 router = APIRouter(prefix="/location", tags=["location"])
 
 
-# # ---------------------------------------------------------------------------
-# Todo: remove this api ?
-# @router.delete(path="/delete", response_model=DeleteResponse)
-# async def delete_location(*, db=Depends(deps.get_db),
-#                           current_user: User = Depends(
-#                               deps.get_
-# current_user_with_permissions([permission.DELETE_LOCATION])),
-#                           delete_data: IDRequest) -> DeleteResponse:
-#     """
-#     ! Delete Location
-#
-#     Parameters
-#     ----------
-#     db
-#         Target database connection
-#     current_user
-#         Requester User
-#     delete_data
-#         Necessary data for delete location
-#
-#     Returns
-#     -------
-#     response
-#         Result of operation
-#
-#     Raises
-#     ------
-#     LocationParentNotFoundException
-#     LocationNotFoundException
-#     """
-#     # * Verify location existence
-#     location = await location_crud.verify_existence(db=db, location_id=delete_data.id)
-#     if len(location.children) > 0:
-#         raise
-#     await location_crud.delete(db=db, id=delete_data.id)
-#     return DeleteResponse(result="Location Deleted Successfully")
-
-
 # ---------------------------------------------------------------------------
 @router.post(path="/create", response_model=LocationRead)
 async def create_location(
@@ -201,7 +163,7 @@ async def find_location(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[LocationRead])
+@router.post(path="/list", response_model=List[LocationRead])
 async def get_location(
     *,
     db=Depends(deps.get_db),

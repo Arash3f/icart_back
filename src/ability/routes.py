@@ -54,7 +54,7 @@ async def delete_ability(
     await ability_crud.verify_existence(db=db, ability_id=delete_data.id)
     # * Delete Ability
     await ability_crud.delete(db=db, item_id=delete_data.id)
-    # ? Update All Agent interest_rates and is_main field
+    # ? Update All Agent profit_rate and is_main field
     await agent_crud.update_auto_data(db=db)
 
     return DeleteResponse(result="Ability Deleted Successfully")
@@ -93,7 +93,7 @@ async def create_ability(
     await ability_crud.verify_duplicate_name(db=db, name=create_data.name)
     # * Create Ability
     ability = await ability_crud.create(db=db, obj_in=create_data)
-    # ? Update All Agent interest_rates and is_main field
+    # ? Update All Agent profit_rate and is_main field
     await agent_crud.update_auto_data(db=db)
 
     return ability
