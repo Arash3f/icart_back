@@ -2,6 +2,7 @@ from sqlalchemy import UUID, Boolean, Column, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
 from src.ability.models import Ability
+from src.contract.models import Contract
 from src.database.base_class import Base, BaseMixin
 from src.location.models import Location
 from src.merchant.models import Merchant
@@ -30,6 +31,13 @@ class Agent(Base, BaseMixin):
     organization = relationship(Organization, back_populates="agent", lazy="selectin")
 
     merchants = relationship(Merchant, back_populates="agent", lazy="selectin")
+
+    contract = relationship(
+        Contract,
+        uselist=False,
+        back_populates="agent",
+        lazy="selectin",
+    )
 
     abilities = relationship(
         Ability,

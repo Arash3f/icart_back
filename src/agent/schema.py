@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from src.schema import IDRequest
+from src.transaction.models import TransactionValueType
 
 
 # ---------------------------------------------------------------------------
@@ -53,3 +54,9 @@ class AgentFilter(BaseModel):
     return_all: bool | None = None
     is_main: None | bool = None
     order_by: AgentFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class IncomeFromUser(BaseModel):
+    type: TransactionValueType
+    value: int

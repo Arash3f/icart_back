@@ -97,8 +97,6 @@ async def create_position_request(
         db=db,
         item_id=current_user.id,
     )
-    if not creator_user.role.name == "نماینده":
-        raise AccessDeniedException()
 
     # * Verify requester existence and verify role
     requester_user = await user_crud.verify_existence_by_username(
@@ -239,6 +237,7 @@ async def update_position_request(
                     new_agent.agent_user_id = obj_current.requester_user_id
                     new_agent.location = location
                     new_agent.parent = parent_agent
+                    new_agent.contract = obj_current.contract
                     agent_role = await role_crud.find_by_name(db=db, name="نماینده")
                     requester_user.role = agent_role
 
@@ -248,6 +247,7 @@ async def update_position_request(
                     new_org.location = location
                     new_org.agent.agent_user_id = parent_agent
                     new_org.user_organization_id = obj_current.requester_user_id
+                    new_org.contract = obj_current.contract
                     org_role = await role_crud.find_by_name(db=db, name="سازمان")
                     requester_user.role = org_role
 
@@ -257,6 +257,7 @@ async def update_position_request(
                     new_merchant.user_id = obj_current.requester_user_id
                     new_merchant.agent.agent_user_id = parent_agent
                     new_merchant.location = location
+                    new_merchant.contract = obj_current.contract
                     merchant_role = await role_crud.find_by_name(db=db, name="پذیرنده")
                     requester_user.role = merchant_role
 
@@ -363,7 +364,7 @@ async def get_list_position_request(
 
 
 # ---------------------------------------------------------------------------
-@router.post(path="/list/my/must_approve", response_model=List[PositionRequestRead])
+@router.post(path="/list/must_approve", response_model=List[PositionRequestRead])
 async def get_must_approve_position_request(
     *,
     db=Depends(deps.get_db),

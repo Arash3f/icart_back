@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -26,3 +27,28 @@ class VerifyUserDep(BaseModel):
 
     is_valid: bool | None = None
     user: User | None = None
+
+
+# ---------------------------------------------------------------------------
+class Duration(BaseModel):
+    start_date: date
+    end_date: date
+
+
+# ---------------------------------------------------------------------------
+class ChartFilterInput(BaseModel):
+    duration: Duration
+    unit: int
+
+
+# ---------------------------------------------------------------------------
+class ChartResponse(BaseModel):
+    duration: Duration
+    value: int
+
+
+# ---------------------------------------------------------------------------
+class ChartTypeResponse(BaseModel):
+    duration: Duration
+    value: int
+    type: str

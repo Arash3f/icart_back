@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 # ---------------------------------------------------------------------------
-class CreditBase(BaseModel):
+class CashBase(BaseModel):
     received: int
     consumed: int
     remaining: int
@@ -17,14 +17,14 @@ class CreditBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-class CreditRead(CreditBase):
+class CashRead(CashBase):
     id: uuid.UUID
 
     created_at: datetime
 
 
 # ---------------------------------------------------------------------------
-class CreditFilterOrderFild(Enum):
+class CashFilterOrderFild(Enum):
     received = "received"
     consumed = "consumed"
     remaining = "remaining"
@@ -33,11 +33,11 @@ class CreditFilterOrderFild(Enum):
 
 
 # ---------------------------------------------------------------------------
-class CreditFilterOrderBy(BaseModel):
-    desc: list[CreditFilterOrderFild] = []
-    asc: list[CreditFilterOrderFild] = []
+class CashFilterOrderBy(BaseModel):
+    desc: list[CashFilterOrderFild] = []
+    asc: list[CashFilterOrderFild] = []
 
 
 # ---------------------------------------------------------------------------
-class CreditFilter(BaseModel):
-    order_by: CreditFilterOrderBy | None = None
+class CashFilter(BaseModel):
+    order_by: CashFilterOrderBy | None = None

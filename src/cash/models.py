@@ -5,8 +5,8 @@ from src.database.base_class import Base, BaseMixin
 
 
 # ---------------------------------------------------------------------------
-class Credit(Base, BaseMixin):
-    __tablename__ = "credit"
+class Cash(Base, BaseMixin):
+    __tablename__ = "cash"
 
     received = Column(Integer, default=0.0)
     paid = Column(Integer, default=0)
@@ -17,4 +17,4 @@ class Credit(Base, BaseMixin):
     balance = Column(Integer, default=0.0)
 
     # ! Relations
-    user = relationship("User", uselist=False, back_populates="credit", lazy="selectin")
+    user = relationship("User", uselist=False, back_populates="cash", lazy="selectin")

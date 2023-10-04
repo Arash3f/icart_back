@@ -78,12 +78,12 @@ async def get_credit_my(
     ------
     CreditNotFoundException
     """
-    obj = await credit_crud.find_by_user_id(db=db, user_id=current_user.id)
-    return obj
+    credit = await credit_crud.verify_existence(db=db, credit_id=current_user.credit_id)
+    return credit
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[CreditRead])
+@router.post(path="/list", response_model=List[CreditRead])
 async def get_list_credit(
     *,
     db=Depends(deps.get_db),
@@ -115,15 +115,11 @@ async def get_list_credit(
     obj_list
         List of ability
     """
-    # * Prepare filter fields
-    filter_data.name = (
-        Credit.name.contains(filter_data.name) if filter_data.name else False
-    )
     # * Add filter fields
     query = select(Credit).filter()
     # * Prepare order fields
     if filter_data.order_by:
-        for field in filter_data.order_by.received:
+        for field in filter_data.order_by.desc:
             # * Add filter fields
             if field == CreditFilterOrderFild.received:
                 query = query.order_by(Credit.received.desc())

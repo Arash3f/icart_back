@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from src.agent.models import Agent
+from src.cash.models import Cash
 from src.credit.models import Credit
 from src.database.base_class import Base, BaseMixin
 from src.organization.models import Organization
@@ -52,6 +53,14 @@ class User(Base, BaseMixin):
         lazy="selectin",
     )
 
+    cash_id = Column(UUID(as_uuid=True), ForeignKey("cash.id"))
+    cash = relationship(
+        Cash,
+        foreign_keys=[cash_id],
+        back_populates="user",
+        lazy="selectin",
+    )
+
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"), nullable=True)
     agent = relationship(Agent, foreign_keys=[agent_id], lazy="selectin")
 
@@ -67,11 +76,11 @@ class User(Base, BaseMixin):
         ForeignKey("organization.id"),
         nullable=True,
     )
-    # organization = relationship(
-    #     "Organization",
-    #     foreign_keys=[organization_id],
-    #     back_populates="users",
-    # )
+    organization = relationship(
+        "Organization",
+        foreign_keys=[organization_id],
+        backref="users",
+    )
 
     wallet = relationship(Wallet, uselist=False, back_populates="user", lazy="selectin")
 
@@ -80,6 +89,7 @@ class User(Base, BaseMixin):
         "Location",
         foreign_keys=[location_id],
         back_populates="users",
+        lazy="selectin",
     )
 
     ticket_messages = relationship("TicketMessage", back_populates="creator")

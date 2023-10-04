@@ -25,3 +25,24 @@ class Contract(Base, BaseMixin):
         back_populates="contract",
         lazy="selectin",
     )
+
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organization.id"))
+    organization = relationship(
+        "Organization",
+        foreign_keys=[organization_id],
+        back_populates="contract",
+    )
+
+    merchant_id = Column(UUID(as_uuid=True), ForeignKey("merchant.id"))
+    merchant = relationship(
+        "Merchant",
+        foreign_keys=[merchant_id],
+        back_populates="contract",
+    )
+
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"))
+    agent = relationship(
+        "Agent",
+        foreign_keys=[agent_id],
+        back_populates="contract",
+    )

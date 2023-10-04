@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from src.contract.schema import ContractBase
 from src.location.schema import LocationRead
 
 
@@ -14,30 +14,23 @@ class OrganizationBase(BaseModel):
 
 # ---------------------------------------------------------------------------
 class UserRead(BaseModel):
-    user_name: str
     id: uuid.UUID
-    active: bool
-    validation: bool
+    username: str
     first_name: str | None
     last_name: str | None
     phone_number: str | None
-    notify_transaction: bool | None
-    subscribe_newsletter: bool | None
+    location: LocationRead | None
+    model_config = ConfigDict(extra="forbid")
 
 
 # ---------------------------------------------------------------------------
-class OrganizationRead(OrganizationBase):
+class OrganizationRead(BaseModel):
     id: uuid.UUID
+    model_config = ConfigDict(extra="forbid")
 
-    created_at: datetime
-    updated_at: datetime | None
-    contract_number: str | None = None
-    signatory_name: str | None = None
-    signatory_position: str | None = None
-    employees_number: str | None = None
-
-    address: str | None = None
-    # ! Relation
+    # # ! Relation
+    contract: ContractBase | None = None
+    user_organization: UserRead
     location: LocationRead
 
 

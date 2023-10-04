@@ -58,7 +58,7 @@ async def update_important_data(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[ImportantDataRead])
+@router.post(path="/list", response_model=List[ImportantDataRead])
 async def get_important_data_list(
     *,
     db=Depends(deps.get_db),

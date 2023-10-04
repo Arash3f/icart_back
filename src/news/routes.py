@@ -163,7 +163,7 @@ async def find_news(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[NewsShortRead])
+@router.post(path="/list", response_model=List[NewsShortRead])
 async def get_news_list(
     *,
     db=Depends(deps.get_db),

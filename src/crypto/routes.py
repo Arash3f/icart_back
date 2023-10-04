@@ -177,7 +177,7 @@ async def get_crypto(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[CryptoRead])
+@router.post(path="/list", response_model=List[CryptoRead])
 async def get_crypto_list(
     *,
     db=Depends(deps.get_db),

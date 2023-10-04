@@ -1,6 +1,7 @@
 from sqlalchemy import UUID, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
+from src.contract.models import Contract
 from src.database.base_class import Base, BaseMixin
 from src.invoice.models import Invoice
 from src.pos.models import Pos
@@ -24,6 +25,13 @@ class Merchant(Base, BaseMixin):
         "Location",
         foreign_keys=[location_id],
         back_populates="merchants",
+    )
+
+    contract = relationship(
+        Contract,
+        uselist=False,
+        back_populates="merchant",
+        lazy="selectin",
     )
 
     invoices = relationship(Invoice, back_populates="merchant")

@@ -5,15 +5,14 @@ from pydantic import BaseModel, ConfigDict
 
 from src.card.models import CardEnum
 from src.schema import IDRequest
+from src.wallet.schema import WalletRead
 
 
 # ---------------------------------------------------------------------------
 class CardBase(BaseModel):
     number: str
     cvv2: int
-    dynamic_password: int | None
     expiration_at: datetime
-    dynamic_password_exp: datetime | None
     type: CardEnum
 
     model_config = ConfigDict(extra="forbid")
@@ -36,14 +35,8 @@ class CardUpdatePassword(BaseModel):
 class CardRead(CardBase):
     id: UUID
 
-    created_at: datetime
-    updated_at: datetime | None
-
-
-# ---------------------------------------------------------------------------
-class BalanceRead(BaseModel):
-    number: str
-    balance: int
+    # ! Relation
+    wallet: WalletRead
 
 
 # ---------------------------------------------------------------------------

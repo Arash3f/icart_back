@@ -150,7 +150,7 @@ async def update_fee(
 
 
 # ---------------------------------------------------------------------------
-@router.get("/list", response_model=list[FeeRead])
+@router.post("/list", response_model=list[FeeRead])
 async def read_fee_list(
     *,
     db: AsyncSession = Depends(deps.get_db),

@@ -26,6 +26,13 @@ class Transaction(Base, BaseMixin):
     transferor_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)
     transferor = relationship("Wallet", foreign_keys=[transferor_id], lazy="selectin")
 
+    intermediary_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=True)
+    intermediary = relationship(
+        "Wallet",
+        foreign_keys=[intermediary_id],
+        lazy="selectin",
+    )
+
     capital_transfer = relationship(
         "CapitalTransfer",
         uselist=False,

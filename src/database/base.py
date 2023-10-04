@@ -26,3 +26,4 @@ from src.pos.models import Pos
 from src.card.models import Card
 from src.user_crypto.models import UserCrypto
 from src.crypto.models import Crypto
+from src.cash.models import Cash

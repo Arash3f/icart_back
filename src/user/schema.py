@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from src.cash.schema import CashBase
+from src.credit.schema import CreditBase
 from src.role.schema import RoleRead
 
 
@@ -18,6 +20,15 @@ class UserRead(UserBase):
     first_name: str | None
     last_name: str | None
     subscribe_newsletter: bool | None
+
+
+# ---------------------------------------------------------------------------
+class UserCreditCashRead(BaseModel):
+    id: UUID
+
+    # ! Relation
+    credit: CreditBase
+    cash: CashBase
 
 
 # ---------------------------------------------------------------------------

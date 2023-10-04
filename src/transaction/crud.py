@@ -1,6 +1,7 @@
 from typing import Type
 from uuid import UUID
 
+from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
@@ -41,6 +42,58 @@ class TransactionCRUD(BaseCRUD[Transaction, TransactionCreate, None]):
             raise TransactionNotFoundException()
 
         return obj
+
+    async def get_transaction_count(
+        self,
+        *,
+        db: AsyncSession,
+        wallet_id: UUID,
+    ) -> bool:
+        """
+        ! Get Transaction Count from wallet id
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        wallet_id
+            Target wallet ID
+
+        Returns
+        -------
+        obj
+            calculated data
+        """
+        transaction_count = await db.execute(
+            select(func.count())
+            .select_from(self.model)
+            .where(
+                or_(
+                    self.model.transferor_id == wallet_id,
+                    self.model.receiver_id == wallet_id,
+                ),
+            ),
+        )
+        transaction_count = transaction_count.scalar()
+
+        return transaction_count
+
+    async def get_income(
+        self,
+        *,
+        db: AsyncSession,
+        wallet_id: UUID,
+    ) -> int:
+        response = await db.execute(
+            select(func.sum(Transaction.value))
+            .select_from(Transaction)
+            .filter(
+                Transaction.receiver_id == wallet_id,
+            ),
+        )
+        income = response.scalar()
+
+        return income
 
 
 # ---------------------------------------------------------------------------

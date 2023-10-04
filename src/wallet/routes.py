@@ -1,13 +1,16 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.permission import permission_codes as permission
 from src.schema import IDRequest
 from src.user.models import User
 from src.wallet.crud import wallet as wallet_crud
-from src.wallet.schema import WalletRead
+from src.transaction.crud import transaction as transaction_crud
+from src.organization.crud import organization as organization_crud
+from src.wallet.schema import WalletRead, WalletAdditionalInfo
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/wallet", tags=["wallet"])
@@ -109,3 +112,36 @@ async def get_my_wallet(
     # * Verify wallet existence
     wallet = await wallet_crud.verify_by_user_id(db=db, user_id=current_user.id)
     return wallet
+
+
+# ---------------------------------------------------------------------------
+@router.get("/additional_info", response_model=WalletAdditionalInfo)
+async def get_organization_additional_info(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+) -> WalletAdditionalInfo:
+    transaction_count = await transaction_crud.get_transaction_count(
+        db=db,
+        wallet_id=current_user.wallet.id,
+    )
+    income = await transaction_crud.get_income(
+        db=db,
+        wallet_id=current_user.wallet.id,
+    )
+    organization_users = 0
+    if current_user.role.name == "سازمان":
+        organization_users = await organization_crud.get_organization_users_count(
+            db=db,
+            user_id=current_user.id,
+        )
+
+    return WalletAdditionalInfo(
+        income=income,
+        transactions=transaction_count,
+        organization_users=organization_users,
+        # todo: IDK
+        unsettled_credit=0,
+        received_credit=int(current_user.credit.received),
+        paid_credit=int(current_user.credit.paid),
+    )

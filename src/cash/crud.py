@@ -3,27 +3,27 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.credit.exception import CreditNotFoundException
-from src.credit.models import Credit
+from src.cash.exception import CashNotFoundException
+from src.cash.models import Cash
 from src.database.base_crud import BaseCRUD
 
 
 # ---------------------------------------------------------------------------
-class CreditCRUD(BaseCRUD[Credit, None, None]):
+class CashCRUD(BaseCRUD[Cash, None, None]):
     async def verify_existence(
         self,
         *,
         db: AsyncSession,
-        credit_id: UUID,
-    ) -> Type[Credit]:
+        cash_id: UUID,
+    ) -> Type[Cash]:
         """
-        ! Verify Credit Existence
+        ! Verify Cash Existence
 
         Parameters
         ----------
         db
             Target database connection
-        credit_id
+        cash_id
             Target Item ID
 
         Returns
@@ -33,14 +33,14 @@ class CreditCRUD(BaseCRUD[Credit, None, None]):
 
         Raises
         ------
-        CreditNotFoundException
+        CashNotFoundException
         """
-        obj = await db.get(entity=self.model, ident=credit_id)
+        obj = await db.get(entity=self.model, ident=cash_id)
         if not obj:
-            raise CreditNotFoundException()
+            raise CashNotFoundException()
 
         return obj
 
 
 # ---------------------------------------------------------------------------
-credit = CreditCRUD(Credit)
+cash = CashCRUD(Cash)

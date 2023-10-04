@@ -30,7 +30,7 @@ class Card(Base, BaseMixin):
     cvv2 = Column(Integer, nullable=False)
     expiration_at = Column(DateTime(timezone=True), nullable=False)
     password = Column(String, nullable=False)
-    dynamic_password = Column(Integer, nullable=True)
+    dynamic_password = Column(String, nullable=True)
     dynamic_password_exp = Column(DateTime(timezone=True), nullable=True)
     type = Column(Enum(CardEnum), nullable=False)
 

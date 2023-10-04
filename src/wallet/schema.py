@@ -4,10 +4,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from src.user.schema import UserCreditCashRead
+
 
 # ---------------------------------------------------------------------------
 class WalletBase(BaseModel):
-    number: str
+    number: int
     model_config = ConfigDict(extra="forbid")
 
 
@@ -29,10 +31,20 @@ class WalletRead(WalletBase):
     updated_at: datetime | None
 
     # ! relations
-    user_id: uuid.UUID
+    user: UserCreditCashRead
 
 
 # ---------------------------------------------------------------------------
 class WalletInitCreate(WalletBase):
     number: str
     user_id: UUID | None
+
+
+# ---------------------------------------------------------------------------
+class WalletAdditionalInfo(BaseModel):
+    income: int
+    transactions: int
+    organization_users: int
+    unsettled_credit: int
+    received_credit: int
+    paid_credit: int

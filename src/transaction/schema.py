@@ -1,9 +1,16 @@
+import enum
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from src.schema import Duration
 from src.transaction.models import TransactionValueType
+
+
+class TransactionChartType(enum.Enum):
+    INCOME = "INCOME"
+    EXPENSE = "EXPENSE"
 
 
 # ---------------------------------------------------------------------------
@@ -33,3 +40,16 @@ class TransactionFilter(BaseModel):
     value_type: TransactionValueType | None = None
     gt_created_date: datetime | None = None
     lt_created_date: datetime | None = None
+
+
+# ---------------------------------------------------------------------------
+class TransactionChartFilter(BaseModel):
+    type: TransactionChartType
+    duration: Duration
+    unit: int
+
+
+# ---------------------------------------------------------------------------
+class TransactionAggregateResponse(BaseModel):
+    cache: int
+    credit: int

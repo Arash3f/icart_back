@@ -1,19 +1,22 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, and_, func
 
 from src import deps
 from src.ability.crud import ability as ability_crud
 from src.agent.crud import agent as agent_crud
+from src.user.crud import user as user_crud
 from src.agent.models import Agent
 from src.agent.schema import (
     AgentFilter,
     AgentFilterOrderFild,
     AgentRead,
     AgentUpdate,
+    IncomeFromUser,
 )
 from src.schema import IDRequest
+from src.transaction.models import Transaction
 from src.user.models import User
 
 # ---------------------------------------------------------------------------
@@ -169,3 +172,55 @@ async def get_agent_list(
     agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 
     return agent_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/income_from", response_model=List[IncomeFromUser])
+async def get_income_from(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    filter_data: IDRequest,
+) -> List[IncomeFromUser]:
+    """
+    ! Calculate Income from user by user id
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester user object
+    filter_data
+        Filter data
+
+    Returns
+    -------
+    result
+        Income from user
+    """
+    user = await user_crud.verify_user_existence(db=db, user_id=filter_data.id)
+    response_data: list[IncomeFromUser] = []
+    query = (
+        select(Transaction.value_type, func.sum(Transaction.value))
+        .select_from(Transaction)
+        .filter(
+            and_(
+                Transaction.intermediary_id == user.wallet.id,
+                Transaction.receiver_id == current_user.wallet.id,
+            ),
+        )
+        .group_by(Transaction.value_type)
+    )
+    response = await db.execute(
+        query,
+    )
+    data_list = response.all()
+    for data in data_list:
+        obj = IncomeFromUser(
+            type=data[0].value,
+            value=data[1],
+        )
+        response_data.append(obj)
+
+    return response_data
