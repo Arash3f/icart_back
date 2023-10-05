@@ -40,7 +40,7 @@ class AgentRead(AgentBase):
 
     # ! Relation
     user: UserRead
-    contract: ContractRead | None
+    contract: ContractRead | None = None
 
 
 # ---------------------------------------------------------------------------
