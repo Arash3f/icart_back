@@ -234,7 +234,7 @@ async def update_position_request(
                 # ? Change user role
                 if obj_current.target_position == PositionRequestType.AGENT:
                     new_agent = Agent()
-                    new_agent.agent_user_id = obj_current.requester_user_id
+                    new_agent.user_id = obj_current.requester_user_id
                     new_agent.location = location
                     new_agent.parent = parent_agent
                     new_agent.contract = obj_current.contract
@@ -245,8 +245,8 @@ async def update_position_request(
                 elif obj_current.target_position == PositionRequestType.ORGANIZATION:
                     new_org = Organization()
                     new_org.location = location
-                    new_org.agent.agent_user_id = parent_agent
-                    new_org.user_organization_id = obj_current.requester_user_id
+                    new_org.agent.user_id = parent_agent
+                    new_org.user_id = obj_current.requester_user_id
                     new_org.contract = obj_current.contract
                     org_role = await role_crud.find_by_name(db=db, name="سازمان")
                     requester_user.role = org_role
@@ -255,7 +255,7 @@ async def update_position_request(
                 elif obj_current.target_position == PositionRequestType.MERCHANT:
                     new_merchant = Merchant()
                     new_merchant.user_id = obj_current.requester_user_id
-                    new_merchant.agent.agent_user_id = parent_agent
+                    new_merchant.agent.user_id = parent_agent
                     new_merchant.location = location
                     new_merchant.contract = obj_current.contract
                     merchant_role = await role_crud.find_by_name(db=db, name="پذیرنده")

@@ -25,8 +25,8 @@ class Agent(Base, BaseMixin):
         lazy="selectin",
     )
 
-    agent_user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", use_alter=True))
-    agent_user = relationship("User", foreign_keys=[agent_user_id], lazy="selectin")
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", use_alter=True))
+    user = relationship("User", foreign_keys=[user_id], lazy="selectin")
 
     organization = relationship(Organization, back_populates="agent", lazy="selectin")
 

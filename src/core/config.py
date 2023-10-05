@@ -43,6 +43,7 @@ class Setting(BaseSettings):
     MINIO_PROFILE_IMAGE_BUCKET: str
     MINIO_CAPITAL_TRANSFER_BUCKET: str
     MINIO_CONTRACT_BUCKET: str
+    MINIO_USER_IMAGE_BUCKET: str
 
     # SMS settings
     KAVENEGAR_TOKEN: str

@@ -26,13 +26,18 @@ class User(Base, BaseMixin):
     password = Column(String, nullable=False)
     first_name = Column(String, index=True, nullable=True)
     last_name = Column(String, index=True, nullable=True)
-    image_version_id = Column(String, nullable=True)
     subscribe_newsletter = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_valid = Column(Boolean, default=False)
     one_time_password = Column(String, nullable=True)
     expiration_password_at = Column(DateTime(timezone=True), nullable=True)
     phone_number = Column(String, unique=False)
+
+    image_version_id = Column(String, nullable=True)
+    image_name = Column(String, nullable=True)
+
+    image_background_version_id = Column(String, nullable=True)
+    image_background_name = Column(String, nullable=True)
 
     # ! Relations
     merchant = relationship("Merchant", uselist=False, back_populates="user")

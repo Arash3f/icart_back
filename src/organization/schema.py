@@ -20,6 +20,7 @@ class UserRead(BaseModel):
     last_name: str | None
     phone_number: str | None
     location: LocationRead | None
+    national_code: str
     model_config = ConfigDict(extra="forbid")
 
 
@@ -30,10 +31,10 @@ class OrganizationRead(BaseModel):
 
     # # ! Relation
     contract: ContractBase | None = None
-    user_organization: UserRead
+    user: UserRead
     location: LocationRead | None = None
 
 
 # ---------------------------------------------------------------------------
 class OrganizationReadWithUser(OrganizationRead):
-    user_organization: UserRead
+    user: UserRead

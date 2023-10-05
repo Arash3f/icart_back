@@ -5,8 +5,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from src.contract.schema import ContractRead
 from src.schema import IDRequest
 from src.transaction.models import TransactionValueType
+from src.user.schema import UserRead
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +37,10 @@ class AgentRead(AgentBase):
 
     created_at: datetime
     updated_at: datetime | None
+
+    # ! Relation
+    user: UserRead
+    contract: ContractRead
 
 
 # ---------------------------------------------------------------------------

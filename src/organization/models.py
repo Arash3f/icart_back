@@ -10,13 +10,13 @@ class Organization(Base, BaseMixin):
     __tablename__ = "organization"
 
     # ! Relations
-    user_organization_id = Column(
+    user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("user.id", use_alter=True),
     )
-    user_organization = relationship(
+    user = relationship(
         "User",
-        foreign_keys=[user_organization_id],
+        foreign_keys=[user_id],
         lazy="selectin",
     )
 

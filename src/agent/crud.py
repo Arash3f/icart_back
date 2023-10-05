@@ -102,7 +102,7 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
             Agent with this user_id not exist
         """
         response = await db.execute(
-            select(self.model).where(self.model.agent_user_id == user_id),
+            select(self.model).where(self.model.user_id == user_id),
         )
 
         obj = response.scalar_one_or_none()

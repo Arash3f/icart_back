@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from src.cash.schema import CashBase
 from src.credit.schema import CreditBase
+from src.location.schema import LocationRead
 from src.role.schema import RoleRead
 
 
@@ -16,10 +17,14 @@ class UserBase(BaseModel):
 # ---------------------------------------------------------------------------
 class UserRead(UserBase):
     id: UUID
-    is_active: bool
+    username: str
     first_name: str | None
     last_name: str | None
-    subscribe_newsletter: bool | None
+    phone_number: str | None
+    national_code: str
+
+    # ! Relation
+    location: LocationRead | None
 
 
 # ---------------------------------------------------------------------------

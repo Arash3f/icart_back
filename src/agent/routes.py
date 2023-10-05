@@ -224,3 +224,33 @@ async def get_income_from(
         response_data.append(obj)
 
     return response_data
+
+
+# ---------------------------------------------------------------------------
+@router.get(path="/me", response_model=AgentRead)
+async def get_agent_me(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+) -> AgentRead:
+    """
+    ! Get My Agent Data
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+
+    Returns
+    -------
+    obj
+        Found agent
+
+    Raises
+    ------
+    MerchantNotFoundException
+    """
+    obj = await agent_crud.find_by_user_id(db=db, user_id=current_user.id)
+    return obj
