@@ -199,7 +199,7 @@ async def get_income_from(
     result
         Income from user
     """
-    user = await user_crud.verify_user_existence(db=db, user_id=filter_data.id)
+    user = await user_crud.verify_existence(db=db, user_id=filter_data.id)
     response_data: list[IncomeFromUser] = []
     query = (
         select(Transaction.value_type, func.sum(Transaction.value))

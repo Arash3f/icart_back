@@ -64,7 +64,7 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
         OrganizationNotFoundException
         """
         response = await db.execute(
-            select(self.model).where(Organization.user_organization_id == user_id),
+            select(self.model).where(Organization.user_id == user_id),
         )
 
         obj = response.scalar_one_or_none()

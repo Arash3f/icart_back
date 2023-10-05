@@ -91,7 +91,7 @@ async def create_user_message(
     UserNotFoundException
     """
     # * Verify user existence
-    await user_crud.verify_user_existence(db=db, user_id=create_data.user_id)
+    await user_crud.verify_existence(db=db, user_id=create_data.user_id)
     # * create user message
     obj = await user_message_crud.create(db=db, obj_in=create_data)
     return obj

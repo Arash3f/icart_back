@@ -63,7 +63,7 @@ async def update_image(
     Raises
     ------
     """
-    user = await user_crud.verify_user_existence(
+    user = await user_crud.verify_existence(
         db=db,
         user_id=current_user.id,
     )
@@ -121,7 +121,7 @@ async def update_background_image(
     Raises
     ------
     """
-    user = await user_crud.verify_user_existence(
+    user = await user_crud.verify_existence(
         db=db,
         user_id=current_user.id,
     )

@@ -38,7 +38,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
 
         return obj
 
-    async def verify_user_existence(
+    async def verify_existence(
         self,
         *,
         db: AsyncSession,
