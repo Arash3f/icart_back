@@ -19,7 +19,7 @@ async def find_organization(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_TRANSACTION]),
+        deps.get_current_user_with_permissions([permission.VIEW_ORGANIZATION]),
     ),
     obj_data: IDRequest,
 ) -> OrganizationRead:
@@ -55,7 +55,9 @@ async def find_organization(
 async def get_organization(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_ORGANIZATION]),
+    ),
 ) -> List[OrganizationRead]:
     """
     ! Get All Organization

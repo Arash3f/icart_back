@@ -31,7 +31,7 @@ class OrganizationRead(BaseModel):
     # # ! Relation
     contract: ContractBase | None = None
     user_organization: UserRead
-    location: LocationRead
+    location: LocationRead | None = None
 
 
 # ---------------------------------------------------------------------------
