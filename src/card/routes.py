@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from random import randint
 
 from fastapi import APIRouter, Depends
+from pytz import timezone
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -198,7 +199,7 @@ async def get_dynamic_password(
     dynamic_password = randint(100000, 999999)
     # ? Update wallet dynamic password
     card.dynamic_password = hash_password(str(dynamic_password))
-    card.dynamic_password_exp = datetime.now() + timedelta(
+    card.dynamic_password_exp = datetime.now(timezone("Asia/Tehran")) + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
     )
     # ? Send SMS message

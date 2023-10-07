@@ -160,7 +160,7 @@ async def request_one_time_password(
     )
     # * Update user data
     user.one_time_password = hash_password(str(one_time_password))
-    user.expiration_password_at = datetime.now() + timedelta(
+    user.expiration_password_at = datetime.now(timezone("Asia/Tehran")) + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
     )
     db.add(user)
@@ -246,7 +246,7 @@ async def register(
     """
     phone_number = register_data.phone_number
     verify_code = register_data.phone_verify_code
-    current_time = datetime.now(tz=timezone.utc)
+    current_time = datetime.now(timezone("Asia/Tehran"))
     role = await role_crud.verify_existence_by_name(db=db, name="کاربر ساده")
 
     # todo: verify phone number and national code with web server

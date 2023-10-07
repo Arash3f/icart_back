@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pytz import timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import and_, select
@@ -53,7 +54,7 @@ async def verify_user(
         phone_number=phone_number,
     )
     # ? Update verify phone
-    expiration_code_at = datetime.now() + timedelta(
+    expiration_code_at = datetime.now(timezone("Asia/Tehran")) + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
     )
     if not verify:
