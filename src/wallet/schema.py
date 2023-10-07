@@ -42,9 +42,9 @@ class WalletInitCreate(WalletBase):
 
 # ---------------------------------------------------------------------------
 class WalletAdditionalInfo(BaseModel):
-    income: int
-    transactions: int
-    organization_users: int
-    unsettled_credit: int
-    received_credit: int
-    paid_credit: int
+    income: int = 0
+    transactions: int = 0
+    organization_users: int = 0
+    unsettled_credit: int = 0
+    received_credit: int = 0
+    paid_credit: int = 0
