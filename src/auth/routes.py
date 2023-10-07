@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from random import randint
 
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pytz import timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
