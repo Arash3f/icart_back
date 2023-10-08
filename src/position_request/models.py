@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import UUID, Boolean, Column, Enum, ForeignKey, Integer
+from sqlalchemy import UUID, Boolean, Column, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
@@ -24,13 +24,19 @@ class PositionRequestStatusType(enum.Enum):
 class PositionRequest(Base, BaseMixin):
     __tablename__ = "position_request"
 
+    name = Column(String, nullable=True)
+    field_of_work = Column(String, nullable=True)
+    postal_code = Column(String, nullable=True)
+    tel = Column(String, nullable=True)
+    address = Column(Text, nullable=True)
+    employee_count = Column(Integer, nullable=True)
     is_approve = Column(Boolean, default=False)
     target_position = Column(Enum(PositionRequestType))
     status = Column(
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,
     )
-    code = Column(Integer, unique=True, index=True, nullable=True)
+    number = Column(Integer, unique=True, index=True, nullable=True)
 
     # ! Relations
     contract = relationship(

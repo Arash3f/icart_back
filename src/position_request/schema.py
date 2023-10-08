@@ -14,6 +14,11 @@ from src.position_request.models import (
 # ---------------------------------------------------------------------------
 class PositionRequestBase(BaseModel):
     is_approve: bool
+    field_of_work: str | None
+    postal_code: str | None
+    tel: str | None
+    address: str | None
+    employee_count: int | None
     target_position: PositionRequestType
     model_config = ConfigDict(extra="forbid")
 

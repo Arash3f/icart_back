@@ -47,10 +47,15 @@ async def create_position_request(
     *,
     db=Depends(deps.get_db),
     # minio: MinioClient = Depends(deps.minio_auth),
-    requester_username: Annotated[str | None, Form()] = None,
+    requester_natinal_code: Annotated[str | None, Form()] = None,
     target_position: Annotated[PositionRequestType, Form()],
     location_id: Annotated[UUID, Form()],
     number: Annotated[str, Form()],
+    field_of_work: Annotated[str, Form()],
+    postal_code: Annotated[str, Form()],
+    tel: Annotated[str, Form()],
+    address: Annotated[str, Form()],
+    employee_count: Annotated[int, Form()],
     name: Annotated[str | None, Form()] = None,
     signatory_name: Annotated[str | None, Form()] = None,
     signatory_position: Annotated[str | None, Form()] = None,
@@ -95,9 +100,9 @@ async def create_position_request(
     )
 
     # * Verify requester existence and verify role
-    requester_user = await user_crud.verify_existence_by_username(
+    requester_user = await user_crud.verify_existence_by_national_number(
         db=db,
-        username=requester_username,
+        national_code=requester_natinal_code,
     )
     if not requester_user.role.name == "کاربر ساده":
         raise AccessDeniedException()
@@ -123,6 +128,11 @@ async def create_position_request(
     create_contract.signatory_name = signatory_name
     create_contract.signatory_position = signatory_position
     create_contract.employees_number = employees_number
+    create_contract.field_of_work = field_of_work
+    create_contract.postal_code = postal_code
+    create_contract.tel = tel
+    create_contract.address = address
+    create_contract.employee_count = employee_count
     # create_contract.file_version_id = contract_file.version_id
     # create_contract.file_name = contract_file.object_name
 
@@ -258,6 +268,7 @@ async def update_position_request(
                     requester_user.role = merchant_role
 
                     db.add(new_merchant)
+                obj_current.status = PositionRequestStatusType.CLOSE
                 db.add(requester_user)
             else:
                 obj_current.status = PositionRequestStatusType.CLOSE

@@ -228,6 +228,21 @@ class UserCRUD(BaseCRUD[User, None, None]):
 
         return obj
 
+    async def verify_existence_by_national_number(
+        self,
+        *,
+        db: AsyncSession,
+        national_code: str,
+    ) -> User:
+        res = await db.execute(
+            select(self.model).where(self.model.national_code == national_code),
+        )
+        obj = res.scalar_one_or_none()
+        if not obj:
+            raise UserNotFoundException()
+
+        return obj
+
     async def find_by_username_and_national_code(
         self,
         *,

@@ -9,6 +9,7 @@ from src.schema import IDRequest
 from src.user.models import User
 from src.wallet.crud import wallet as wallet_crud
 from src.transaction.crud import transaction as transaction_crud
+from src.merchant.crud import merchant as merchant_crud
 from src.organization.crud import organization as organization_crud
 from src.wallet.schema import WalletRead, WalletAdditionalInfo
 
@@ -125,6 +126,10 @@ async def get_organization_additional_info(
         db=db,
         wallet_id=current_user.wallet.id,
     )
+    merchant_count = await merchant_crud.get_merchant_users_count(
+        db=db,
+        user_id=current_user.id,
+    )
     income = await transaction_crud.get_income(
         db=db,
         wallet_id=current_user.wallet.id,
@@ -138,10 +143,11 @@ async def get_organization_additional_info(
 
     return WalletAdditionalInfo(
         income=income,
-        transactions=transaction_count,
+        transaction_count=transaction_count,
         organization_users=organization_users,
         # todo: IDK
-        unsettled_credit=0,
+        used_credit=0,
         received_credit=int(current_user.credit.received),
         paid_credit=int(current_user.credit.paid),
+        merchant_count=merchant_count,
     )

@@ -1,12 +1,13 @@
 from typing import Type
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
 from src.merchant.exception import MerchantNotFoundException
 from src.merchant.models import Merchant
+from src.user.models import User
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +107,24 @@ class MerchantCRUD(BaseCRUD[Merchant, None, None]):
             raise MerchantNotFoundException()
 
         return obj
+
+    async def get_merchant_users_count(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> bool:
+        merchent = await self.find_by_user_id(db=db, user_id=user_id)
+        merchent_users = await db.execute(
+            select(func.count())
+            .select_from(User)
+            .where(
+                User.merchant == merchent,
+            ),
+        )
+        merchent_users_count = merchent_users.scalar()
+
+        return merchent_users_count
 
 
 # ---------------------------------------------------------------------------
