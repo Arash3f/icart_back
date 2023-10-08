@@ -35,11 +35,10 @@ class CapitalTransfer(Base, BaseMixin):
     file_name = Column(String, nullable=True)
 
     # ! Relations
-    receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=True)
+    receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"))
     receiver = relationship(
         "Wallet",
         back_populates="capital_transfer_receiver",
-        nullable=True,
     )
 
     transaction_id = Column(

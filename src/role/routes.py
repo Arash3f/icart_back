@@ -303,7 +303,7 @@ async def add_permissions_to_role(
 
 # ---------------------------------------------------------------------------
 @router.get(path="/me", response_model=RoleRead)
-async def get_me(
+async def me(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
