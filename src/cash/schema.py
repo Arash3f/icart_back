@@ -17,6 +17,12 @@ class CashBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class CashBalanceResponse(BaseModel):
+    balance: int
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class CashRead(CashBase):
     id: uuid.UUID
 

@@ -4,7 +4,7 @@ from src import deps
 from src.core.config import settings
 from src.schema import ResultResponse
 from src.user.models import User
-from src.user.schema import UserReadWithRole
+from src.user.schema import UserMeResponse
 from src.utils.minio_client import MinioClient
 from typing import Annotated
 from src.user.crud import user as user_crud
@@ -14,8 +14,10 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 
 # ---------------------------------------------------------------------------
-@router.get("/me", response_model=UserReadWithRole)
-async def current_user(current_user: User = Depends(deps.get_current_user())) -> User:
+@router.get("/me", response_model=UserMeResponse)
+async def current_user(
+    current_user: User = Depends(deps.get_current_user()),
+) -> UserMeResponse:
     """
     ! Get My data
 

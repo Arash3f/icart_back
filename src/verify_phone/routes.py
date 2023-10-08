@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from random import randint
+
 from pytz import timezone
 
 from fastapi import APIRouter, Depends
@@ -47,7 +49,7 @@ async def verify_user(
     """
     phone_number = request_data.phone_number
     # * Generate dynamic code
-    code = await verify_phone_crud.generate_dynamic_code(db=db)
+    code = randint(100000, 999999)
     # * Find phone number
     verify = await verify_phone_crud.find_by_phone_number(
         db=db,

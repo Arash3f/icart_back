@@ -1,4 +1,3 @@
-from random import randint
 from typing import Type
 from uuid import UUID
 
@@ -146,32 +145,6 @@ class VerifyPhoneCRUD(BaseCRUD[VerifyPhone, None, None]):
         if not found_item:
             raise IncorrectCodeException()
         return found_item
-
-    async def generate_dynamic_code(self, *, db: AsyncSession) -> int:
-        """
-        ! Generate dynamic code
-
-        Parameters
-        ----------
-        db
-            Target database connection
-
-        Returns
-        -------
-        code
-            generated code
-        """
-        code = 0
-        while not code:
-            generate_code = randint(100000, 999999)
-            is_duplicate = await self.find_by_verify_code(
-                db=db,
-                verify_code=generate_code,
-            )
-            if not is_duplicate:
-                code = generate_code
-
-        return code
 
 
 # ---------------------------------------------------------------------------

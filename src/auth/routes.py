@@ -20,6 +20,7 @@ from src.auth.schema import (
     UserRegisterIn,
     VerifyUsernameAndNationalCode,
 )
+from src.cash.models import Cash
 from src.core.config import settings
 from src.core.security import hash_password
 from src.credit.models import Credit
@@ -288,16 +289,21 @@ async def register(
         user=created_user,
     )
 
+    # ? Create Credit
+    cash = Cash(
+        user=created_user,
+    )
+
     # ? Create Wallet
     wallet_number = randint(100000, 999999)
     wallet = Wallet(
         user=created_user,
         number=wallet_number,
     )
-    credit.user = created_user
 
     db.add(created_user)
     db.add(credit)
+    db.add(cash)
     db.add(wallet)
     await db.commit()
     await db.refresh(created_user)

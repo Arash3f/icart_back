@@ -17,6 +17,12 @@ class CreditBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class CreditBalanceResponse(BaseModel):
+    balance: int
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class CreditRead(CreditBase):
     id: uuid.UUID
 

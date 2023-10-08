@@ -3,8 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from src.cash.schema import CashBase
-from src.credit.schema import CreditBase
+from src.cash.schema import CashBase, CashBalanceResponse
+from src.credit.schema import CreditBase, CreditBalanceResponse
 from src.location.schema import LocationRead
 from src.role.schema import RoleRead
 
@@ -45,6 +45,16 @@ class CreateUser(BaseModel):
 # ---------------------------------------------------------------------------
 class UserReadWithRole(UserRead):
     role: RoleRead
+
+    created_at: datetime
+    updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+class UserMeResponse(UserRead):
+    role: RoleRead
+    cash: CashBalanceResponse
+    credit: CreditBalanceResponse
 
     created_at: datetime
     updated_at: datetime | None
