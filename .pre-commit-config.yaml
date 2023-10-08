@@ -61,14 +61,14 @@ repos:
     hooks:
         -   id: pyupgrade
 
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    # ? Python linter
-    rev: v0.0.275
-    hooks:
-        -   id: ruff
-            exclude: database.base.py
-            args:
-                - --fix
+#-   repo: https://github.com/charliermarsh/ruff-pre-commit
+#    # ? Python linter
+#    rev: v0.0.275
+#    hooks:
+#        -   id: ruff
+#            exclude: database.base.py
+#            args:
+#                - --fix
 
 -   repo: https://github.com/psf/black
     rev: 23.3.0
