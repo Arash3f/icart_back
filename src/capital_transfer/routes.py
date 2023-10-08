@@ -134,13 +134,13 @@ async def get_capital_transfer(
 async def create_capital_transfer(
     *,
     db=Depends(deps.get_db),
-    minio: MinioClient = Depends(deps.minio_auth),
+    # minio: MinioClient = Depends(deps.minio_auth),
     current_user: User = Depends(
         deps.get_current_user(),
     ),
     transfer_type: Annotated[CapitalTransferEnum, Form()],
     value: Annotated[float, Form()],
-    transfer_file: Annotated[UploadFile, File()],
+    # transfer_file: Annotated[UploadFile, File()],
 ) -> CapitalTransferRead:
     """
     ! Create CapitalTransfer with permission
@@ -165,20 +165,20 @@ async def create_capital_transfer(
     capital_transfer
         New position_request
     """
-    uploaded_file = minio.client.put_object(
-        object_name=transfer_file.filename,
-        data=transfer_file.file,
-        bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
-        length=-1,
-        part_size=10 * 1024 * 1024,
-    )
+    # uploaded_file = minio.client.put_object(
+    #     object_name=transfer_file.filename,
+    #     data=transfer_file.file,
+    #     bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
+    #     length=-1,
+    #     part_size=10 * 1024 * 1024,
+    # )
     code = await capital_transfer_crud.generate_code(db=db)
     create_data = CapitalTransferCreate(
-        file_version_id=uploaded_file.version_id,
+        # file_version_id=uploaded_file.version_id,
         transfer_type=transfer_type,
         value=value,
         receiver_id=current_user.wallet.id,
-        file_name=transfer_file.filename,
+        # file_name=transfer_file.filename,
         code=code,
     )
     capital_transfer = await capital_transfer_crud.create(db=db, obj_in=create_data)
