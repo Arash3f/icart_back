@@ -4,9 +4,7 @@ from uuid import UUID
 from fastapi import (
     APIRouter,
     Depends,
-    File,
     Form,
-    UploadFile,
 )
 from sqlalchemy import or_, select
 
@@ -17,7 +15,6 @@ from src.permission import permission_codes as permission
 from src import deps
 from src.agent.crud import agent as agent_crud
 from src.agent.models import Agent
-from src.core.config import settings
 from src.location.crud import location as location_crud
 from src.merchant.models import Merchant
 from src.organization.models import Organization
@@ -39,7 +36,6 @@ from src.role.crud import role as role_crud
 from src.schema import VerifyUserDep, IDRequest
 from src.user.crud import user as user_crud
 from src.user.models import User
-from src.utils.minio_client import MinioClient
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/position_request", tags=["position_request"])
@@ -50,7 +46,7 @@ router = APIRouter(prefix="/position_request", tags=["position_request"])
 async def create_position_request(
     *,
     db=Depends(deps.get_db),
-    minio: MinioClient = Depends(deps.minio_auth),
+    # minio: MinioClient = Depends(deps.minio_auth),
     requester_username: Annotated[str | None, Form()] = None,
     target_position: Annotated[PositionRequestType, Form()],
     location_id: Annotated[UUID, Form()],
@@ -59,7 +55,7 @@ async def create_position_request(
     signatory_name: Annotated[str | None, Form()] = None,
     signatory_position: Annotated[str | None, Form()] = None,
     employees_number: Annotated[int | None, Form()] = None,
-    contract_file: Annotated[UploadFile, File()],
+    # contract_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.CREATE_POSITION_REQUEST]),
     ),
@@ -70,7 +66,7 @@ async def create_position_request(
     Parameters
     ----------
     db
-    minio
+    # minio
     requester_username
     target_position
     location_id
@@ -112,14 +108,14 @@ async def create_position_request(
         location_id=location_id,
     )
 
-    # * Save Contract File
-    contract_file = minio.client.put_object(
-        data=contract_file.file,
-        object_name=contract_file.filename,
-        bucket_name=settings.MINIO_CONTRACT_BUCKET,
-        length=-1,
-        part_size=10 * 1024 * 1024,
-    )
+    # # * Save Contract File
+    # contract_file = minio.client.put_object(
+    #     data=contract_file.file,
+    #     object_name=contract_file.filename,
+    #     bucket_name=settings.MINIO_CONTRACT_BUCKET,
+    #     length=-1,
+    #     part_size=10 * 1024 * 1024,
+    # )
     # * Create Contract
     create_contract = Contract()
     create_contract.number = number
@@ -127,8 +123,8 @@ async def create_position_request(
     create_contract.signatory_name = signatory_name
     create_contract.signatory_position = signatory_position
     create_contract.employees_number = employees_number
-    create_contract.file_version_id = contract_file.version_id
-    create_contract.file_name = contract_file.object_name
+    # create_contract.file_version_id = contract_file.version_id
+    # create_contract.file_name = contract_file.object_name
 
     # * Create Position Request
     code = await position_request_crud.generate_code(db=db)

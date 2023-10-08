@@ -39,3 +39,9 @@ class CapitalTransferRead(CapitalTransferBase):
 
     created_at: datetime
     updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+class CapitalTransferFilter(BaseModel):
+    gt_value: float | None = None
+    lt_value: float | None = None

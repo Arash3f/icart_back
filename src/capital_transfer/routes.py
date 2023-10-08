@@ -18,6 +18,7 @@ from src.capital_transfer.models import CapitalTransfer, CapitalTransferEnum
 from src.capital_transfer.schema import (
     CapitalTransferCreate,
     CapitalTransferRead,
+    CapitalTransferFilter,
 )
 from src.core.config import settings
 from src.permission import permission_codes as permission
@@ -88,6 +89,7 @@ async def get_capital_transfer(
     verify_data: VerifyUserDep = Depends(
         deps.is_user_have_permission([permission.VIEW_CAPITAL_TRANSFER]),
     ),
+    filter_data: CapitalTransferFilter,
     skip: int = 0,
     limit: int = 20,
 ) -> List[CapitalTransferRead]:

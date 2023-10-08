@@ -11,6 +11,9 @@ from src.ticket_message.models import TicketMessage
 class TicketType(enum.Enum):
     TECHNICAL = "TECHNICAL"
     SALES = "SALES"
+    ORGANIZATION = "ORGANIZATION"
+    MERCHANT = "MERCHANT"
+    AGENT = "AGENT"
 
 
 # ---------------------------------------------------------------------------
