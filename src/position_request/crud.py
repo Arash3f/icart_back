@@ -68,7 +68,7 @@ class PositionRequestCRUD(BaseCRUD[PositionRequest, PositionRequestCreate, None]
             select(self.model).filter(
                 and_(
                     self.model.id == position_request_id,
-                    self.model.is_approve is False,
+                    self.model.is_approve == False,
                 ),
             ),
         )
