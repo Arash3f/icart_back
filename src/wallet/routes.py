@@ -149,9 +149,14 @@ async def get_organization_additional_info(
         income=income,
         transaction_count=transaction_count,
         organization_users=organization_users,
-        # todo: IDK
         used_credit=0,
         received_credit=int(current_user.credit.received),
         paid_credit=int(current_user.credit.paid),
         merchant_count=merchant_count,
+        credit_consumed=0,
+        debt_to_acceptor=0,
+        settled_amount=0,
+        credit_amount=0,
+        organizations_count=0,
+        unsettled_credit=0,
     )
