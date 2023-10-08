@@ -126,10 +126,7 @@ async def get_organization_additional_info(
         db=db,
         wallet_id=current_user.wallet.id,
     )
-    merchant_count = await merchant_crud.get_merchant_users_count(
-        db=db,
-        user_id=current_user.id,
-    )
+
     income = await transaction_crud.get_income(
         db=db,
         wallet_id=current_user.wallet.id,
@@ -137,6 +134,13 @@ async def get_organization_additional_info(
     organization_users = 0
     if current_user.role.name == "سازمان":
         organization_users = await organization_crud.get_organization_users_count(
+            db=db,
+            user_id=current_user.id,
+        )
+
+    merchant_count = 0
+    if current_user.role.name == "نماینده":
+        merchant_count = await merchant_crud.get_merchant_users_count(
             db=db,
             user_id=current_user.id,
         )
