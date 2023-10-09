@@ -108,7 +108,7 @@ async def login_one_time_password(
     InactiveUserException
         User Is Inactive
     """
-    current_time = datetime.now(tz=timezone.utc)
+    current_time = datetime.now(timezone("Asia/Tehran"))
 
     user = await auth_crud.authenticate_by_one_time_password(
         db=db,

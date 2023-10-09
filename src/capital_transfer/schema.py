@@ -45,3 +45,6 @@ class CapitalTransferRead(CapitalTransferBase):
 class CapitalTransferFilter(BaseModel):
     gt_value: float | None = None
     lt_value: float | None = None
+    transfer_type: CapitalTransferEnum | None = None
+    finish: bool | None = None
+    code: int | None = None

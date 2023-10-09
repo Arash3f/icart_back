@@ -157,6 +157,6 @@ async def get_organization_additional_info(
         debt_to_acceptor=0,
         settled_amount=0,
         credit_amount=0,
-        organizations_count=0,
+        organizations_count=organization_users,
         unsettled_credit=0,
     )
