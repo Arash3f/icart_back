@@ -105,7 +105,7 @@ async def get_background_file(
     user: IDRequest,
 ):
     """
-    ! Find Contract Image
+    ! Find User Background Image
 
     Parameters
     ----------
@@ -113,8 +113,8 @@ async def get_background_file(
         Target database connection
     minio
         Minio dep
-    contract
-        Target contract id
+    user
+        Target user id
 
     Returns
     -------
@@ -132,8 +132,8 @@ async def get_background_file(
 
     background_file = minio.client.get_object(
         bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
-        object_name=obj.file_name,
-        version_id=obj.file_version_id,
+        object_name=obj.image_background_name,
+        version_id=obj.image_background_version_id,
     )
     return StreamingResponse(io.BytesIO(background_file.read()), media_type="image/png")
 
@@ -173,7 +173,7 @@ async def get_image_file(
 
     image_file = minio.client.get_object(
         bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
-        object_name=obj.file_name,
-        version_id=obj.file_version_id,
+        object_name=obj.image_name,
+        version_id=obj.image_version_id,
     )
     return StreamingResponse(io.BytesIO(image_file.read()), media_type="image/png")

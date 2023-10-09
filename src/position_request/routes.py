@@ -55,11 +55,10 @@ async def create_position_request(
     postal_code: Annotated[str, Form()],
     tel: Annotated[str, Form()],
     address: Annotated[str, Form()],
-    employee_count: Annotated[int, Form()],
+    employee_count: Annotated[int | None, Form()] = None,
     name: Annotated[str | None, Form()] = None,
     signatory_name: Annotated[str | None, Form()] = None,
     signatory_position: Annotated[str | None, Form()] = None,
-    employees_number: Annotated[int | None, Form()] = None,
     # contract_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.CREATE_POSITION_REQUEST]),
@@ -127,12 +126,11 @@ async def create_position_request(
     create_contract.name = name
     create_contract.signatory_name = signatory_name
     create_contract.signatory_position = signatory_position
-    create_contract.employees_number = employees_number
+    create_contract.employees_number = employee_count
     create_contract.field_of_work = field_of_work
     create_contract.postal_code = postal_code
     create_contract.tel = tel
     create_contract.address = address
-    create_contract.employee_count = employee_count
     # create_contract.file_version_id = contract_file.version_id
     # create_contract.file_name = contract_file.object_name
 

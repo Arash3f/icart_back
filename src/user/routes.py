@@ -61,21 +61,13 @@ async def update_image(
     -------
     response
         Result of operation
-
-    Raises
-    ------
     """
-    user = await user_crud.verify_existence(
-        db=db,
-        user_id=current_user.id,
-    )
-
     # * Remove old image
-    if user.image_version_id:
+    if current_user.image_version_id:
         minio.client.remove_object(
             bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
-            object_name=user.image_background_name,
-            version_id=user.image_background_version_id,
+            object_name=current_user.image_name,
+            version_id=current_user.image_version_id,
         )
 
     # * Save Contract File
@@ -86,10 +78,10 @@ async def update_image(
         length=-1,
         part_size=10 * 1024 * 1024,
     )
-    user.image_version_id = image_file.version_id
-    user.image_name = image_file.object_name
+    current_user.image_version_id = image_file.version_id
+    current_user.image_name = image_file.object_name
 
-    db.add(user)
+    db.add(current_user)
     await db.commit()
     return ResultResponse(result="Image Updated Successfully")
 
@@ -119,21 +111,13 @@ async def update_background_image(
     -------
     response
         Result of operation
-
-    Raises
-    ------
     """
-    user = await user_crud.verify_existence(
-        db=db,
-        user_id=current_user.id,
-    )
-
     # * Remove old image
-    if user.image_background_version_id:
+    if current_user.image_background_version_id:
         minio.client.remove_object(
             bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
-            object_name=user.image_background_name,
-            version_id=user.image_background_version_id,
+            object_name=current_user.image_background_name,
+            version_id=current_user.image_background_version_id,
         )
 
     # * Save Contract File
@@ -144,9 +128,76 @@ async def update_background_image(
         length=-1,
         part_size=10 * 1024 * 1024,
     )
-    user.image_background_version_id = image_file.version_id
-    user.image_background_name = image_file.object_name
+    current_user.image_background_version_id = image_file.version_id
+    current_user.image_background_name = image_file.object_name
 
-    db.add(user)
+    db.add(current_user)
     await db.commit()
     return ResultResponse(result="Image Updated Successfully")
+
+
+@router.delete(path="/image/delete", response_model=ResultResponse)
+async def delete_image_file(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    current_user: User = Depends(deps.get_current_user()),
+) -> ResultResponse:
+    """
+    ! Delete User Image
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    current_user
+        Requester User
+
+    Returns
+    -------
+    res
+        result of operation
+    """
+    if current_user.image_version_id:
+        minio.client.remove_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=current_user.image_name,
+            version_id=current_user.image_version_id,
+        )
+    return ResultResponse(result="Image Deleted Successfully")
+
+
+@router.delete(path="/background/delete", response_model=ResultResponse)
+async def get_background_file(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    current_user: User = Depends(deps.get_current_user()),
+) -> ResultResponse:
+    """
+    ! Delete User Background Image
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    current_user
+        Requester User
+
+    Returns
+    -------
+    res
+        result of operation
+    """
+    if current_user.image_version_id:
+        minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=current_user.image_background_name,
+            version_id=current_user.image_background_version_id,
+        )
+
+    return ResultResponse(result="Image Deleted Successfully")
