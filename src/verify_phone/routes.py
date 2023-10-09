@@ -19,6 +19,7 @@ from src.verify_phone.schema import (
     VerifyPhoneFilter,
     VerifyPhoneNumberRequestIn,
     VerifyPhoneRead,
+    VerifyPhoneFilterOrderFild,
 )
 
 # ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ async def verify_user(
 
 # ---------------------------------------------------------------------------
 @router.post("/list", response_model=list[VerifyPhoneRead])
-async def verify_phone_list(
+async def read_verify_phone(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
@@ -115,12 +116,31 @@ async def verify_phone_list(
         if filter_data.phone_number
         else True
     )
+    filter_data.type = (
+        (VerifyPhone.type == filter_data.type) if filter_data.type else True
+    )
     # * Add filter fields
     query = select(VerifyPhone).filter(
         and_(
             filter_data.phone_number,
+            filter_data.type,
         ),
     )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == VerifyPhoneFilterOrderFild.type:
+                query = query.order_by(VerifyPhone.type.desc())
+            elif field == VerifyPhoneFilterOrderFild.phone_number:
+                query = query.order_by(VerifyPhone.phone_number.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == VerifyPhoneFilterOrderFild.type:
+                query = query.order_by(VerifyPhone.type.asc())
+            elif field == VerifyPhoneFilterOrderFild.phone_number:
+                query = query.order_by(VerifyPhone.phone_number.asc())
+
     obj_list = await verify_phone_crud.get_multi(
         db=db,
         skip=skip,
@@ -132,7 +152,7 @@ async def verify_phone_list(
 
 # ---------------------------------------------------------------------------
 @router.post("/find", response_model=VerifyPhoneRead)
-async def read_permission(
+async def find_verify_phone(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(

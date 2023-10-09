@@ -1,7 +1,10 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
+
+from src.verify_phone.models import VerifyPhoneType
 
 
 # ---------------------------------------------------------------------------
@@ -9,6 +12,7 @@ class VerifyPhoneBase(BaseModel):
     phone_number: str
     verify_code: int
     expiration_code_at: datetime
+    type: VerifyPhoneType | None = None
     model_config = ConfigDict(extra="forbid")
 
 
@@ -26,5 +30,19 @@ class VerifyPhoneNumberRequestIn(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class VerifyPhoneFilterOrderFild(Enum):
+    type = "type"
+    phone_number = "phone_number"
+
+
+# ---------------------------------------------------------------------------
+class VerifyPhoneFilterOrderBy(BaseModel):
+    desc: list[VerifyPhoneFilterOrderFild] = []
+    asc: list[VerifyPhoneFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class VerifyPhoneFilter(BaseModel):
     phone_number: str | bool | None = None
+    type: VerifyPhoneType | None = None
+    order_by: VerifyPhoneFilterOrderBy | None = None
