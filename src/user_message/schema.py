@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
@@ -41,5 +42,19 @@ class UserMessageShortRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class UserMessageFilterOrderFild(Enum):
+    status = "status"
+    title = "title"
+
+
+# ---------------------------------------------------------------------------
+class UserMessageFilterOrderBy(BaseModel):
+    desc: list[UserMessageFilterOrderFild] = []
+    asc: list[UserMessageFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class UserMessageFilter(BaseModel):
     status: bool | None = None
+    title: str | None = None
+    order_by: UserMessageFilterOrderBy | None = None

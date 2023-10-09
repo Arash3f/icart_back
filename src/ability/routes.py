@@ -187,7 +187,7 @@ async def find_ability(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[AbilityRead])
-async def get_ability_list(
+async def read_ability_list(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),

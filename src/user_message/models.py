@@ -8,7 +8,7 @@ from src.database.base_class import Base, BaseMixin
 class UserMessage(Base, BaseMixin):
     __tablename__ = "user_message"
 
-    title = Column(String, nullable=True)
+    title = Column(String, index=True, nullable=True)
     text = Column(Text, nullable=True)
     status = Column(Boolean, default=False)
 

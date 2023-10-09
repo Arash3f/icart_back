@@ -15,6 +15,7 @@ from src.user_message.schema import (
     UserMessageFilter,
     UserMessageRead,
     UserMessageShortRead,
+    UserMessageFilterOrderFild,
 )
 
 # ---------------------------------------------------------------------------
@@ -145,7 +146,7 @@ async def get_user_message(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[UserMessageShortRead])
-async def get_user_message_list(
+async def read_user_message_list(
     *,
     db=Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
@@ -187,10 +188,33 @@ async def get_user_message_list(
         if filter_data.status is not None
         else True
     )
-    # * Add filter fields
-    query = query.filter(and_(filter_data.status)).order_by(
-        desc(UserMessage.created_at),
+    filter_data.title = (
+        UserMessage.title.contains(filter_data.title)
+        if filter_data.title is not None
+        else True
     )
+    query = query.filter(
+        and_(
+            filter_data.status,
+            filter_data.title,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == UserMessageFilterOrderFild.type:
+                query = query.order_by(UserMessage.type.desc())
+            elif field == UserMessageFilterOrderFild.number:
+                query = query.order_by(UserMessage.number.desc())
+        for field in filter_data.order_by.asc:
+            query = query.order_by(desc(UserMessage.created_at))
+            # * Add filter fields
+            if field == UserMessageFilterOrderFild.type:
+                query = query.order_by(UserMessage.type.asc())
+            elif field == UserMessageFilterOrderFild.number:
+                query = query.order_by(UserMessage.number.asc())
+
     # * Find All user message with filters
     message_list = await user_message_crud.get_multi(
         db=db,
