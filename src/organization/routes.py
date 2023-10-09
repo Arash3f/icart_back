@@ -80,7 +80,7 @@ async def get_organization(
 
 # ---------------------------------------------------------------------------
 @router.get("/me", response_model=OrganizationRead)
-async def get_organization_me(
+async def me(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),

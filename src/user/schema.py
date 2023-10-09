@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from src.cash.schema import CashBase, CashBalanceResponse
 from src.credit.schema import CreditBase, CreditBalanceResponse
 from src.location.schema import LocationRead
-from src.role.schema import RoleRead
+from src.role.schema import RoleRead, RoleBase
 
 
 # ---------------------------------------------------------------------------
@@ -24,6 +24,7 @@ class UserRead(UserBase):
     national_code: str
 
     # ! Relation
+    role: RoleBase
     location: LocationRead | None
 
 

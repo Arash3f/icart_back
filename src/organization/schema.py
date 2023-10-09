@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.contract.schema import ContractBase
 from src.location.schema import LocationRead
+from src.role.schema import RoleBase
 
 
 # ---------------------------------------------------------------------------
@@ -22,6 +23,9 @@ class UserRead(BaseModel):
     location: LocationRead | None
     national_code: str
     model_config = ConfigDict(extra="forbid")
+
+    # ! Relations
+    role: RoleBase
 
 
 # ---------------------------------------------------------------------------

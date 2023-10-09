@@ -81,7 +81,7 @@ async def get_merchant_list(
 
 # ---------------------------------------------------------------------------
 @router.get(path="/me", response_model=MerchantRead)
-async def get_agent_me(
+async def me(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
