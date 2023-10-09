@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime
+from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -42,9 +44,24 @@ class CapitalTransferRead(CapitalTransferBase):
 
 
 # ---------------------------------------------------------------------------
+class CapitalTransferFilterOrderFild(Enum):
+    value = "value"
+    transfer_type = "transfer_type"
+    finish = "finish"
+
+
+# ---------------------------------------------------------------------------
+class CapitalTransferFilterOrderBy(BaseModel):
+    desc: list[CapitalTransferFilterOrderFild] = []
+    asc: list[CapitalTransferFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class CapitalTransferFilter(BaseModel):
     gt_value: float | None = None
     lt_value: float | None = None
-    transfer_type: CapitalTransferEnum | None = None
-    finish: bool | None = None
-    code: int | None = None
+    transfer_type: None | CapitalTransferEnum = None
+    receiver_id: None | UUID = None
+    finish: None | bool = None
+    code: None | str = None
+    order_by: CapitalTransferFilterOrderBy | None = None

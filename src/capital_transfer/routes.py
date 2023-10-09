@@ -7,7 +7,7 @@ from fastapi import (
     Form,
     UploadFile,
 )
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -19,6 +19,7 @@ from src.capital_transfer.schema import (
     CapitalTransferCreate,
     CapitalTransferRead,
     CapitalTransferFilter,
+    CapitalTransferFilterOrderFild,
 )
 from src.core.config import settings
 from src.permission import permission_codes as permission
@@ -83,7 +84,7 @@ async def find_capital_transfer(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[CapitalTransferRead])
-async def capital_transfer_list(
+async def read_capital_transfer(
     *,
     db=Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
@@ -106,25 +107,78 @@ async def capital_transfer_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     obj_list
         List of capital transfer
-
     """
-    if verify_data.is_valid:
-        obj_list = await capital_transfer_crud.get_multi(db=db, skip=skip, limit=limit)
-    else:
-        query = select(CapitalTransfer).where(
+    # * Prepare filter fields
+    filter_data.gt_value = (
+        (CapitalTransfer.value > filter_data.gt_value) if filter_data.gt_value else True
+    )
+    filter_data.lt_value = (
+        (CapitalTransfer.value < filter_data.lt_value) if filter_data.lt_value else True
+    )
+    filter_data.transfer_type = (
+        (CapitalTransfer.transfer_type == filter_data.transfer_type)
+        if filter_data.transfer_type
+        else True
+    )
+    filter_data.code = (
+        (CapitalTransfer.code == filter_data.code) if filter_data.code else True
+    )
+    filter_data.finish = (
+        (CapitalTransfer.finish == filter_data.finish) if filter_data.finish else True
+    )
+    filter_data.receiver_id = (
+        (CapitalTransfer.receiver_id == filter_data.receiver_id)
+        if filter_data.receiver_id
+        else True
+    )
+
+    # * Add filter fields
+    query = select(CapitalTransfer).filter(
+        and_(
+            filter_data.gt_value,
+            filter_data.lt_value,
+            filter_data.transfer_type,
+            filter_data.code,
+            filter_data.finish,
+            filter_data.receiver_id,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == CapitalTransferFilterOrderFild.value:
+                query = query.order_by(CapitalTransfer.value.desc())
+            elif field == CapitalTransferFilterOrderFild.transfer_type:
+                query = query.order_by(CapitalTransfer.transfer_type.desc())
+            elif field == CapitalTransferFilterOrderFild.finish:
+                query = query.order_by(CapitalTransfer.finish.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == CapitalTransferFilterOrderFild.value:
+                query = query.order_by(CapitalTransfer.value.asc())
+            elif field == CapitalTransferFilterOrderFild.transfer_type:
+                query = query.order_by(CapitalTransfer.transfer_type.asc())
+            elif field == CapitalTransferFilterOrderFild.finish:
+                query = query.order_by(CapitalTransfer.finish.asc())
+
+    if not verify_data.is_valid:
+        query = query.where(
             CapitalTransfer.receiver == verify_data.user.wallet,
         )
-        obj_list = await capital_transfer_crud.get_multi(
-            db=db,
-            skip=skip,
-            limit=limit,
-            query=query,
-        )
+    obj_list = await capital_transfer_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
 
     return obj_list
 
@@ -134,13 +188,13 @@ async def capital_transfer_list(
 async def create_capital_transfer(
     *,
     db=Depends(deps.get_db),
-    # minio: MinioClient = Depends(deps.minio_auth),
+    minio: MinioClient = Depends(deps.minio_auth),
     current_user: User = Depends(
         deps.get_current_user(),
     ),
     transfer_type: Annotated[CapitalTransferEnum, Form()],
     value: Annotated[float, Form()],
-    # transfer_file: Annotated[UploadFile, File()],
+    transfer_file: Annotated[UploadFile, File()],
 ) -> CapitalTransferRead:
     """
     ! Create CapitalTransfer with permission
@@ -165,20 +219,20 @@ async def create_capital_transfer(
     capital_transfer
         New position_request
     """
-    # uploaded_file = minio.client.put_object(
-    #     object_name=transfer_file.filename,
-    #     data=transfer_file.file,
-    #     bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
-    #     length=-1,
-    #     part_size=10 * 1024 * 1024,
-    # )
+    uploaded_file = minio.client.put_object(
+        object_name=transfer_file.filename,
+        data=transfer_file.file,
+        bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
+        length=-1,
+        part_size=10 * 1024 * 1024,
+    )
     code = await capital_transfer_crud.generate_code(db=db)
     create_data = CapitalTransferCreate(
-        # file_version_id=uploaded_file.version_id,
+        file_version_id=uploaded_file.version_id,
         transfer_type=transfer_type,
         value=value,
         receiver_id=current_user.wallet.id,
-        # file_name=transfer_file.filename,
+        file_name=transfer_file.filename,
         code=code,
     )
     capital_transfer = await capital_transfer_crud.create(db=db, obj_in=create_data)
@@ -216,6 +270,7 @@ async def approve_capital_transfer(
     Raises
     ------
     CapitalTransferNotFoundException
+    CapitalTransferFinishException
     """
     # ? Verify capital_transfer existence
     obj_current = await capital_transfer_crud.verify_existence(

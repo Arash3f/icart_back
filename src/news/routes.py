@@ -206,7 +206,7 @@ async def get_news_list(
     filter_data.title = (
         (News.title.contains(filter_data.title)) if filter_data.title else True
     )
-    # # * Add filter fields
+    # * Add filter fields
     query = select(News).filter(
         and_(
             filter_data.title,

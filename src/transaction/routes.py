@@ -86,7 +86,7 @@ async def read_transaction_list(
         else True
     )
 
-    # # * Add filter fields
+    # * Add filter fields
     query = select(Transaction).filter(
         and_(
             or_(

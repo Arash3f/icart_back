@@ -202,7 +202,7 @@ async def get_location(
         (Location.name.contains(filter_data.name)) if filter_data.name else True
     )
 
-    # # * Add filter fields
+    # * Add filter fields
     query = select(Location).filter(
         and_(
             filter_data.is_main,
