@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 from typing import List
 
 from pydantic import BaseModel, ConfigDict, conint
@@ -81,3 +82,26 @@ class TicketComplexRead(TicketBase):
     # ! Relations
     creator_id: uuid.UUID
     messages: List[TicketMessageRead]
+
+
+# ---------------------------------------------------------------------------
+class TicketFilterOrderFild(Enum):
+    type = "type"
+    position = "position"
+    important = "important"
+    number = "number"
+
+
+# ---------------------------------------------------------------------------
+class TicketFilterOrderBy(BaseModel):
+    desc: list[TicketFilterOrderFild] = []
+    asc: list[TicketFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class TicketFilter(BaseModel):
+    type: None | TicketType = None
+    position: None | TicketPosition = None
+    important: None | int = None
+    number: None | int = None
+    order_by: TicketFilterOrderBy | None = None

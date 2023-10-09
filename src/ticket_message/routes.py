@@ -20,7 +20,7 @@ router = APIRouter(prefix="/ticket_message", tags=["ticket_message"])
 
 # ---------------------------------------------------------------------------
 @router.post("/create", response_model=TicketMessageRead)
-async def user_create_message(
+async def create_message(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(

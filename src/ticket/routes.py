@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import case, desc, func, not_, select
+from sqlalchemy import case, desc, func, not_, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -18,6 +18,8 @@ from src.ticket.schema import (
     TicketRead,
     TicketReadV2,
     TicketUpdate,
+    TicketFilter,
+    TicketFilterOrderFild,
 )
 from src.ticket_message.crud import ticket_message as ticket_message_crud
 from src.ticket_message.crud import update_ticket_message_status
@@ -30,10 +32,11 @@ router = APIRouter(prefix="/ticket", tags=["ticket"])
 
 
 # ---------------------------------------------------------------------------
-@router.get("/list", response_model=List[TicketReadV2])
-async def read_my_tickets(
+@router.post("/list", response_model=List[TicketReadV2])
+async def read_tickets(
     *,
     db: AsyncSession = Depends(deps.get_db),
+    filter_data: TicketFilter,
     verify_data: VerifyUserDep = Depends(
         deps.is_user_have_permission([permission.VIEW_USER_MESSAGE]),
     ),
@@ -53,6 +56,8 @@ async def read_my_tickets(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
@@ -74,8 +79,56 @@ async def read_my_tickets(
     # * Not Have permissions
     if not verify_data.is_valid:
         query = query.where(Ticket.creator_id == verify_data.user.id)
-    res: List[TicketReadV2] = []
 
+    # * Prepare filter fields
+    filter_data.type = (Ticket.type == filter_data.type) if filter_data.type else True
+    filter_data.position = (
+        (Ticket.position == filter_data.position) if filter_data.position else True
+    )
+    filter_data.important = (
+        (Ticket.important == filter_data.important) if filter_data.important else True
+    )
+    filter_data.number = (
+        (Ticket.number == filter_data.number) if filter_data.number else True
+    )
+
+    query = (
+        query.filter(
+            and_(
+                filter_data.type,
+                filter_data.position,
+                filter_data.important,
+                filter_data.number,
+            ),
+        )
+        .offset(skip)
+        .limit(limit)
+    )
+
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == TicketFilterOrderFild.type:
+                query = query.order_by(Ticket.type.desc())
+            elif field == TicketFilterOrderFild.position:
+                query = query.order_by(Ticket.position.desc())
+            elif field == TicketFilterOrderFild.important:
+                query = query.order_by(Ticket.important.desc())
+            elif field == TicketFilterOrderFild.number:
+                query = query.order_by(Ticket.number.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == TicketFilterOrderFild.type:
+                query = query.order_by(Ticket.type.asc())
+            elif field == TicketFilterOrderFild.position:
+                query = query.order_by(Ticket.important.asc())
+            elif field == TicketFilterOrderFild.important:
+                query = query.order_by(Ticket.parent_id.asc())
+            elif field == TicketFilterOrderFild.number:
+                query = query.order_by(Ticket.number.asc())
+
+    res: List[TicketReadV2] = []
     response = await db.execute(query)
     obj_list = response.all()
     for i in obj_list:
@@ -149,7 +202,7 @@ async def create_ticket(
 
 # ---------------------------------------------------------------------------
 @router.get("/find", response_model=TicketComplexRead)
-async def read_my_ticket_by_id(
+async def find_ticket(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
