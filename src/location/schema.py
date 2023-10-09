@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime
+from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -42,6 +44,21 @@ class LocationInitCreate(LocationBase):
 
 
 # ---------------------------------------------------------------------------
+class LocationFilterOrderFild(Enum):
+    is_main = "is_main"
+    name = "name"
+    parent_id = "parent_id"
+
+
+# ---------------------------------------------------------------------------
+class LocationFilterOrderBy(BaseModel):
+    desc: list[LocationFilterOrderFild] = []
+    asc: list[LocationFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class LocationFilter(BaseModel):
-    return_all: bool | None = None
     is_main: None | bool = None
+    parent_id: None | UUID = None
+    name: None | str = None
+    order_by: LocationFilterOrderBy | None = None

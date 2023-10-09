@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, and_
 
 from src import deps
 from src.location.crud import location as location_crud
@@ -11,6 +11,7 @@ from src.location.schema import (
     LocationFilter,
     LocationRead,
     LocationUpdate,
+    LocationFilterOrderFild,
 )
 from src.permission import permission_codes as permission
 from src.schema import IDRequest
@@ -167,7 +168,6 @@ async def find_location(
 async def get_location(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
     filter_data: LocationFilter,
     skip: int = 0,
     limit: int = 20,
@@ -179,8 +179,6 @@ async def get_location(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
     skip
         Pagination skip
     limit
@@ -195,15 +193,41 @@ async def get_location(
     """
     # * Prepare filter fields
     filter_data.is_main = (
-        (Location.parent_id.is_(None)) if filter_data.is_main else False
+        (Location.parent_id.is_(None)) if filter_data.is_main else True
     )
-    # * Add filter fields
+    filter_data.parent_id = (
+        (Location.parent_id == filter_data.parent_id) if filter_data.parent_id else True
+    )
+    filter_data.name = (
+        (Location.name.contains(filter_data.name)) if filter_data.name else True
+    )
+
+    # # * Add filter fields
     query = select(Location).filter(
-        or_(
-            filter_data.return_all,
+        and_(
             filter_data.is_main,
+            filter_data.parent_id,
+            filter_data.name,
         ),
     )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == LocationFilterOrderFild.is_main:
+                query = query.order_by(Location.is_main.desc())
+            elif field == LocationFilterOrderFild.name:
+                query = query.order_by(Location.name.desc())
+            elif field == LocationFilterOrderFild.parent_id:
+                query = query.order_by(Location.parent_id.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == LocationFilterOrderFild.is_main:
+                query = query.order_by(Location.is_main.asc())
+            elif field == LocationFilterOrderFild.name:
+                query = query.order_by(Location.name.asc())
+            elif field == LocationFilterOrderFild.parent_id:
+                query = query.order_by(Location.parent_id.asc())
     # * Find All agent with filters
     obj_list = await location_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 
