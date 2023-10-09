@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
@@ -37,6 +38,17 @@ class NewsShortRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class NewsFilterOrderFild(Enum):
+    title = "title"
+
+
+# ---------------------------------------------------------------------------
+class NewsFilterOrderBy(BaseModel):
+    desc: list[NewsFilterOrderFild] = []
+    asc: list[NewsFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class NewsFilter(BaseModel):
-    return_all: bool | None = None
     title: str | None | bool = None
+    order_by: NewsFilterOrderBy | None = None

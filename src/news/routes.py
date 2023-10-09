@@ -1,12 +1,19 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, and_
 
 from src import deps
 from src.news.crud import news as news_crud
 from src.news.models import News
-from src.news.schema import NewsCreate, NewsRead, NewsShortRead, NewsUpdate
+from src.news.schema import (
+    NewsCreate,
+    NewsRead,
+    NewsShortRead,
+    NewsUpdate,
+    NewsFilter,
+    NewsFilterOrderFild,
+)
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
@@ -170,6 +177,7 @@ async def get_news_list(
     current_user: User = Depends(
         deps.get_current_user(),
     ),
+    filter_data: NewsFilter,
     skip: int = 0,
     limit: int = 20,
 ) -> List[NewsShortRead]:
@@ -186,12 +194,33 @@ async def get_news_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     obj_list
         List of ability
     """
-    query = select(News).order_by(desc(News.created_at))
+    # * Prepare filter fields
+    filter_data.title = (
+        (News.title.contains(filter_data.title)) if filter_data.title else True
+    )
+    # # * Add filter fields
+    query = select(News).filter(
+        and_(
+            filter_data.title,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == NewsFilterOrderFild.title:
+                query = query.order_by(News.title.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == NewsFilterOrderFild.title:
+                query = query.order_by(News.title.asc())
     obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list
