@@ -114,57 +114,6 @@ class PositionRequestCRUD(BaseCRUD[PositionRequest, PositionRequestCreate, None]
 
         return obj
 
-    async def find_by_number(
-        self,
-        *,
-        db: AsyncSession,
-        number: int,
-    ) -> Type[PositionRequest]:
-        """
-        ! Find Capital Transfer by code
-
-        Parameters
-        ----------
-        db
-            Target database connection
-        number
-            Capital Transfer code
-
-        Returns
-        -------
-        found_item
-            Found Item
-        """
-        response = await db.execute(
-            select(self.model).where(self.model.number == number),
-        )
-
-        found_item = response.scalar_one_or_none()
-        return found_item
-
-    async def generate_code(self, *, db: AsyncSession) -> int:
-        """
-        ! Generate code
-
-        Parameters
-        ----------
-        db
-            Target database connection
-
-        Returns
-        -------
-        code
-            generated code
-        """
-        code = 0
-        while not code:
-            generate_code = randint(100000, 999999)
-            is_duplicate = await self.find_by_number(db=db, number=generate_code)
-            if not is_duplicate:
-                code = generate_code
-
-        return code
-
 
 # ---------------------------------------------------------------------------
 position_request = PositionRequestCRUD(PositionRequest)

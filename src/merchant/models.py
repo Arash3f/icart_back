@@ -25,6 +25,7 @@ class Merchant(Base, BaseMixin):
         "Location",
         foreign_keys=[location_id],
         back_populates="merchants",
+        lazy="selectin",
     )
 
     contract = relationship(

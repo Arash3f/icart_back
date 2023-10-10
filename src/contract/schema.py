@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
@@ -31,3 +32,20 @@ class ContractRead(ContractBase):
 
     # ! Relation
     position_request_id: uuid.UUID
+
+
+# ---------------------------------------------------------------------------
+class ContractFilterOrderFild(Enum):
+    number = "number"
+
+
+# ---------------------------------------------------------------------------
+class ContractFilterOrderBy(BaseModel):
+    desc: list[ContractFilterOrderFild] = []
+    asc: list[ContractFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class ContractFilter(BaseModel):
+    number: str | None = None
+    order_by: ContractFilterOrderBy | None = None

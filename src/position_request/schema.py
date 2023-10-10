@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
@@ -8,6 +9,7 @@ from src.location.schema import LocationBase
 from src.position_request.models import (
     PositionRequestStatusType,
     PositionRequestType,
+    FieldOfWorkType,
 )
 
 
@@ -48,3 +50,28 @@ class PositionRequestRead(PositionRequestBase):
 class PositionRequestApproveIn(BaseModel):
     position_request_id: uuid.UUID
     is_approve: bool
+
+
+# ---------------------------------------------------------------------------
+class PositionRequestFilterOrderFild(Enum):
+    field_of_work = "field_of_work"
+    target_position = "target_position"
+    is_approve = "is_approve"
+    status = "status"
+    number = "number"
+
+
+# ---------------------------------------------------------------------------
+class PositionRequestFilterOrderBy(BaseModel):
+    desc: list[PositionRequestFilterOrderFild] = []
+    asc: list[PositionRequestFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class PositionRequestFilter(BaseModel):
+    field_of_work: FieldOfWorkType | None = None
+    target_position: PositionRequestType | None = None
+    is_approve: bool | None = None
+    status: PositionRequestStatusType | None = None
+    number: str | None = None
+    order_by: PositionRequestFilterOrderBy | None = None

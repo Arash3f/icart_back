@@ -1,6 +1,7 @@
 from typing import Type
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.contract.exception import ContractNotFoundException
@@ -41,6 +42,34 @@ class ContractCRUD(BaseCRUD[Contract, ContractCreate, None]):
             raise ContractNotFoundException()
 
         return obj
+
+    async def find_by_number(
+        self,
+        *,
+        db: AsyncSession,
+        number: str,
+    ) -> Type[Contract]:
+        """
+        ! Find Contract by number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        number
+            Target number
+
+        Returns
+        -------
+        found_item
+            Found Item
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.number == number),
+        )
+
+        found_item = response.scalar_one_or_none()
+        return found_item
 
 
 # ---------------------------------------------------------------------------

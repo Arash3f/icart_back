@@ -1,3 +1,4 @@
+from random import randint
 from typing import Annotated, List
 from uuid import UUID
 
@@ -5,11 +6,15 @@ from fastapi import (
     APIRouter,
     Depends,
     Form,
+    UploadFile,
+    File,
 )
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, and_
 
 from src.auth.exception import AccessDeniedException
+from src.contract.exception import ContractNumberIsDuplicatedException
 from src.contract.models import Contract
+from src.core.config import settings
 from src.permission import permission_codes as permission
 
 from src import deps
@@ -27,15 +32,20 @@ from src.position_request.models import (
     PositionRequest,
     PositionRequestStatusType,
     PositionRequestType,
+    FieldOfWorkType,
 )
 from src.position_request.schema import (
     PositionRequestRead,
     PositionRequestApproveIn,
+    PositionRequestFilter,
+    PositionRequestFilterOrderFild,
 )
 from src.role.crud import role as role_crud
 from src.schema import VerifyUserDep, IDRequest
 from src.user.crud import user as user_crud
+from src.contract.crud import contract as contract_crud
 from src.user.models import User
+from src.utils.minio_client import MinioClient
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/position_request", tags=["position_request"])
@@ -46,20 +56,20 @@ router = APIRouter(prefix="/position_request", tags=["position_request"])
 async def create_position_request(
     *,
     db=Depends(deps.get_db),
-    # minio: MinioClient = Depends(deps.minio_auth),
-    requester_natinal_code: Annotated[str | None, Form()] = None,
+    minio: MinioClient = Depends(deps.minio_auth),
+    requester_national_code: Annotated[str, Form()],
     target_position: Annotated[PositionRequestType, Form()],
     location_id: Annotated[UUID, Form()],
     number: Annotated[str, Form()],
-    field_of_work: Annotated[str, Form()],
+    field_of_work: Annotated[FieldOfWorkType | None, Form()] = None,
     postal_code: Annotated[str, Form()],
     tel: Annotated[str, Form()],
     address: Annotated[str, Form()],
     employee_count: Annotated[int | None, Form()] = None,
-    name: Annotated[str | None, Form()] = None,
-    signatory_name: Annotated[str | None, Form()] = None,
-    signatory_position: Annotated[str | None, Form()] = None,
-    # contract_file: Annotated[UploadFile, File()],
+    name: Annotated[str, Form()],
+    signatory_name: Annotated[str, Form()],
+    signatory_position: Annotated[str, Form()],
+    contract_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.CREATE_POSITION_REQUEST]),
     ),
@@ -70,15 +80,19 @@ async def create_position_request(
     Parameters
     ----------
     db
-    # minio
-    requester_username
+    tel
+    address
+    employee_count
+    requester_national_code
+    postal_code
+    field_of_work
+    minio
     target_position
     location_id
     number
     name
     signatory_name
     signatory_position
-    employees_number
     contract_file
     current_user
 
@@ -91,17 +105,16 @@ async def create_position_request(
     ------
     AccessDeniedException
     UserNotFoundException
+    ContractNumberIsDuplicatedException
     """
     # * Verify creator existence and verify role
-    creator_user = await user_crud.get(
-        db=db,
-        item_id=current_user.id,
-    )
+    if current_user.role.name != "نماینده":
+        raise AccessDeniedException()
 
     # * Verify requester existence and verify role
     requester_user = await user_crud.verify_existence_by_national_number(
         db=db,
-        national_code=requester_natinal_code,
+        national_code=requester_national_code,
     )
     if not requester_user.role.name == "کاربر ساده":
         raise AccessDeniedException()
@@ -112,14 +125,20 @@ async def create_position_request(
         location_id=location_id,
     )
 
-    # # * Save Contract File
-    # contract_file = minio.client.put_object(
-    #     data=contract_file.file,
-    #     object_name=contract_file.filename,
-    #     bucket_name=settings.MINIO_CONTRACT_BUCKET,
-    #     length=-1,
-    #     part_size=10 * 1024 * 1024,
-    # )
+    # * Save Contract File
+    contract_file = minio.client.put_object(
+        data=contract_file.file,
+        object_name=contract_file.filename,
+        bucket_name=settings.MINIO_CONTRACT_BUCKET,
+        length=-1,
+        part_size=10 * 1024 * 1024,
+    )
+
+    # ! Verify contract number (duplicate)
+    number_duplicated = await contract_crud.find_by_number(db=db, number=number)
+    if number_duplicated:
+        raise ContractNumberIsDuplicatedException()
+
     # * Create Contract
     create_contract = Contract()
     create_contract.number = number
@@ -131,20 +150,29 @@ async def create_position_request(
     create_contract.postal_code = postal_code
     create_contract.tel = tel
     create_contract.address = address
-    # create_contract.file_version_id = contract_file.version_id
-    # create_contract.file_name = contract_file.object_name
+    create_contract.file_version_id = contract_file.version_id
+    create_contract.file_name = contract_file.object_name
 
     # * Create Position Request
-    code = await position_request_crud.generate_code(db=db)
-    agent = await agent_crud.find_by_user_id(db=db, user_id=creator_user.id)
+    code = generate_code = randint(100000, 999999)
+    agent = await agent_crud.find_by_user_id(db=db, user_id=current_user.id)
     position_request = PositionRequest()
+    if agent.parent_id:
+        agent2 = await agent_crud.get(db=db, item_id=agent.parent_id)
+        position_request.next_approve_user_id = agent2.user_id
     position_request.contract = create_contract
     position_request.code = code
     position_request.target_position = target_position
-    position_request.next_approve_user_id = agent.parent_id
     position_request.location_id = location.id
     position_request.requester_user_id = requester_user.id
     position_request.creator_id = current_user.id
+    position_request.name = name
+    position_request.creator_id = current_user.id
+    position_request.field_of_work = field_of_work
+    position_request.postal_code = postal_code
+    position_request.tel = tel
+    position_request.address = address
+    position_request.employee_count = employee_count
 
     db.add(position_request)
     db.add(create_contract)
@@ -183,6 +211,7 @@ async def update_position_request(
     ------
     PositionRequestNotFoundException
     ApproveAccessDeniedException
+    PositionRequestClosedException
     """
     # * Verify position_request existence
     obj_current = (
@@ -205,7 +234,7 @@ async def update_position_request(
             # * Verify requester = next approve person existence
             if obj_current.next_approve_user_id != current_user.id:
                 raise ApproveAccessDeniedException()
-            agent = await agent_crud.get_agent_with_user_id(
+            agent = await agent_crud.find_by_user_id(
                 db=db,
                 user_id=obj_current.next_approve_user_id,
             )
@@ -286,8 +315,8 @@ async def update_position_request(
 async def find_position_request(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_POSITION_REQUEST]),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_POSITION_REQUEST]),
     ),
     obj_data: IDRequest,
 ) -> PositionRequestRead:
@@ -298,8 +327,8 @@ async def find_position_request(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
+    verify_data
+        user's verified data
     obj_data
         Target position request id
 
@@ -311,23 +340,31 @@ async def find_position_request(
     Raises
     ------
     PositionRequestNotFoundException
+    AccessDeniedException
     """
     # * Verify position_request existence
     obj = await position_request_crud.verify_existence(
         db=db,
         position_request_id=obj_data.id,
     )
+    if not verify_data.is_valid:
+        is_requester = obj.requester_user_id == verify_data.user.id
+        is_creator = obj.creator_id == verify_data.user.id
+        if not is_creator and not is_requester:
+            raise AccessDeniedException()
+
     return obj
 
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[PositionRequestRead])
-async def get_list_position_request(
+async def list_position_request(
     *,
     db=Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
         deps.is_user_have_permission([permission.VIEW_POSITION_REQUEST]),
     ),
+    filter_data: PositionRequestFilter,
     skip: int = 0,
     limit: int = 20,
 ) -> List[PositionRequestRead]:
@@ -344,12 +381,76 @@ async def get_list_position_request(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     obj_list
         found items
     """
+    # * Prepare filter fields
+    filter_data.field_of_work = (
+        (PositionRequest.field_of_work == filter_data.field_of_work)
+        if filter_data.field_of_work
+        else True
+    )
+    filter_data.target_position = (
+        (PositionRequest.target_position == filter_data.target_position)
+        if filter_data.target_position
+        else True
+    )
+    filter_data.is_approve = (
+        (PositionRequest.is_approve == filter_data.is_approve)
+        if filter_data.is_approve
+        else True
+    )
+    filter_data.status = (
+        (PositionRequest.status == filter_data.status) if filter_data.status else True
+    )
+    filter_data.number = (
+        (PositionRequest.number.conyains(filter_data.number))
+        if filter_data.number
+        else True
+    )
+
+    # * Add filter fields
+    query = select(PositionRequest).filter(
+        and_(
+            filter_data.field_of_work,
+            filter_data.target_position,
+            filter_data.is_approve,
+            filter_data.status,
+            filter_data.number,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == PositionRequestFilterOrderFild.field_of_work:
+                query = query.order_by(PositionRequest.field_of_work.desc())
+            elif field == PositionRequestFilterOrderFild.target_position:
+                query = query.order_by(PositionRequest.target_position.desc())
+            elif field == PositionRequestFilterOrderFild.is_approve:
+                query = query.order_by(PositionRequest.is_approve.desc())
+            elif field == PositionRequestFilterOrderFild.status:
+                query = query.order_by(PositionRequest.status.desc())
+            elif field == PositionRequestFilterOrderFild.number:
+                query = query.order_by(PositionRequest.number.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == PositionRequestFilterOrderFild.field_of_work:
+                query = query.order_by(PositionRequest.field_of_work.asc())
+            elif field == PositionRequestFilterOrderFild.target_position:
+                query = query.order_by(PositionRequest.target_position.asc())
+            elif field == PositionRequestFilterOrderFild.is_approve:
+                query = query.order_by(PositionRequest.is_approve.asc())
+            elif field == PositionRequestFilterOrderFild.status:
+                query = query.order_by(PositionRequest.status.asc())
+            elif field == PositionRequestFilterOrderFild.number:
+                query = query.order_by(PositionRequest.number.asc())
+
     query = select(PositionRequest)
     # * Not Have permissions
     if not verify_data.is_valid:
@@ -378,6 +479,7 @@ async def get_must_approve_position_request(
     ),
     skip: int = 0,
     limit: int = 20,
+    filter_data: PositionRequestFilter,
 ) -> List[PositionRequestRead]:
     """
     ! Get All Position Request that must be approved
@@ -392,13 +494,76 @@ async def get_must_approve_position_request(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     obj_list
         found items
     """
-    query = select(PositionRequest)
+    # * Prepare filter fields
+    filter_data.field_of_work = (
+        (PositionRequest.field_of_work == filter_data.field_of_work)
+        if filter_data.field_of_work
+        else True
+    )
+    filter_data.target_position = (
+        (PositionRequest.target_position == filter_data.target_position)
+        if filter_data.target_position
+        else True
+    )
+    filter_data.is_approve = (
+        (PositionRequest.is_approve == filter_data.is_approve)
+        if filter_data.is_approve
+        else True
+    )
+    filter_data.status = (
+        (PositionRequest.status == filter_data.status) if filter_data.status else True
+    )
+    filter_data.number = (
+        (PositionRequest.number.conyains(filter_data.number))
+        if filter_data.number
+        else True
+    )
+
+    # * Add filter fields
+    query = select(PositionRequest).filter(
+        and_(
+            filter_data.field_of_work,
+            filter_data.target_position,
+            filter_data.is_approve,
+            filter_data.status,
+            filter_data.number,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == PositionRequestFilterOrderFild.field_of_work:
+                query = query.order_by(PositionRequest.field_of_work.desc())
+            elif field == PositionRequestFilterOrderFild.target_position:
+                query = query.order_by(PositionRequest.target_position.desc())
+            elif field == PositionRequestFilterOrderFild.is_approve:
+                query = query.order_by(PositionRequest.is_approve.desc())
+            elif field == PositionRequestFilterOrderFild.status:
+                query = query.order_by(PositionRequest.status.desc())
+            elif field == PositionRequestFilterOrderFild.number:
+                query = query.order_by(PositionRequest.number.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == PositionRequestFilterOrderFild.field_of_work:
+                query = query.order_by(PositionRequest.field_of_work.asc())
+            elif field == PositionRequestFilterOrderFild.target_position:
+                query = query.order_by(PositionRequest.target_position.asc())
+            elif field == PositionRequestFilterOrderFild.is_approve:
+                query = query.order_by(PositionRequest.is_approve.asc())
+            elif field == PositionRequestFilterOrderFild.status:
+                query = query.order_by(PositionRequest.status.asc())
+            elif field == PositionRequestFilterOrderFild.number:
+                query = query.order_by(PositionRequest.number.asc())
+
     # * Not Have permissions
     if not verify_data.is_valid:
         query = query.where(
@@ -406,8 +571,10 @@ async def get_must_approve_position_request(
         )
     else:
         query = query.where(
-            PositionRequest.next_approve_user_id.is_(None),
-            PositionRequest.status == PositionRequestStatusType.OPEN,
+            and_(
+                PositionRequest.next_approve_user_id.is_(None),
+                PositionRequest.status == PositionRequestStatusType.OPEN,
+            ),
         )
 
     obj_list = await position_request_crud.get_multi(

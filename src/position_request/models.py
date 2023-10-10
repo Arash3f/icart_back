@@ -21,6 +21,39 @@ class PositionRequestStatusType(enum.Enum):
 
 
 # ---------------------------------------------------------------------------
+class FieldOfWorkType(enum.Enum):
+    MOBILE_STORE = "MOBILE_STORE"
+    AUDIO_AND_VIDEO_PRODUCT_STORE = "AUDIO_AND_VIDEO_PRODUCT_STORE"
+    KITCHEN_ACCESSORIES_STORE = "KITCHEN_ACCESSORIES_STORE"
+    ELECTRICAL_APPLIANCES_STORE = "ELECTRICAL_APPLIANCES_STORE"
+    SLEEP_GOODS_STORES = "SLEEP_GOODS_STORES"
+    FURNITURE_STORES = "FURNITURE_STORES"
+    GROCERY_STORES = "GROCERY_STORES"
+    PROTEIN_STORE = "PROTEIN_STORE"
+    CHANDELIERS_AND_ELECTRICAL_APPLIANCES = "CHANDELIERS_AND_ELECTRICAL_APPLIANCES"
+    SUPER_MARKETS = "SUPER_MARKETS"
+    BAKERY = "BAKERY"
+    FRUIT_SHOPS = "FRUIT_SHOPS"
+    STATIONERY_STORES = "STATIONERY_STORES"
+    DTY_FRUITS_SHOP = "DTY_FRUITS_SHOP"
+    DENTAL_CLINICS = "DENTAL_CLINICS"
+    BEAUTY_CLINICS = "BEAUTY_CLINICS"
+    CLINICS = "CLINICS"
+    CLOTHING_STORES = "CLOTHING_STORES"
+    HAIRDRESSERS = "HAIRDRESSERS"
+    LASER_CENTERS = "LASER_CENTERS"
+    GOLD_AND_SILVER = "GOLD_AND_SILVER"
+    WATCH_SHOP = "WATCH_SHOP"
+    PERFUME_AND_COLOGNE_STORE = "PERFUME_AND_COLOGNE_STORE"
+    DECORATION = "DECORATION"
+    COSMETIC = "COSMETIC"
+    MESON = "MESON"
+    CAR_REPAIRS = "CAR_REPAIRS"
+    PHARMACY = "PHARMACY"
+    EDUCATIONAL_SERVICES = "EDUCATIONAL_SERVICES"
+
+
+# ---------------------------------------------------------------------------
 class PositionRequest(Base, BaseMixin):
     __tablename__ = "position_request"
 
@@ -36,7 +69,6 @@ class PositionRequest(Base, BaseMixin):
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,
     )
-    number = Column(Integer, unique=True, index=True, nullable=True)
 
     # ! Relations
     contract = relationship(

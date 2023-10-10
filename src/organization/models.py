@@ -25,6 +25,7 @@ class Organization(Base, BaseMixin):
         "Location",
         foreign_keys=[location_id],
         back_populates="organizations",
+        lazy="selectin",
     )
 
     # todo: fix relation problem

@@ -18,3 +18,18 @@ class ContractNotFoundException(HTTPException):
             "english_message": "Contract Not Found!",
         }
         self.headers = None
+
+
+class ContractNumberIsDuplicatedException(HTTPException):
+    """
+    ? Exception When Contract number is duplicated
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 601,
+            "persian_message": "شماره قرارداد تکراری است!",
+            "english_message": "Contract Number Is Duplicated!",
+        }
+        self.headers = None
