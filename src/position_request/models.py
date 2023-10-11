@@ -58,7 +58,7 @@ class PositionRequest(Base, BaseMixin):
     __tablename__ = "position_request"
 
     name = Column(String, nullable=True)
-    field_of_work = Column(String, nullable=True)
+    field_of_work = Column(Enum(FieldOfWorkType), nullable=True)
     postal_code = Column(String, nullable=True)
     tel = Column(String, nullable=True)
     address = Column(Text, nullable=True)

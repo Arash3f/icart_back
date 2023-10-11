@@ -26,6 +26,7 @@ class TransactionCreate(TransactionBase):
     # ! Relation
     receiver_id: UUID
     transferor_id: UUID
+    code: str | None = None
 
 
 # ---------------------------------------------------------------------------

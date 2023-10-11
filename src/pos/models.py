@@ -8,7 +8,7 @@ from src.database.base_class import Base, BaseMixin
 class Pos(Base, BaseMixin):
     __tablename__ = "pos"
 
-    token = Column(String, nullable=True, index=True, unique=True)
+    number = Column(String, nullable=True, index=True, unique=True)
 
     # ! Relations
     merchant_id = Column(
@@ -19,4 +19,5 @@ class Pos(Base, BaseMixin):
         "Merchant",
         foreign_keys=[merchant_id],
         back_populates="poses",
+        lazy="selectin",
     )

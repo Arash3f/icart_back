@@ -18,6 +18,7 @@ class Transaction(Base, BaseMixin):
     value = Column(Float, nullable=False)
     text = Column(String, nullable=False)
     value_type = Column(Enum(TransactionValueType), nullable=False)
+    code = Column(String, nullable=True)
 
     # ! Relations
     receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)

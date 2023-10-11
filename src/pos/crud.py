@@ -69,6 +69,36 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
 
         return obj
 
+    async def find_by_number(self, *, db: AsyncSession, number: str) -> Pos:
+        """
+        ! Verify pos existence by token
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        number
+            Target Item token
+
+        Returns
+        -------
+        obj
+            Found Item
+
+        Raises
+        ------
+        PosNotFoundException
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.number == number),
+        )
+
+        obj = response.scalar_one_or_none()
+        if not obj:
+            raise PosNotFoundException()
+
+        return obj
+
 
 # ---------------------------------------------------------------------------
 pos = PosCRUD(Pos)

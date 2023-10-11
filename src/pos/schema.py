@@ -33,3 +33,39 @@ class PosRead(PosBase):
 
     created_at: datetime
     updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+class PosFilter(BaseModel):
+    merchant_id: UUID | None = None
+
+
+# ---------------------------------------------------------------------------
+class ConfigPosInput(BaseModel):
+    terminal_number: str
+    merchant_number: str
+
+
+# ---------------------------------------------------------------------------
+class BalanceInput(ConfigPosInput):
+    card_number: str
+    password: str
+
+
+# ---------------------------------------------------------------------------
+class BalanceOutput(ConfigPosInput):
+    amount: str
+
+
+# ---------------------------------------------------------------------------
+class PurchaseInput(ConfigPosInput):
+    card_number: str
+    password: str
+    amount: str
+
+
+# ---------------------------------------------------------------------------
+class PurchaseOutput(BaseModel):
+    amount: str
+    code: str
+    merchant_name: str

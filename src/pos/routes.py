@@ -1,12 +1,35 @@
+from random import randint
+
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
+from src.core.config import settings
+from src.core.security import verify_password
 from src.merchant.crud import merchant as merchant_crud
+from src.card.crud import card as card_crud
 from src.permission import permission_codes as permission
 from src.pos.crud import pos as pos_crud
-from src.pos.schema import PosBase, PosCreate, PosRead, PosUpdate
-from src.schema import DeleteResponse, IDRequest
+from src.transaction.models import TransactionValueType
+from src.transaction.schema import TransactionCreate
+from src.user.crud import user as user_crud
+from src.transaction.crud import transaction as transaction_crud
+from src.pos.exception import PosNotFoundException
+from src.pos.models import Pos
+from src.pos.schema import (
+    PosBase,
+    PosCreate,
+    PosRead,
+    PosUpdate,
+    PosFilter,
+    ConfigPosInput,
+    BalanceOutput,
+    BalanceInput,
+    PurchaseInput,
+    PurchaseOutput,
+)
+from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
 
 # ---------------------------------------------------------------------------
@@ -147,7 +170,7 @@ async def update_pos(
 
 
 # ---------------------------------------------------------------------------
-@router.get("/list", response_model=list[PosRead])
+@router.post("/list", response_model=list[PosRead])
 async def read_pos_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -156,6 +179,7 @@ async def read_pos_list(
     ),
     skip: int = 0,
     limit: int = 10,
+    filter_data: PosFilter,
 ) -> list[PosRead]:
     """
     ! Read Pos
@@ -170,13 +194,25 @@ async def read_pos_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     pos_list
         List of pos
     """
-    pos_list = await pos_crud.get_multi(db=db, skip=skip, limit=limit)
+    # * Prepare filter fields
+    filter_data.merchant_id = (
+        (Pos.merchant_id == filter_data.merchant_id)
+        if filter_data.merchant_id
+        else True
+    )
+    # * Add filter fields
+    query = select(Pos).filter(
+        filter_data.merchant_id,
+    )
+    pos_list = await pos_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return pos_list
 
 
@@ -214,3 +250,197 @@ async def find_pos(
     # * Verify pos existence
     pos = await pos_crud.verify_existence(db=db, pos_id=read_data.id)
     return pos
+
+
+# ---------------------------------------------------------------------------
+@router.post("/config", response_model=ResultResponse)
+async def config(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    config_data: ConfigPosInput,
+) -> PosRead:
+    """
+    ! Config Pos
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    config_data
+        Necessary data for config pos
+
+    Returns
+    -------
+    res
+        result of configuration
+
+    Raises
+    ------
+    PosNotFoundException
+    """
+    # * Verify pos existence
+    pos = await pos_crud.find_by_number(db=db, number=config_data.merchant_number)
+
+    if pos.merchant.number != config_data.merchant_number:
+        raise PosNotFoundException()
+
+    return ResultResponse(result="Pos configured successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post("/balance", response_model=BalanceOutput)
+async def config(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    card_data: BalanceInput,
+) -> BalanceOutput:
+    """
+    ! Config Pos
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    card_data
+        Necessary data for balance card
+
+    Returns
+    -------
+    res
+        card amount
+
+    Raises
+    ------
+    PosNotFoundException
+    CardNotFoundException
+    """
+    # * Verify pos existence
+    pos = await pos_crud.find_by_number(db=db, number=card_data.terminal_number)
+
+    if pos.merchant.number != card_data.merchant_number:
+        raise PosNotFoundException()
+
+    # * Verify Card number existence
+    card = await card_crud.verify_by_number(db=db, number=card_data.card_number)
+
+    # * Verify Card password
+    verify_pass = verify_password(card.password, card_data.password)
+    if not verify_pass:
+        return None
+
+    response = BalanceOutput(
+        amount=card.wallet.user.cash.balance,
+        terminal_number=pos.number,
+        merchant_number=pos.merchant.number,
+    )
+
+    return response
+
+
+# ---------------------------------------------------------------------------
+@router.post("/purchase", response_model=PurchaseOutput)
+async def purchase(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    input_data: PurchaseInput,
+) -> PurchaseOutput:
+    """
+    ! Config Pos
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    input_data
+        Necessary data for purchase
+
+    Returns
+    -------
+    res
+        result of operation
+
+    Raises
+    ------
+    PosNotFoundException
+    CardNotFoundException
+    """
+    # * Verify pos existence
+    pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
+
+    if pos.merchant.number != input_data.merchant_number:
+        raise PosNotFoundException()
+
+    # * Verify Card number existence
+    card = await card_crud.verify_by_number(db=db, number=input_data.card_number)
+
+    # * Verify Card password
+    verify_pass = verify_password(card.password, input_data.password)
+    if not verify_pass:
+        raise None
+
+    agent = pos.merchant.agent
+    merchant = pos.merchant
+    merchant_profit = (input_data.amount * (100 - 40)) / 100
+    new_amount = input_data.amount - merchant_profit
+    agent_profit = (new_amount * 40) / 100
+    icart_profit = new_amount - merchant_profit
+
+    icart_user = await user_crud.find_by_username(
+        db=db,
+        username=settings.ADMIN_USERNAME,
+    )
+
+    # * Verify wallet balance
+    requester_user = card.wallet.user
+    if requester_user.cash.balance < input_data.amount:
+        raise None
+
+    # * Increase & Decrease wallet
+    merchant_user = pos.merchant.user
+
+    requester_user.cash.balance = requester_user.cash.balance - input_data.amount
+    merchant_user.cash.balance = merchant_user.cash.balance + merchant_profit
+    agent.user.cash.balance = agent.user.cash.balance + agent_profit
+    icart_user.cash.balance = icart_user.cash.balance + icart_profit
+
+    code = randint(100000000000, 999999999999)
+    user_merchant_tr = TransactionCreate(
+        value=float(input_data.amount),
+        text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
+        value_type=TransactionValueType.CASH,
+        receiver_id=merchant.user.wallet_id,
+        transferor_id=requester_user.wallet_id,
+        code=code,
+    )
+    icart_tr = TransactionCreate(
+        value=float(icart_profit),
+        text="سود از فروشنده {}".format(merchant.contract.name),
+        value_type=TransactionValueType.CASH,
+        receiver_id=icart_user.wallet_id,
+        transferor_id=merchant.user.wallet_id,
+        code=randint(100000000000, 999999999999),
+    )
+    agent_tr = TransactionCreate(
+        value=float(agent_profit),
+        text="سود از فروشنده {}".format(merchant.contract.name),
+        value_type=TransactionValueType.CASH,
+        receiver_id=agent.user.wallet_id,
+        transferor_id=merchant.user.wallet_id,
+        code=randint(100000000000, 999999999999),
+    )
+
+    await transaction_crud.create(db=db, obj_in=user_merchant_tr)
+    await transaction_crud.create(db=db, obj_in=icart_tr)
+    await transaction_crud.create(db=db, obj_in=agent_tr)
+    db.add(card)
+    db.add(pos)
+    db.add(icart_user)
+
+    response = PurchaseOutput(
+        amount=input_data.amount,
+        code=code,
+        merchant_name=merchant.contract.name,
+    )
+
+    await db.commit()
+    return response
