@@ -168,6 +168,9 @@ async def delete_image_file(
         )
         current_user.image_name = None
         current_user.image_version_id = None
+        db.add(current_user)
+        await db.commit()
+
     return ResultResponse(result="Image Deleted Successfully")
 
 
@@ -203,5 +206,7 @@ async def get_background_file(
         )
         current_user.image_background_name = None
         current_user.image_background_version_id = None
+        db.add(current_user)
+        await db.commit()
 
     return ResultResponse(result="Image Deleted Successfully")
