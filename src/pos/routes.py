@@ -5,10 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
+from src.card.exception import CardNotFoundException
 from src.core.config import settings
 from src.core.security import verify_password
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
+from src.merchant.exception import MerchantNotFoundException
 from src.permission import permission_codes as permission
 from src.pos.crud import pos as pos_crud
 from src.transaction.models import TransactionValueType
@@ -368,7 +370,7 @@ async def purchase(
     pos = await pos_crud.find_by_number(db=db, number=input_data.pos_number)
 
     if pos.merchant.number != input_data.merchant_number:
-        raise PosNotFoundException()
+        raise MerchantNotFoundException()
 
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=input_data.card_number)
@@ -376,7 +378,7 @@ async def purchase(
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
-        raise PosNotFoundException()
+        raise CardNotFoundException()
 
     agent = pos.merchant.agent
     merchant = pos.merchant
@@ -393,7 +395,7 @@ async def purchase(
     # * Verify wallet balance
     requester_user = card.wallet.user
     if requester_user.cash.balance < input_data.amount:
-        raise PosNotFoundException()
+        raise LackOfMoneyException()
 
     # * Increase & Decrease wallet
     merchant_user = pos.merchant.user
