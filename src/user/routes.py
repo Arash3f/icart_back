@@ -198,7 +198,7 @@ async def get_background_file(
     res
         result of operation
     """
-    if current_user.image_version_id:
+    if current_user.image_background_version_id:
         minio.client.get_object(
             bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
             object_name=current_user.image_background_name,
