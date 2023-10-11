@@ -26,7 +26,9 @@ def upgrade() -> None:
     op.drop_index("ix_pos_token", table_name="pos")
     op.create_index(op.f("ix_pos_number"), "pos", ["number"], unique=True)
     op.drop_column("pos", "token")
-    # ### end Alembic commands ###
+
+
+1  # ### end Alembic commands ###
 
 
 def downgrade() -> None:
