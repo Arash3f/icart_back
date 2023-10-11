@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.base_crud import BaseCRUD
 from src.pos.exception import (
     PosNotFoundException,
-    PosTokenIsDuplicatedException,
+    PosNumberIsDuplicatedException,
 )
 from src.pos.models import Pos
 from src.pos.schema import PosCreate, PosUpdate
@@ -41,7 +41,7 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
 
         return obj
 
-    async def verify_duplicate_token(self, *, db: AsyncSession, token: str) -> Pos:
+    async def verify_duplicate_number(self, *, db: AsyncSession, number: str) -> Pos:
         """
         ! Verify pos code duplicated
 
@@ -49,8 +49,8 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
         ----------
         db
             Target database connection
-        token
-            Target Item token
+        number
+            Target Item number
 
         Returns
         -------
@@ -61,24 +61,26 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
         ------
         PosTokenIsDuplicatedException
         """
-        response = await db.execute(select(self.model).where(self.model.token == token))
+        response = await db.execute(
+            select(self.model).where(self.model.number == number),
+        )
 
         obj = response.scalar_one_or_none()
         if obj:
-            raise PosTokenIsDuplicatedException()
+            raise PosNumberIsDuplicatedException()
 
         return obj
 
     async def find_by_number(self, *, db: AsyncSession, number: str) -> Pos:
         """
-        ! Verify pos existence by token
+        ! Verify pos existence by number
 
         Parameters
         ----------
         db
             Target database connection
         number
-            Target Item token
+            Target Item number
 
         Returns
         -------

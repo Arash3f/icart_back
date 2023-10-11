@@ -110,7 +110,7 @@ async def create_pos(
     # * Verify merchant existence
     await merchant_crud.verify_existence(db=db, merchant_id=create_data.merchant_id)
     # * Verify pos Token duplicated
-    await pos_crud.verify_duplicate_token(db=db, token=create_data.token)
+    await pos_crud.verify_duplicate_number(db=db, number=create_data.number)
     # * Create Pos
     pos = await pos_crud.create(db=db, obj_in=create_data)
 
@@ -157,8 +157,8 @@ async def update_pos(
     )
     # * Verify pos existence
     obj_current = await pos_crud.verify_existence(db=db, pos_id=update_data.where.id)
-    # * Verify pos token duplicate
-    await pos_crud.verify_duplicate_token(db=db, token=update_data.data.token)
+    # * Verify pos number duplicate
+    await pos_crud.verify_duplicate_number(db=db, number=update_data.data.number)
     # * Update pos
     pos = await pos_crud.update(
         db=db,

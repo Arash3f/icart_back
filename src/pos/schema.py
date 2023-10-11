@@ -8,7 +8,7 @@ from src.schema import IDRequest
 
 # ---------------------------------------------------------------------------
 class PosBase(BaseModel):
-    token: str
+    number: str
 
     # ! Relations
     merchant_id: UUID

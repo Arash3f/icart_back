@@ -20,9 +20,9 @@ class PosNotFoundException(HTTPException):
         self.headers = None
 
 
-class PosTokenIsDuplicatedException(HTTPException):
+class PosNumberIsDuplicatedException(HTTPException):
     """
-    ? Exception when pos's token is duplicated
+    ? Exception when pos's number is duplicated
     """
 
     def __init__(self):
@@ -30,6 +30,6 @@ class PosTokenIsDuplicatedException(HTTPException):
         self.detail = {
             "code": 3001,
             "persian_message": "توکن پوز تکراری است!",
-            "english_message": "Pos Token Is Duplicated!",
+            "english_message": "Pos Number Is Duplicated!",
         }
         self.headers = None
