@@ -324,7 +324,8 @@ async def config(
     card = await card_crud.verify_by_number(db=db, number=card_data.card_number)
 
     # * Verify Card password
-    verify_pass = verify_password(card.password, card_data.password)
+
+    verify_pass = verify_password(card_data.password, card.password)
     if not verify_pass:
         return None
 
@@ -333,7 +334,7 @@ async def config(
         pos_number=pos.number,
         merchant_number=pos.merchant.number,
     )
-
+    print(response)
     return response
 
 
