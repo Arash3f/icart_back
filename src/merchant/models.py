@@ -15,10 +15,15 @@ class Merchant(Base, BaseMixin):
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
-    user = relationship("User", foreign_keys=[user_id], back_populates="merchant")
+    user = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="merchant",
+        lazy="selectin",
+    )
 
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agent.id"))
-    agent = relationship("Agent", foreign_keys=[agent_id])
+    agent = relationship("Agent", foreign_keys=[agent_id], lazy="selectin")
 
     location_id = Column(UUID(as_uuid=True), ForeignKey("location.id"), nullable=True)
     location = relationship(

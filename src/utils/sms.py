@@ -185,5 +185,5 @@ def send_welcome_sms(
         token,
         template,
     )
-    requests.get(url)
+    # requests.get(url)
     return True

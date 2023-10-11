@@ -54,18 +54,18 @@ class BalanceInput(ConfigPosInput):
 
 # ---------------------------------------------------------------------------
 class BalanceOutput(ConfigPosInput):
-    amount: str
+    amount: int
 
 
 # ---------------------------------------------------------------------------
 class PurchaseInput(ConfigPosInput):
     card_number: str
     password: str
-    amount: str
+    amount: int
 
 
 # ---------------------------------------------------------------------------
 class PurchaseOutput(BaseModel):
-    amount: str
+    amount: int
     code: str
     merchant_name: str

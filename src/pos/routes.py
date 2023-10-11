@@ -334,7 +334,6 @@ async def config(
         pos_number=pos.number,
         merchant_number=pos.merchant.number,
     )
-    print(response)
     return response
 
 
@@ -375,9 +374,9 @@ async def purchase(
     card = await card_crud.verify_by_number(db=db, number=input_data.card_number)
 
     # * Verify Card password
-    verify_pass = verify_password(card.password, input_data.password)
+    verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
-        raise None
+        raise PosNotFoundException()
 
     agent = pos.merchant.agent
     merchant = pos.merchant
@@ -394,7 +393,7 @@ async def purchase(
     # * Verify wallet balance
     requester_user = card.wallet.user
     if requester_user.cash.balance < input_data.amount:
-        raise None
+        raise PosNotFoundException()
 
     # * Increase & Decrease wallet
     merchant_user = pos.merchant.user
@@ -409,25 +408,25 @@ async def purchase(
         value=float(input_data.amount),
         text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
-        receiver_id=merchant.user.wallet_id,
-        transferor_id=requester_user.wallet_id,
-        code=code,
+        receiver_id=merchant.user.wallet.id,
+        transferor_id=card.wallet.id,
+        code=str(code),
     )
     icart_tr = TransactionCreate(
         value=float(icart_profit),
         text="سود از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
-        receiver_id=icart_user.wallet_id,
-        transferor_id=merchant.user.wallet_id,
-        code=randint(100000000000, 999999999999),
+        receiver_id=icart_user.wallet.id,
+        transferor_id=merchant.user.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
     )
     agent_tr = TransactionCreate(
         value=float(agent_profit),
         text="سود از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
-        receiver_id=agent.user.wallet_id,
-        transferor_id=merchant.user.wallet_id,
-        code=randint(100000000000, 999999999999),
+        receiver_id=agent.user.wallet.id,
+        transferor_id=merchant.user.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
     )
 
     await transaction_crud.create(db=db, obj_in=user_merchant_tr)
@@ -436,10 +435,12 @@ async def purchase(
     db.add(card)
     db.add(pos)
     db.add(icart_user)
+    db.add(agent)
+    db.add(merchant)
 
     response = PurchaseOutput(
         amount=input_data.amount,
-        code=code,
+        code=str(code),
         merchant_name=merchant.contract.name,
     )
 
