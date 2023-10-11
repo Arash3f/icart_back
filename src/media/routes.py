@@ -8,7 +8,7 @@ from src.capital_transfer.crud import capital_transfer as capital_transfer_crud
 from src.contract.crud import contract as contract_crud
 from src.user.crud import user as user_crud
 from src.core.config import settings
-from src.schema import IDRequest
+from src.schema import IDRequest, ResultResponse
 from src.utils.minio_client import MinioClient
 
 # ---------------------------------------------------------------------------
@@ -48,12 +48,16 @@ async def get_capital_transfer_media(
         capital_transfer_id=capital_transfer.id,
     )
 
-    media_file = minio.client.get_object(
-        bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
-        object_name=obj.file_name,
-        version_id=obj.file_version_id,
-    )
-    return StreamingResponse(io.BytesIO(media_file.read()), media_type="image/png")
+    if obj.file_version_id:
+        media_file = minio.client.get_object(
+            bucket_name=settings.MINIO_CAPITAL_TRANSFER_BUCKET,
+            object_name=obj.file_name,
+            version_id=obj.file_version_id,
+        )
+        return StreamingResponse(io.BytesIO(media_file.read()), media_type="image/png")
+
+    else:
+        return ResultResponse(result="Image Not Found")
 
 
 @router.post(path="/contract/find")
@@ -89,12 +93,16 @@ async def get_contract_media(
         contract_id=contract.id,
     )
 
-    media_file = minio.client.get_object(
-        bucket_name=settings.MINIO_CONTRACT_BUCKET,
-        object_name=obj.file_name,
-        version_id=obj.file_version_id,
-    )
-    return StreamingResponse(io.BytesIO(media_file.read()), media_type="image/png")
+    if obj.file_version_id:
+        media_file = minio.client.get_object(
+            bucket_name=settings.MINIO_CONTRACT_BUCKET,
+            object_name=obj.file_name,
+            version_id=obj.file_version_id,
+        )
+        return StreamingResponse(io.BytesIO(media_file.read()), media_type="image/png")
+
+    else:
+        return ResultResponse(result="Image Not Found")
 
 
 @router.post(path="/user/background/find")
@@ -130,12 +138,19 @@ async def get_background_file(
         user_id=user.id,
     )
 
-    background_file = minio.client.get_object(
-        bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
-        object_name=obj.image_background_name,
-        version_id=obj.image_background_version_id,
-    )
-    return StreamingResponse(io.BytesIO(background_file.read()), media_type="image/png")
+    if obj.image_background_version_id:
+        background_file = minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=obj.image_background_name,
+            version_id=obj.image_background_version_id,
+        )
+        return StreamingResponse(
+            io.BytesIO(background_file.read()),
+            media_type="image/png",
+        )
+
+    else:
+        return ResultResponse(result="Image Not Found")
 
 
 @router.post(path="/user/image/find")
@@ -171,9 +186,12 @@ async def get_image_file(
         user_id=user.id,
     )
 
-    image_file = minio.client.get_object(
-        bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
-        object_name=obj.image_name,
-        version_id=obj.image_version_id,
-    )
-    return StreamingResponse(io.BytesIO(image_file.read()), media_type="image/png")
+    if obj.image_version_id:
+        image_file = minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=obj.image_name,
+            version_id=obj.image_version_id,
+        )
+        return StreamingResponse(io.BytesIO(image_file.read()), media_type="image/png")
+    else:
+        return ResultResponse(result="Image Not Found")
