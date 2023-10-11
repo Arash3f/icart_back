@@ -166,6 +166,8 @@ async def delete_image_file(
             object_name=current_user.image_name,
             version_id=current_user.image_version_id,
         )
+        current_user.image_name = None
+        current_user.image_version_id = None
     return ResultResponse(result="Image Deleted Successfully")
 
 
@@ -199,5 +201,7 @@ async def get_background_file(
             object_name=current_user.image_background_name,
             version_id=current_user.image_background_version_id,
         )
+        current_user.image_background_name = None
+        current_user.image_background_version_id = None
 
     return ResultResponse(result="Image Deleted Successfully")
