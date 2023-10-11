@@ -42,7 +42,7 @@ class PosFilter(BaseModel):
 
 # ---------------------------------------------------------------------------
 class ConfigPosInput(BaseModel):
-    terminal_number: str
+    pos_number: str
     merchant_number: str
 
 
