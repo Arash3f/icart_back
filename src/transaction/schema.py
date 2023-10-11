@@ -30,8 +30,16 @@ class TransactionCreate(TransactionBase):
 
 
 # ---------------------------------------------------------------------------
-class TransactionRead(TransactionCreate):
+class TransactionRead(TransactionBase):
     id: UUID
+    code: str | None = None
+
+    created_at: datetime
+    updated_at: datetime | None
+
+    # ! Relation
+    receiver_id: UUID
+    transferor_id: UUID
 
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,7 @@ from src.permission import permission_codes as permission
 from src.schema import IDRequest
 from src.user.models import User
 from src.wallet.crud import wallet as wallet_crud
+from src.agent.crud import agent as agent_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.merchant.crud import merchant as merchant_crud
 from src.organization.crud import organization as organization_crud
@@ -140,9 +141,10 @@ async def get_organization_additional_info(
 
     merchant_count = 0
     if current_user.role.name == "نماینده":
-        merchant_count = await merchant_crud.get_merchant_users_count(
+        agent = await agent_crud.find_by_user_id(db=db, user_id=current_user.id)
+        merchant_count = await merchant_crud.get_merchant_users_count_by_agent_id(
             db=db,
-            user_id=current_user.id,
+            agent_id=agent.id,
         )
 
     return WalletAdditionalInfo(

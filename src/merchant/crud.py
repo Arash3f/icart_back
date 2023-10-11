@@ -108,21 +108,20 @@ class MerchantCRUD(BaseCRUD[Merchant, None, None]):
 
         return obj
 
-    async def get_merchant_users_count(
+    async def get_merchant_users_count_by_agent_id(
         self,
         *,
         db: AsyncSession,
-        user_id: UUID,
+        agent_id: UUID,
     ) -> bool:
-        merchent = await self.find_by_user_id(db=db, user_id=user_id)
-        merchent_users = await db.execute(
+        response = await db.execute(
             select(func.count())
-            .select_from(User)
+            .select_from(Merchant)
             .where(
-                User.merchant == merchent,
+                Merchant.agent_id == agent_id,
             ),
         )
-        merchent_users_count = merchent_users.scalar()
+        merchent_users_count = response.scalar()
 
         return merchent_users_count
 
