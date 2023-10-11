@@ -26,13 +26,6 @@ def upgrade() -> None:
     op.drop_index("ix_pos_token", table_name="pos")
     op.create_index(op.f("ix_pos_number"), "pos", ["number"], unique=True)
     op.drop_column("pos", "token")
-
-    field_of_work = postgresql.ENUM(FieldOfWorkType, name="fieldofworktype")
-    field_of_work.create(op.get_bind(), checkfirst=True)
-    op.add_column(
-        "position_request",
-        sa.Column("field_of_work", field_of_work, nullable=True),
-    )
     # ### end Alembic commands ###
 
 
