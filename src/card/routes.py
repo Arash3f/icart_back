@@ -243,6 +243,30 @@ async def get_manage_chart(
 
     # ? calculate durations
     buf_time = start
+    buf_cash = current_user.cash.balance
+    buf_credit = current_user.credit.balance
+
+    query = (
+        select(Transaction.value_type, func.sum(Transaction.value))
+        .select_from(Transaction)
+        .filter(
+            and_(
+                Transaction.transferor_id == current_user.wallet.id,
+                Transaction.created_at >= start,
+            ),
+        )
+        .group_by(Transaction.value_type)
+    )
+    res = await db.execute(
+        query,
+    )
+    buf_data_list = res.all()
+    for data in buf_data_list:
+        if data[0].value == "CASH":
+            buf_cash -= data[1]
+        else:
+            buf_credit -= data[1]
+
     while buf_time < end:
         buf_end = buf_time + timedelta(
             days=unit,
@@ -268,13 +292,26 @@ async def get_manage_chart(
             query,
         )
         data_list = response.all()
+        cash_obj = ChartTypeResponse(
+            duration=duration,
+            type="CASH",
+            value=0,
+        )
+        credit_obj = ChartTypeResponse(
+            duration=duration,
+            type="CREDIT",
+            value=0,
+        )
         for data in data_list:
-            obj = ChartTypeResponse(
-                duration=duration,
-                type=data[0].value,
-                value=data[1],
-            )
-            chart_data.append(obj)
+            if data[0].value == "CASH":
+                buf_cash += data[1]
+                cash_obj.value += data[1]
+            else:
+                buf_credit += data[1]
+                credit_obj.value += data[1]
+
+        chart_data.append(credit_obj)
+        chart_data.append(cash_obj)
 
         buf_time = buf_end
     return chart_data
