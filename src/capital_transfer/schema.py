@@ -5,7 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.capital_transfer.models import CapitalTransferEnum
+from src.capital_transfer.models import CapitalTransferEnum, CapitalTransferStatusEnum
+from src.schema import IDRequest
 
 
 # ---------------------------------------------------------------------------
@@ -38,6 +39,7 @@ class CapitalTransferRead(CapitalTransferBase):
     id: uuid.UUID
     code: int
     finish: bool
+    status: CapitalTransferStatusEnum
 
     created_at: datetime
     updated_at: datetime | None
@@ -64,4 +66,11 @@ class CapitalTransferFilter(BaseModel):
     receiver_id: None | UUID = None
     finish: None | bool = None
     code: None | str = None
+    status: CapitalTransferStatusEnum | None = None
     order_by: CapitalTransferFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class CapitalTransferApprove(BaseModel):
+    where: IDRequest
+    approve: bool

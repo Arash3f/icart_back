@@ -14,12 +14,17 @@ from src import deps
 from src.auth.exception import AccessDeniedException
 from src.capital_transfer.crud import capital_transfer as capital_transfer_crud
 from src.capital_transfer.exception import CapitalTransferFinishException
-from src.capital_transfer.models import CapitalTransfer, CapitalTransferEnum
+from src.capital_transfer.models import (
+    CapitalTransfer,
+    CapitalTransferEnum,
+    CapitalTransferStatusEnum,
+)
 from src.capital_transfer.schema import (
     CapitalTransferCreate,
     CapitalTransferRead,
     CapitalTransferFilter,
     CapitalTransferFilterOrderFild,
+    CapitalTransferApprove,
 )
 from src.core.config import settings
 from src.permission import permission_codes as permission
@@ -133,6 +138,9 @@ async def read_capital_transfer(
     filter_data.finish = (
         (CapitalTransfer.finish == filter_data.finish) if filter_data.finish else True
     )
+    filter_data.status = (
+        (CapitalTransfer.status == filter_data.status) if filter_data.status else True
+    )
     filter_data.receiver_id = (
         (CapitalTransfer.receiver_id == filter_data.receiver_id)
         if filter_data.receiver_id
@@ -148,6 +156,7 @@ async def read_capital_transfer(
             filter_data.code,
             filter_data.finish,
             filter_data.receiver_id,
+            filter_data.status,
         ),
     )
     # * Prepare order fields
@@ -245,7 +254,7 @@ async def create_capital_transfer(
 async def approve_capital_transfer(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    obj_data: IDRequest,
+    obj_data: CapitalTransferApprove,
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.APPROVE_CAPITAL_TRANSFER]),
     ),
@@ -258,7 +267,7 @@ async def approve_capital_transfer(
     db
         Target database connection
     obj_data
-        Capital transfer item
+        Capital transfer id and approve value
     current_user
         Requester User
 
@@ -275,38 +284,43 @@ async def approve_capital_transfer(
     # ? Verify capital_transfer existence
     obj_current = await capital_transfer_crud.verify_existence(
         db=db,
-        capital_transfer_id=obj_data.id,
+        capital_transfer_id=obj_data.where.id,
     )
 
     if obj_current.finish:
         raise CapitalTransferFinishException()
 
-    receiver_wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
-    admin_user = await user_crud.verify_existence_by_username(
-        db=db,
-        username=settings.ADMIN_USERNAME,
-    )
+    if not obj_data.approve:
+        obj_current.finish = True
+        obj_current.status = CapitalTransferStatusEnum.FAILED
 
-    # * Update capital transfer
-    obj_current.finish = True
-    if obj_current.transfer_type == CapitalTransferEnum.Credit:
-        tr_type = TransactionValueType.CREDIT
-        receiver_wallet.credit_balance += obj_current.value
-    elif obj_current.transfer_type == CapitalTransferEnum.Cash:
-        tr_type = TransactionValueType.CASH
-        receiver_wallet.cash_balance += obj_current.value
-    # ? Create Transaction
-    transaction_create = Transaction(
-        value=obj_current.value,
-        receiver_id=obj_current.receiver_id,
-        transferor_id=admin_user.wallet.id,
-        value_type=tr_type,
-        text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
-        capital_transfer=obj_current,
-    )
+    else:
+        receiver_wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
+        admin_user = await user_crud.verify_existence_by_username(
+            db=db,
+            username=settings.ADMIN_USERNAME,
+        )
 
-    db.add(transaction_create)
-    db.add(receiver_wallet)
+        # * Update capital transfer
+        obj_current.finish = True
+        if obj_current.transfer_type == CapitalTransferEnum.Credit:
+            tr_type = TransactionValueType.CREDIT
+            receiver_wallet.credit_balance += obj_current.value
+        elif obj_current.transfer_type == CapitalTransferEnum.Cash:
+            tr_type = TransactionValueType.CASH
+            receiver_wallet.cash_balance += obj_current.value
+        # ? Create Transaction
+        transaction_create = Transaction(
+            value=obj_current.value,
+            receiver_id=obj_current.receiver_id,
+            transferor_id=admin_user.wallet.id,
+            value_type=tr_type,
+            text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
+            capital_transfer=obj_current,
+        )
+        db.add(transaction_create)
+        db.add(receiver_wallet)
+
     db.add(obj_current)
     await db.commit()
     await db.refresh(obj_current)

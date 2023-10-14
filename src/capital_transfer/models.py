@@ -23,6 +23,13 @@ class CapitalTransferEnum(enum.Enum):
 
 
 # ---------------------------------------------------------------------------
+class CapitalTransferStatusEnum(enum.Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    FAILED = "FAILED"
+    ACCEPTED = "ACCEPTED"
+
+
+# ---------------------------------------------------------------------------
 class CapitalTransfer(Base, BaseMixin):
     __tablename__ = "capital_transfer"
 
@@ -30,6 +37,11 @@ class CapitalTransfer(Base, BaseMixin):
     transfer_type = Column(Enum(CapitalTransferEnum))
     finish = Column(Boolean, default=False)
     code = Column(Integer, unique=True, index=True, nullable=True)
+    status = Column(
+        Enum(CapitalTransferStatusEnum),
+        nullable=False,
+        default=CapitalTransferStatusEnum.IN_PROGRESS,
+    )
 
     file_version_id = Column(String, nullable=True)
     file_name = Column(String, nullable=True)
