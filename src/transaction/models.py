@@ -11,6 +11,12 @@ class TransactionValueType(enum.Enum):
     CREDIT = "CREDIT"
 
 
+class TransactionReasonEnum(enum.Enum):
+    WALLET_CHARGING = "WALLET_CHARGING"
+    PROFIT = "PROFIT"
+    PURCHASE = "PURCHASE"
+
+
 # ---------------------------------------------------------------------------
 class Transaction(Base, BaseMixin):
     __tablename__ = "transaction"
@@ -19,6 +25,7 @@ class Transaction(Base, BaseMixin):
     text = Column(String, nullable=False)
     value_type = Column(Enum(TransactionValueType), nullable=False)
     code = Column(String, nullable=True)
+    reason = Column(Enum(TransactionReasonEnum), nullable=True)
 
     # ! Relations
     receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)

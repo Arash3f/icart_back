@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from src.schema import Duration
-from src.transaction.models import TransactionValueType
+from src.transaction.models import TransactionValueType, TransactionReasonEnum
 
 
 class TransactionChartType(enum.Enum):
@@ -33,6 +33,7 @@ class TransactionCreate(TransactionBase):
 class TransactionRead(TransactionBase):
     id: UUID
     code: str | None = None
+    reason: TransactionReasonEnum | None
 
     created_at: datetime
     updated_at: datetime | None
@@ -49,6 +50,7 @@ class TransactionFilter(BaseModel):
     value_type: TransactionValueType | None = None
     gt_created_date: datetime | None = None
     lt_created_date: datetime | None = None
+    reason: TransactionReasonEnum | None = None
 
 
 # ---------------------------------------------------------------------------

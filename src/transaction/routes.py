@@ -75,6 +75,9 @@ async def read_transaction_list(
         if filter_data.value_type
         else True
     )
+    filter_data.reason = (
+        (Transaction.reason == filter_data.reason) if filter_data.reason else True
+    )
     filter_data.gt_created_date = (
         (Transaction.created_at >= filter_data.gt_created_date)
         if filter_data.gt_created_date
@@ -100,6 +103,7 @@ async def read_transaction_list(
                 filter_data.gt_created_date,
                 filter_data.lt_created_date,
             ),
+            filter_data.reason,
         ),
     )
 

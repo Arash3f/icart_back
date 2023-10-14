@@ -13,7 +13,7 @@ from src.card.crud import card as card_crud
 from src.merchant.exception import MerchantNotFoundException
 from src.permission import permission_codes as permission
 from src.pos.crud import pos as pos_crud
-from src.transaction.models import TransactionValueType
+from src.transaction.models import TransactionValueType, TransactionReasonEnum
 from src.transaction.schema import TransactionCreate
 from src.user.crud import user as user_crud
 from src.transaction.crud import transaction as transaction_crud
@@ -413,6 +413,7 @@ async def purchase(
         receiver_id=merchant.user.wallet.id,
         transferor_id=card.wallet.id,
         code=str(code),
+        reason=TransactionReasonEnum.PURCHASE,
     )
     icart_tr = TransactionCreate(
         value=float(icart_profit),
@@ -421,6 +422,7 @@ async def purchase(
         receiver_id=icart_user.wallet.id,
         transferor_id=merchant.user.wallet.id,
         code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.PROFIT,
     )
     agent_tr = TransactionCreate(
         value=float(agent_profit),
@@ -429,6 +431,7 @@ async def purchase(
         receiver_id=agent.user.wallet.id,
         transferor_id=merchant.user.wallet.id,
         code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.PROFIT,
     )
 
     await transaction_crud.create(db=db, obj_in=user_merchant_tr)
