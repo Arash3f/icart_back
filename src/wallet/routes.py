@@ -12,7 +12,7 @@ from src.agent.crud import agent as agent_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.merchant.crud import merchant as merchant_crud
 from src.organization.crud import organization as organization_crud
-from src.wallet.schema import WalletRead, WalletAdditionalInfo
+from src.wallet.schema import WalletRead, WalletAdditionalInfo, WalletBalanceRead
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/wallet", tags=["wallet"])
@@ -114,6 +114,34 @@ async def get_my_wallet(
     # * Verify wallet existence
     wallet = await wallet_crud.verify_by_user_id(db=db, user_id=current_user.id)
     return wallet
+
+
+# ---------------------------------------------------------------------------
+@router.get(path="/my/balance", response_model=WalletBalanceRead)
+async def get_my_wallet(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+) -> WalletBalanceRead:
+    """
+    ! Get My Wallet balance
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+
+    Returns
+    -------
+    wallet
+        my wallet balance
+    """
+    return WalletBalanceRead(
+        cash_balance=current_user.cash.balance,
+        credit_balance=current_user.credit.balance,
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -35,6 +35,12 @@ class WalletRead(WalletBase):
 
 
 # ---------------------------------------------------------------------------
+class WalletBalanceRead(BaseModel):
+    cash_balance: int
+    credit_balance: int
+
+
+# ---------------------------------------------------------------------------
 class WalletInitCreate(WalletBase):
     number: str
     user_id: UUID | None
