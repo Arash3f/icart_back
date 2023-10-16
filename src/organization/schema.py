@@ -1,4 +1,6 @@
 import uuid
+from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -42,3 +44,22 @@ class OrganizationRead(BaseModel):
 # ---------------------------------------------------------------------------
 class OrganizationReadWithUser(OrganizationRead):
     user: UserRead
+
+
+# ---------------------------------------------------------------------------
+class OrganizationFilterOrderFild(Enum):
+    agent_id = "agent_id"
+
+
+# ---------------------------------------------------------------------------
+class OrganizationFilterOrderBy(BaseModel):
+    desc: list[OrganizationFilterOrderFild] = []
+    asc: list[OrganizationFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class OrganizationFilter(BaseModel):
+    location_id: None | UUID = None
+    user_id: None | UUID = None
+    agent_id: None | UUID = None
+    order_by: OrganizationFilterOrderBy | None = None
