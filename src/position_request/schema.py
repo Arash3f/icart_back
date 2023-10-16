@@ -17,7 +17,7 @@ from src.position_request.models import (
 # ---------------------------------------------------------------------------
 class PositionRequestBase(BaseModel):
     is_approve: bool
-    field_of_work: str | None
+    field_of_work: FieldOfWorkType | None
     postal_code: str | None
     tel: str | None
     address: str | None

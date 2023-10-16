@@ -415,7 +415,7 @@ async def list_position_request(
         (PositionRequest.status == filter_data.status) if filter_data.status else True
     )
     filter_data.number = (
-        (PositionRequest.number.conyains(filter_data.number))
+        (PositionRequest.contract.number.contains(filter_data.number))
         if filter_data.number
         else True
     )
