@@ -2,10 +2,12 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select, and_
 
 from src import deps
 from src.merchant.crud import merchant as merchant_crud
-from src.merchant.schema import MerchantRead
+from src.merchant.models import Merchant
+from src.merchant.schema import MerchantRead, MerchantFilter, MerchantFilterOrderFild
 from src.user.models import User
 
 # ---------------------------------------------------------------------------
@@ -54,6 +56,7 @@ async def get_merchant_list(
     db=Depends(deps.get_db),
     skip: int = 0,
     limit: int = 20,
+    filter_data: MerchantFilter,
 ) -> List[MerchantRead]:
     """
     ! Get All Merchant
@@ -66,12 +69,47 @@ async def get_merchant_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     obj_list
         List of merchants
     """
+    # * Prepare filter fields
+    filter_data.location_id = (
+        (Merchant.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True
+    )
+    filter_data.selling_type = (
+        (Merchant.selling_type == filter_data.selling_type)
+        if filter_data.selling_type
+        else True
+    )
+
+    # * Add filter fields
+    query = select(Merchant).filter(
+        and_(
+            filter_data.location_id,
+            filter_data.selling_type,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == MerchantFilterOrderFild.created_at:
+                query = query.order_by(Merchant.created_at.desc())
+            # elif field == MerchantFilterOrderFild.name:
+            #     query = query.order_by(Merchant.name.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == MerchantFilterOrderFild.created_at:
+                query = query.order_by(Merchant.created_at.asc())
+            # elif field == MerchantFilterOrderFild.name:
+            #     query = query.order_by(Merchant.name.asc())
     obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
     return obj_list
 
