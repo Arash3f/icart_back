@@ -16,6 +16,7 @@ from src.ability.schema import (
 from src.agent.crud import agent as agent_crud
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
+from src.permission import permission_codes as permission
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/ability", tags=["ability"])
@@ -26,7 +27,9 @@ router = APIRouter(prefix="/ability", tags=["ability"])
 async def delete_ability(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.DELETE_ABILITY]),
+    ),
     delete_data: IDRequest,
 ) -> DeleteResponse:
     """
@@ -65,7 +68,9 @@ async def delete_ability(
 async def create_ability(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.CREATE_ABILITY]),
+    ),
     create_data: AbilityCreate,
 ) -> AbilityRead:
     """
@@ -104,7 +109,9 @@ async def create_ability(
 async def update_ability(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_ABILITY]),
+    ),
     update_data: AbilityUpdate,
 ) -> AbilityRead:
     """

@@ -21,6 +21,13 @@ class PositionRequestStatusType(enum.Enum):
 
 
 # ---------------------------------------------------------------------------
+class SellingType(enum.Enum):
+    CASH = "CASH"
+    CREDIT = "CREDIT"
+    BOTH = "BOTH"
+
+
+# ---------------------------------------------------------------------------
 class FieldOfWorkType(enum.Enum):
     MOBILE_STORE = "MOBILE_STORE"
     AUDIO_AND_VIDEO_PRODUCT_STORE = "AUDIO_AND_VIDEO_PRODUCT_STORE"
@@ -51,6 +58,7 @@ class FieldOfWorkType(enum.Enum):
     CAR_REPAIRS = "CAR_REPAIRS"
     PHARMACY = "PHARMACY"
     EDUCATIONAL_SERVICES = "EDUCATIONAL_SERVICES"
+    HOME_APPLIANCES = "HOME_APPLIANCES"
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +73,7 @@ class PositionRequest(Base, BaseMixin):
     employee_count = Column(Integer, nullable=True)
     is_approve = Column(Boolean, default=False)
     target_position = Column(Enum(PositionRequestType))
+    selling_type = Column(Enum(SellingType), nullable=True)
     status = Column(
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,

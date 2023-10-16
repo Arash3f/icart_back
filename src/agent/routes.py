@@ -18,6 +18,7 @@ from src.agent.schema import (
 from src.schema import IDRequest
 from src.transaction.models import Transaction
 from src.user.models import User
+from src.permission import permission_codes as permission
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/agent", tags=["agent"])
@@ -28,7 +29,9 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 async def update_agent(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_AGENT]),
+    ),
     update_data: AgentUpdate,
 ) -> AgentRead:
     """
@@ -82,7 +85,9 @@ async def update_agent(
 async def find_agent(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_AGENT]),
+    ),
     obj_data: IDRequest,
 ) -> AgentRead:
     """

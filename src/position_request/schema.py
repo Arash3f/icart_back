@@ -10,6 +10,7 @@ from src.position_request.models import (
     PositionRequestStatusType,
     PositionRequestType,
     FieldOfWorkType,
+    SellingType,
 )
 
 
@@ -21,6 +22,7 @@ class PositionRequestBase(BaseModel):
     tel: str | None
     address: str | None
     employee_count: int | None
+    selling_type: SellingType | None
     target_position: PositionRequestType
     model_config = ConfigDict(extra="forbid")
 

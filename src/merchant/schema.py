@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.contract.schema import ContractBase
 from src.location.schema import LocationRead
-from src.position_request.models import FieldOfWorkType
+from src.position_request.models import FieldOfWorkType, SellingType
 from src.user.schema import UserRead
 
 
@@ -14,6 +14,7 @@ class MerchantBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     number: str
     field_of_work: FieldOfWorkType | None
+    selling_type: SellingType
 
 
 # ---------------------------------------------------------------------------
