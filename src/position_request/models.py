@@ -24,6 +24,7 @@ class PositionRequestStatusType(enum.Enum):
 class SellingType(enum.Enum):
     CASH = "CASH"
     CREDIT = "CREDIT"
+    INSTALLMENT = "INSTALLMENT"
     BOTH = "BOTH"
 
 
