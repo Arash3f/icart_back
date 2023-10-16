@@ -1,10 +1,11 @@
-from sqlalchemy import UUID, Column, ForeignKey, String
+from sqlalchemy import UUID, Column, ForeignKey, String, Enum
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
 from src.database.base_class import Base, BaseMixin
 from src.invoice.models import Invoice
 from src.pos.models import Pos
+from src.position_request.models import FieldOfWorkType
 
 
 # ---------------------------------------------------------------------------
@@ -12,6 +13,7 @@ class Merchant(Base, BaseMixin):
     __tablename__ = "merchant"
 
     number = Column(String, index=True, unique=True, nullable=False)
+    field_of_work = Column(Enum(FieldOfWorkType), nullable=True)
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))

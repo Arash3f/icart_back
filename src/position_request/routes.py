@@ -288,6 +288,7 @@ async def update_position_request(
                 elif obj_current.target_position == PositionRequestType.MERCHANT:
                     new_merchant = Merchant()
                     new_merchant.user_id = obj_current.requester_user_id
+                    new_merchant.field_of_work = obj_current.field_of_work
                     new_merchant.agent.user_id = parent_agent
                     new_merchant.location = location
                     new_merchant.contract = obj_current.contract
