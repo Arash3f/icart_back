@@ -33,6 +33,7 @@ from src.position_request.models import (
     PositionRequestStatusType,
     PositionRequestType,
     FieldOfWorkType,
+    SellingType,
 )
 from src.position_request.schema import (
     PositionRequestRead,
@@ -62,6 +63,7 @@ async def create_position_request(
     location_id: Annotated[UUID, Form()],
     number: Annotated[str, Form()],
     field_of_work: Annotated[FieldOfWorkType | None, Form()] = None,
+    selling_type: Annotated[SellingType | None, Form()] = None,
     postal_code: Annotated[str, Form()],
     tel: Annotated[str, Form()],
     address: Annotated[str, Form()],
@@ -89,6 +91,7 @@ async def create_position_request(
     minio
     target_position
     location_id
+    selling_type
     number
     name
     signatory_name
@@ -166,6 +169,7 @@ async def create_position_request(
     position_request.location_id = location.id
     position_request.requester_user_id = requester_user.id
     position_request.creator_id = current_user.id
+    position_request.selling_type = selling_type
     position_request.name = name
     position_request.creator_id = current_user.id
     position_request.field_of_work = field_of_work
