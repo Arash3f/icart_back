@@ -16,7 +16,7 @@ from src.database.base_class import Base, BaseMixin
 
 class CardEnum(enum.Enum):
     CREDIT = "CREDIT"
-    SILVER = "CREDIT"
+    SILVER = "SILVER"
     GOLD = "GOLD"
     BLUE = "BLUE"
     PLATINUM = "PLATINUM"

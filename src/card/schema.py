@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -35,8 +36,7 @@ class CardUpdatePassword(BaseModel):
 class CardRead(CardBase):
     id: UUID
 
-    # ! Relation
-    wallet: WalletRead
+    created_at: datetime
 
 
 # ---------------------------------------------------------------------------
@@ -48,3 +48,22 @@ class CardDynamicPasswordOutput(BaseModel):
 # ---------------------------------------------------------------------------
 class CardDynamicPasswordInput(BaseModel):
     number: str
+
+
+# ---------------------------------------------------------------------------
+class CardFilterOrderFild(Enum):
+    number = "number"
+
+
+# ---------------------------------------------------------------------------
+class CardFilterOrderBy(BaseModel):
+    desc: list[CardFilterOrderFild] = []
+    asc: list[CardFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class CardFilter(BaseModel):
+    number: None | str = None
+    type: None | CardEnum = None
+    user_id: None | UUID = None
+    order_by: CardFilterOrderBy | None = None

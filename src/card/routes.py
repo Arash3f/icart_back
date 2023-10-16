@@ -9,11 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.card.crud import card as card_crud
+from src.user.crud import user as user_crud
 from src.card.models import Card
 from src.card.schema import (
     CardDynamicPasswordInput,
     CardRead,
     CardUpdatePassword,
+    CardFilter,
+    CardFilterOrderFild,
 )
 from src.core.config import settings
 from src.core.security import hash_password, pwd_context
@@ -90,8 +93,9 @@ async def read_card_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
-        deps.is_user_have_permission([permission.VIEW_TICKET]),
+        deps.is_user_have_permission([permission.VIEW_CARD]),
     ),
+    filter_data: CardFilter,
     skip: int = 0,
     limit: int = 10,
 ) -> list[CardRead]:
@@ -108,13 +112,51 @@ async def read_card_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     card_list
         List of card
+
+    Raises
+    ------
+    UserNotFoundException
     """
-    query = select(Card)
+    # * Prepare filter fields
+    filter_data.number = (
+        (Card.number.contains(filter_data.number)) if filter_data.number else True
+    )
+    filter_data.type = (Card.type == filter_data.type) if filter_data.type else True
+    if filter_data.user_id:
+        filter_user = await user_crud.verify_existence(
+            db=db,
+            user_id=filter_data.user_id,
+        )
+        filter_data.user_id = Card.wallet_id == filter_user.wallet.id
+    else:
+        filter_data.user_id = True
+
+    # * Add filter fields
+    query = select(Card).filter(
+        and_(
+            filter_data.number,
+            filter_data.type,
+            filter_data.user_id,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == CardFilterOrderFild.number:
+                query = query.order_by(Card.number.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == CardFilterOrderFild.number:
+                query = query.order_by(Card.number.asc())
+
     # * Have permissions
     if not verify_data.is_valid:
         query.where(Card.wallet_id == verify_data.user.wallet.id)
