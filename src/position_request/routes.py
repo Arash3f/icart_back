@@ -414,11 +414,11 @@ async def list_position_request(
     filter_data.status = (
         (PositionRequest.status == filter_data.status) if filter_data.status else True
     )
-    filter_data.number = (
-        (PositionRequest.contract.number.contains(filter_data.number))
-        if filter_data.number
-        else True
-    )
+    # filter_data.number = (
+    #     (PositionRequest.contract.number.contains(filter_data.number))
+    #     if filter_data.number
+    #     else True
+    # )
 
     # * Add filter fields
     query = select(PositionRequest).filter(
@@ -427,7 +427,7 @@ async def list_position_request(
             filter_data.target_position,
             filter_data.is_approve,
             filter_data.status,
-            filter_data.number,
+            # filter_data.number,
         ),
     )
     # * Prepare order fields

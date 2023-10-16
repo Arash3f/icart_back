@@ -50,7 +50,7 @@ async def get_merchant(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[MerchantRead])
+@router.post(path="/list", response_model=List[MerchantRead])
 async def get_merchant_list(
     *,
     db=Depends(deps.get_db),
