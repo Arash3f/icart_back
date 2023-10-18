@@ -49,7 +49,7 @@ class TerminalCRUD(BaseCRUD[Terminal, None, None]):
         terminal_number: str,
     ) -> Type[Terminal]:
         """
-        ! Verify terminal Existence
+        ! Verify terminal by number
 
         Parameters
         ----------
@@ -74,6 +74,35 @@ class TerminalCRUD(BaseCRUD[Terminal, None, None]):
         obj = response.scalar_one_or_none()
         if not obj:
             raise TerminalNotFoundException()
+
+        return obj
+
+    async def find_by_number(
+        self,
+        *,
+        db: AsyncSession,
+        terminal_number: str,
+    ) -> Type[Terminal] | None:
+        """
+        ! find terminal by number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        terminal_number
+            Target terminal's number
+
+        Returns
+        -------
+        response
+            Found Item
+        """
+        response = await db.execute(
+            select(self.model).where(Terminal.number == terminal_number),
+        )
+
+        obj = response.scalar_one_or_none()
 
         return obj
 

@@ -22,7 +22,6 @@ class Invoice(Base, BaseMixin):
     type = Column(Enum(InvoiceTypeEnum), nullable=False)
 
     # ! Relations
-
     parent_id = Column(UUID(as_uuid=True), ForeignKey("invoice.id"), nullable=True)
     parent = relationship("Invoice", foreign_keys=[parent_id], back_populates="child")
 
@@ -33,12 +32,15 @@ class Invoice(Base, BaseMixin):
         remote_side="Invoice.id",
     )
 
-    merchant_id = Column(UUID(as_uuid=True), ForeignKey("merchant.id"), nullable=False)
-    merchant = relationship(
-        "Merchant",
-        foreign_keys=[merchant_id],
-        back_populates="invoices",
-        lazy="selectin",
+    installments_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("installments.id"),
+        nullable=False,
+    )
+    installments = relationship(
+        "Installments",
+        foreign_keys=[installments_id],
+        back_populates="invoice",
     )
 
     terminals = relationship(Terminal, back_populates="invoice")

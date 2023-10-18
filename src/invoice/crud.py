@@ -135,7 +135,7 @@ class InvoiceCRUD(BaseCRUD[Invoice, InvoiceCreate, None]):
         ------
         InvoiceNotFoundException
         """
-        q1 = Invoice.merchant.user_id == user_id
+        q1 = Invoice.installments.merchant.user_id == user_id
         q2 = Invoice.number == invoice_number
         response = await db.execute(select(Invoice).where(and_(q1, q2)))
 

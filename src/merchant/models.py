@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
 from src.database.base_class import Base, BaseMixin
+from src.installments.models import Installments
 from src.invoice.models import Invoice
 from src.pos.models import Pos
 from src.position_request.models import FieldOfWorkType, SellingType
@@ -43,6 +44,6 @@ class Merchant(Base, BaseMixin):
         lazy="selectin",
     )
 
-    invoices = relationship(Invoice, back_populates="merchant")
+    installments = relationship(Installments, back_populates="merchant")
 
     poses = relationship(Pos, back_populates="merchant")

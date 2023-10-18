@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select, and_, func
+from sqlalchemy import select, and_, func
 
 from src import deps
 from src.ability.crud import ability as ability_crud
@@ -118,7 +118,7 @@ async def find_agent(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[AgentRead])
+@router.post(path="/list", response_model=List[AgentRead])
 async def get_agent_list(
     *,
     db=Depends(deps.get_db),
@@ -150,12 +150,11 @@ async def get_agent_list(
     """
     # * Prepare filter fields
     filter_data.is_main = (
-        (Agent.is_main == filter_data.name) if filter_data.is_main else False
+        (Agent.is_main == True) if filter_data.is_main is not None else True
     )
     # * Add filter fields
     query = select(Agent).filter(
-        or_(
-            filter_data.return_all,
+        and_(
             filter_data.is_main,
         ),
     )

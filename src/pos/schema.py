@@ -7,9 +7,9 @@ from pydantic import BaseModel, ConfigDict
 from src.schema import IDRequest
 
 
-class PosTransactionType(enum.Enum):
-    NORMAL = "NORMAL"
-    INSTALMENT = "INSTALMENT"
+class PosPurchaseType(enum.Enum):
+    DIRECT = "DIRECT"
+    CREDIT = "CREDIT"
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +75,7 @@ class PurchaseInput(ConfigPosInput):
     merchant_number: str
     terminal_number: str
     amount: int
-    type: PosTransactionType
+    type: PosPurchaseType
 
 
 # ---------------------------------------------------------------------------

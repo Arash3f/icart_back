@@ -137,4 +137,9 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند درخواست های کاربران را ویرایش کند",
         code=permission.UPDATE_USER_REQUEST,
     ),
+    # ! VIEW_INSTALLMENTS
+    PermissionCreate(
+        name="می تواند اقساط را ببیند",
+        code=permission.VIEW_INSTALLMENTS,
+    ),
 ]

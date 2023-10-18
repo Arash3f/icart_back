@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select
+from sqlalchemy import select, and_
 
 from src import deps
 from src.ability.crud import ability as ability_crud
@@ -226,12 +226,11 @@ async def read_ability_list(
     """
     # * Prepare filter fields
     filter_data.name = (
-        Ability.name.contains(filter_data.name) if filter_data.name else False
+        Ability.name.contains(filter_data.name) if filter_data.name else True
     )
     # * Add filter fields
     query = select(Ability).filter(
-        or_(
-            filter_data.return_all,
+        and_(
             filter_data.name,
         ),
     )

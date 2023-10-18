@@ -111,3 +111,5 @@ VIEW_CARD = 290
 VIEW_USER_REQUEST = 300
 APPROVE_USER_REQUEST = 301
 UPDATE_USER_REQUEST = 302
+# ---------------------------------------------------------------------------
+VIEW_INSTALLMENTS = 310

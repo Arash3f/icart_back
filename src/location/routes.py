@@ -193,7 +193,7 @@ async def get_location(
     """
     # * Prepare filter fields
     filter_data.is_main = (
-        (Location.parent_id.is_(None)) if filter_data.is_main else True
+        (Location.parent_id.is_(None)) if filter_data.is_main is not None else True
     )
     filter_data.parent_id = (
         (Location.parent_id == filter_data.parent_id) if filter_data.parent_id else True

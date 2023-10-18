@@ -15,6 +15,7 @@ class TransactionReasonEnum(enum.Enum):
     WALLET_CHARGING = "WALLET_CHARGING"
     PROFIT = "PROFIT"
     PURCHASE = "PURCHASE"
+    FEE = "FEE"
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +40,12 @@ class Transaction(Base, BaseMixin):
         "Wallet",
         foreign_keys=[intermediary_id],
         lazy="selectin",
+    )
+
+    installments = relationship(
+        "Installments",
+        uselist=False,
+        back_populates="transaction",
     )
 
     capital_transfer = relationship(

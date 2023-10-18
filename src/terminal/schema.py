@@ -1,9 +1,7 @@
 from uuid import UUID
-
 from pydantic import BaseModel
 
 from src.invoice.schema import InvoiceRead
-from src.transaction.models import TransactionEnum
 
 
 # ---------------------------------------------------------------------------
@@ -31,16 +29,3 @@ class TerminalVerifyOutput(TerminalBase):
 
     # ! Relation
     invoice: InvoiceRead
-
-
-# ---------------------------------------------------------------------------
-class GenerateTerminalOutput(BaseModel):
-    terminal_token: str
-
-
-# ---------------------------------------------------------------------------
-class GenerateTerminalInput(BaseModel):
-    merchant_token: str
-    invoice_number: int
-    value: int
-    type: TransactionEnum

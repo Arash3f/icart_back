@@ -28,3 +28,4 @@ from src.user_crypto.models import UserCrypto
 from src.crypto.models import Crypto
 from src.cash.models import Cash
 from src.user_request.models import UserRequest
+from src.installments.models import Installments

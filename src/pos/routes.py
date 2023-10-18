@@ -31,9 +31,11 @@ from src.pos.schema import (
     PurchaseInput,
     PurchaseOutput,
     ConfigPosOutput,
+    PosPurchaseType,
 )
 from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
+from src.wallet.exception import LackOfMoneyException
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/pos", tags=["pos"])
@@ -348,8 +350,7 @@ async def purchase(
     input_data: PurchaseInput,
 ) -> PurchaseOutput:
     """
-    ! Config Pos
-    todo: add INSTALMENT transaction
+    ! purchase request
 
     Parameters
     ----------
@@ -392,18 +393,38 @@ async def purchase(
         username=settings.ADMIN_USERNAME,
     )
 
+    # * Calculate Fee
+    fee_value = 0
+
     # * Verify wallet balance
     requester_user = card.wallet.user
-    if requester_user.cash.balance < input_data.amount:
-        raise LackOfMoneyException()
-
-    # * Increase & Decrease wallet
     merchant_user = pos.merchant.user
+    if input_data.type == PosPurchaseType.DIRECT:
+        # ! + Verify Fee
+        if requester_user.cash.balance < input_data.amount + fee_value:
+            raise LackOfMoneyException()
+        # * Increase & Decrease wallet
+        requester_user.cash.balance = (
+            requester_user.cash.balance - input_data.amount - fee_value
+        )
+        merchant_user.cash.balance = merchant_user.cash.balance + merchant_profit
+        agent.user.cash.balance = agent.user.cash.balance + agent_profit
+        icart_user.cash.balance = icart_user.cash.balance + icart_profit
 
-    requester_user.cash.balance = requester_user.cash.balance - input_data.amount
-    merchant_user.cash.balance = merchant_user.cash.balance + merchant_profit
-    agent.user.cash.balance = agent.user.cash.balance + agent_profit
-    icart_user.cash.balance = icart_user.cash.balance + icart_profit
+    else:
+        if requester_user.credit.balance < input_data.amount:
+            raise LackOfMoneyException()
+        # ! Verify Fee
+        if requester_user.cash.balance < fee_value:
+            raise LackOfMoneyException()
+        # * Increase & Decrease wallet
+        requester_user.cash.balance = requester_user.cash.balance - fee_value
+        requester_user.credit.balance = (
+            requester_user.credit.balance - input_data.amount
+        )
+        merchant_user.credit.balance = merchant_user.credit.balance + merchant_profit
+        agent.user.credit.balance = agent.user.credit.balance + agent_profit
+        icart_user.credit.balance = icart_user.credit.balance + icart_profit
 
     code = randint(100000000000, 999999999999)
     user_merchant_tr = TransactionCreate(
@@ -414,6 +435,15 @@ async def purchase(
         transferor_id=card.wallet.id,
         code=str(code),
         reason=TransactionReasonEnum.PURCHASE,
+    )
+    user_fee_tr = TransactionCreate(
+        value=float(fee_value),
+        text="کارمزد تراکنش",
+        value_type=TransactionValueType.CASH,
+        receiver_id=merchant.user.wallet.id,
+        transferor_id=card.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.FEE,
     )
     icart_tr = TransactionCreate(
         value=float(icart_profit),

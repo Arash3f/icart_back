@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
@@ -25,8 +24,6 @@ class CreditBalanceResponse(BaseModel):
 # ---------------------------------------------------------------------------
 class CreditRead(CreditBase):
     id: uuid.UUID
-
-    created_at: datetime
 
 
 # ---------------------------------------------------------------------------

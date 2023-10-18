@@ -57,7 +57,6 @@ class AgentFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class AgentFilter(BaseModel):
-    return_all: bool | None = None
     is_main: None | bool = None
     order_by: AgentFilterOrderBy | None = None
 

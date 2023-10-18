@@ -46,6 +46,5 @@ class AbilityFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class AbilityFilter(BaseModel):
-    return_all: bool | None = None
     name: str | None | bool = None
     order_by: AbilityFilterOrderBy | None = None
