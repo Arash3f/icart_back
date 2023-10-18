@@ -14,6 +14,7 @@ from src.credit.models import Credit
 from src.database.base_class import Base, BaseMixin
 from src.organization.models import Organization
 from src.ticket.models import Ticket
+from src.user_request.models import UserRequest
 from src.wallet.models import Wallet
 
 
@@ -88,6 +89,13 @@ class User(Base, BaseMixin):
     )
 
     wallet = relationship(Wallet, uselist=False, back_populates="user", lazy="selectin")
+
+    user_request = relationship(
+        UserRequest,
+        uselist=False,
+        back_populates="user",
+        lazy="selectin",
+    )
 
     location_id = Column(UUID(as_uuid=True), ForeignKey("location.id"))
     location = relationship(

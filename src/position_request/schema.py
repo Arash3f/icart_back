@@ -60,7 +60,6 @@ class PositionRequestFilterOrderFild(Enum):
     target_position = "target_position"
     is_approve = "is_approve"
     status = "status"
-    number = "number"
 
 
 # ---------------------------------------------------------------------------
@@ -75,5 +74,4 @@ class PositionRequestFilter(BaseModel):
     target_position: PositionRequestType | None = None
     is_approve: bool | None = None
     status: PositionRequestStatusType | None = None
-    number: str | None = None
     order_by: PositionRequestFilterOrderBy | None = None

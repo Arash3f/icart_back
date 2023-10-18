@@ -6,7 +6,9 @@ from starlette.responses import StreamingResponse
 from src import deps
 from src.capital_transfer.crud import capital_transfer as capital_transfer_crud
 from src.contract.crud import contract as contract_crud
+from src.media.schema import UserId
 from src.user.crud import user as user_crud
+from src.user_request.crud import user_request as user_request_crud
 from src.core.config import settings
 from src.schema import IDRequest, ResultResponse
 from src.utils.minio_client import MinioClient
@@ -193,5 +195,194 @@ async def get_image_file(
             version_id=obj.image_version_id,
         )
         return StreamingResponse(io.BytesIO(image_file.read()), media_type="image/png")
+    else:
+        return ResultResponse(result="Image Not Found")
+
+
+@router.post(path="/user_request/national_card_front/find")
+async def get_national_card_front_file(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    where_data: UserId,
+):
+    """
+    ! Find User Image
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    where_data
+        Target user id
+
+    Returns
+    -------
+    res
+        found File
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    obj = await user_request_crud.verify_existence_by_user_id(
+        db=db,
+        user_id=where_data.user_id,
+    )
+
+    if obj.national_card_front_version_id:
+        national_card_front_file = minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=obj.national_card_front_name,
+            version_id=obj.national_card_front_version_id,
+        )
+        return StreamingResponse(
+            io.BytesIO(national_card_front_file.read()),
+            media_type="image/png",
+        )
+    else:
+        return ResultResponse(result="Image Not Found")
+
+
+@router.post(path="/user_request/national_card_back/find")
+async def get_national_card_back_file(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    where_data: UserId,
+):
+    """
+    ! Find User Image
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    where_data
+        Target user id
+
+    Returns
+    -------
+    res
+        found File
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    obj = await user_request_crud.verify_existence_by_user_id(
+        db=db,
+        user_id=where_data.user_id,
+    )
+
+    if obj.national_card_back_version_id:
+        national_card_back_file = minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=obj.national_card_back_name,
+            version_id=obj.national_card_back_version_id,
+        )
+        return StreamingResponse(
+            io.BytesIO(national_card_back_file.read()),
+            media_type="image/png",
+        )
+    else:
+        return ResultResponse(result="Image Not Found")
+
+
+@router.post(path="/user_request/birth_certificate/find")
+async def get_birth_certificate_file(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    where_data: UserId,
+):
+    """
+    ! Find User Image
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    where_data
+        Target user id
+
+    Returns
+    -------
+    res
+        found File
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    obj = await user_request_crud.verify_existence_by_user_id(
+        db=db,
+        user_id=where_data.user_id,
+    )
+
+    if obj.birth_certificate_version_id:
+        birth_certificate_file = minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=obj.birth_certificate_name,
+            version_id=obj.birth_certificate_version_id,
+        )
+        return StreamingResponse(
+            io.BytesIO(birth_certificate_file.read()),
+            media_type="image/png",
+        )
+    else:
+        return ResultResponse(result="Image Not Found")
+
+
+@router.post(path="/user_request/video/find")
+async def get_video_file(
+    *,
+    db=Depends(deps.get_db),
+    minio: MinioClient = Depends(deps.minio_auth),
+    where_data: UserId,
+):
+    """
+    ! Find User video
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    minio
+        Minio dep
+    where_data
+        Target user id
+
+    Returns
+    -------
+    res
+        found File
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    obj = await user_request_crud.verify_existence_by_user_id(
+        db=db,
+        user_id=where_data.user_id,
+    )
+
+    if obj.video_version_id:
+        video_file = minio.client.get_object(
+            bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+            object_name=obj.video_name,
+            version_id=obj.video_version_id,
+        )
+        # todo: not work
+        return StreamingResponse(
+            io.BytesIO(video_file.stream()),
+            media_type="video/mp4",
+        )
     else:
         return ResultResponse(result="Image Not Found")

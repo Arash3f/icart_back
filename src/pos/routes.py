@@ -30,6 +30,7 @@ from src.pos.schema import (
     BalanceInput,
     PurchaseInput,
     PurchaseOutput,
+    ConfigPosOutput,
 )
 from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
@@ -255,12 +256,12 @@ async def find_pos(
 
 
 # ---------------------------------------------------------------------------
-@router.post("/config", response_model=ResultResponse)
+@router.post("/config", response_model=ConfigPosOutput)
 async def config(
     *,
     db: AsyncSession = Depends(deps.get_db),
     config_data: ConfigPosInput,
-) -> PosRead:
+) -> ConfigPosOutput:
     """
     ! Config Pos
 
@@ -286,7 +287,7 @@ async def config(
     if pos.merchant.number != config_data.merchant_number:
         raise PosNotFoundException()
 
-    return ResultResponse(result="Pos configured successfully")
+    return ConfigPosOutput(merchant_name=pos.merchant.name)
 
 
 # ---------------------------------------------------------------------------
@@ -348,6 +349,7 @@ async def purchase(
 ) -> PurchaseOutput:
     """
     ! Config Pos
+    todo: add INSTALMENT transaction
 
     Parameters
     ----------
@@ -367,14 +369,12 @@ async def purchase(
     CardNotFoundException
     """
     # * Verify pos existence
-    pos = await pos_crud.find_by_number(db=db, number=input_data.pos_number)
-
+    pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
+    # * Verify merchant number
     if pos.merchant.number != input_data.merchant_number:
         raise MerchantNotFoundException()
-
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=input_data.card_number)
-
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:

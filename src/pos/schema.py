@@ -1,9 +1,15 @@
+import enum
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 from src.schema import IDRequest
+
+
+class PosTransactionType(enum.Enum):
+    NORMAL = "NORMAL"
+    INSTALMENT = "INSTALMENT"
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +53,11 @@ class ConfigPosInput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class ConfigPosOutput(BaseModel):
+    merchant_name: str
+
+
+# ---------------------------------------------------------------------------
 class BalanceInput(ConfigPosInput):
     card_number: str
     password: str
@@ -59,13 +70,16 @@ class BalanceOutput(ConfigPosInput):
 
 # ---------------------------------------------------------------------------
 class PurchaseInput(ConfigPosInput):
-    card_number: str
+    card_track: str
     password: str
+    merchant_number: str
+    terminal_number: str
     amount: int
+    type: PosTransactionType
 
 
 # ---------------------------------------------------------------------------
 class PurchaseOutput(BaseModel):
     amount: int
-    code: str
-    merchant_name: str
+    traction_code: str
+    date_time: datetime

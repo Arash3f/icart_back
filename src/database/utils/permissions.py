@@ -124,24 +124,17 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند درخواست های سمت را تایید کند",
         code=permission.APPROVE_POSITION_REQUEST,
     ),
-    # ! ABILITY
-    # ! AUTH
-    # ! CONTRACT
-    # ! CREDIT
-    # ! IMPORTANT DATA
-    # ! INVOICE
-    # ! MERCHANT
-    # ! NEWS
-    # ! TERMINAL
-    # ! TRANSACTION
-    # ! USER
-    # ! USER MESSAGE
-    # ! VERIFY PHONE
-    # ! WALLET
-    # ! CRYPTO
-    # ! USER TOKEN
-    # ! TICKET
-    # ! TICKET MESSAGE
-    # ! POST
-    # ! SITE MEDIA
+    # ! USER REQUEST
+    PermissionCreate(
+        name="می تواند درخواست های کاربران را تایید کند",
+        code=permission.APPROVE_USER_REQUEST,
+    ),
+    PermissionCreate(
+        name="می تواند درخواست های کاربران را ببیند",
+        code=permission.VIEW_USER_REQUEST,
+    ),
+    PermissionCreate(
+        name="می تواند درخواست های کاربران را ویرایش کند",
+        code=permission.UPDATE_USER_REQUEST,
+    ),
 ]

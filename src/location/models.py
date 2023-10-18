@@ -35,3 +35,5 @@ class Location(Base, BaseMixin):
     children = relationship("Location", back_populates="parent")
 
     users = relationship("User", back_populates="location")
+
+    user_requests = relationship("UserRequest", back_populates="location")
