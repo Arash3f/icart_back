@@ -48,7 +48,7 @@ class PosFilter(BaseModel):
 
 # ---------------------------------------------------------------------------
 class ConfigPosInput(BaseModel):
-    pos_number: str
+    terminal_number: str
     merchant_number: str
 
 
@@ -69,12 +69,9 @@ class BalanceOutput(ConfigPosInput):
 
 
 # ---------------------------------------------------------------------------
-class PurchaseInput(BaseModel):
+class PurchaseInput(ConfigPosInput):
     card_track: str
-    merchant_number: str
     password: str
-    merchant_number: str
-    terminal_number: str
     amount: int
     type: PosPurchaseType
 

@@ -284,7 +284,7 @@ async def config(
     PosNotFoundException
     """
     # * Verify pos existence
-    pos = await pos_crud.find_by_number(db=db, number=config_data.pos_number)
+    pos = await pos_crud.find_by_number(db=db, number=config_data.terminal_number)
 
     if pos.merchant.number != config_data.merchant_number:
         raise PosNotFoundException()
@@ -320,7 +320,7 @@ async def config(
     CardNotFoundException
     """
     # * Verify pos existence
-    pos = await pos_crud.find_by_number(db=db, number=card_data.pos_number)
+    pos = await pos_crud.find_by_number(db=db, number=card_data.terminal_number)
 
     if pos.merchant.number != card_data.merchant_number:
         raise PosNotFoundException()
@@ -336,7 +336,7 @@ async def config(
 
     response = BalanceOutput(
         amount=card.wallet.user.cash.balance,
-        pos_number=pos.number,
+        terminal_number=pos.number,
         merchant_number=pos.merchant.number,
     )
     return response
