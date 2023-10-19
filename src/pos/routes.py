@@ -289,7 +289,7 @@ async def config(
     if pos.merchant.number != config_data.merchant_number:
         raise PosNotFoundException()
 
-    return ConfigPosOutput(merchant_name=pos.merchant.name)
+    return ConfigPosOutput(merchant_name=pos.merchant.contract.name)
 
 
 # ---------------------------------------------------------------------------
@@ -394,7 +394,7 @@ async def purchase(
     )
 
     # * Calculate Fee
-    fee_value = 0
+    fee_value = 700
 
     # * Verify wallet balance
     requester_user = card.wallet.user
@@ -436,15 +436,17 @@ async def purchase(
         code=str(code),
         reason=TransactionReasonEnum.PURCHASE,
     )
+    admin = await user_crud.find_by_username(db=db, username=settings.ADMIN_USERNAME)
     user_fee_tr = TransactionCreate(
         value=float(fee_value),
         text="کارمزد تراکنش",
         value_type=TransactionValueType.CASH,
-        receiver_id=merchant.user.wallet.id,
+        receiver_id=admin.wallet.id,
         transferor_id=card.wallet.id,
         code=str(randint(100000000000, 999999999999)),
         reason=TransactionReasonEnum.FEE,
     )
+    admin.cash.balance += fee_value
     icart_tr = TransactionCreate(
         value=float(icart_profit),
         text="سود از فروشنده {}".format(merchant.contract.name),
@@ -467,12 +469,13 @@ async def purchase(
     await transaction_crud.create(db=db, obj_in=user_merchant_tr)
     await transaction_crud.create(db=db, obj_in=icart_tr)
     await transaction_crud.create(db=db, obj_in=agent_tr)
+    await transaction_crud.create(db=db, obj_in=user_fee_tr)
     db.add(card)
     db.add(pos)
     db.add(icart_user)
     db.add(agent)
     db.add(merchant)
-
+    db.add(admin)
     response = PurchaseOutput(
         amount=input_data.amount,
         code=str(code),
