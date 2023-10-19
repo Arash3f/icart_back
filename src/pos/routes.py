@@ -1,6 +1,8 @@
+from datetime import datetime
 from random import randint
 
 from fastapi import APIRouter, Depends
+from pytz import timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -531,8 +533,8 @@ async def purchase(
     db.add(admin)
     response = PurchaseOutput(
         amount=input_data.amount,
-        code=str(code),
-        merchant_name=merchant.contract.name,
+        traction_code=str(code),
+        date_time=datetime.now(timezone("Asia/Tehran")),
     )
 
     await db.commit()
