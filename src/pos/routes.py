@@ -5,6 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
+from src.auth.exception import (
+    IncorrectUsernameOrPasswordException,
+    InactiveUserException,
+)
 from src.card.exception import CardNotFoundException
 from src.core.config import settings
 from src.core.security import verify_password
@@ -16,6 +20,7 @@ from src.pos.crud import pos as pos_crud
 from src.transaction.models import TransactionValueType, TransactionReasonEnum
 from src.transaction.schema import TransactionCreate
 from src.user.crud import user as user_crud
+from src.auth.crud import auth as auth_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.pos.exception import PosNotFoundException
 from src.pos.models import Pos
@@ -32,6 +37,8 @@ from src.pos.schema import (
     PurchaseOutput,
     ConfigPosOutput,
     PosPurchaseType,
+    ConfigurationPosInput,
+    ConfigurationPosOutput,
 )
 from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
@@ -258,12 +265,12 @@ async def find_pos(
 
 
 # ---------------------------------------------------------------------------
-@router.post("/config", response_model=ConfigPosOutput)
+@router.post("/config", response_model=ConfigurationPosOutput)
 async def config(
     *,
     db: AsyncSession = Depends(deps.get_db),
     config_data: ConfigPosInput,
-) -> ConfigPosOutput:
+) -> ConfigurationPosOutput:
     """
     ! Config Pos
 
@@ -290,6 +297,53 @@ async def config(
         raise PosNotFoundException()
 
     return ConfigPosOutput(merchant_name=pos.merchant.contract.name)
+
+
+# ---------------------------------------------------------------------------
+@router.post("/configuration", response_model=ConfigPosOutput)
+async def config(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    config_data: ConfigurationPosInput,
+) -> ConfigPosOutput:
+    """
+    ! Config Pos
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    config_data
+        Necessary data for config pos
+
+    Returns
+    -------
+    res
+        result of configuration
+
+    Raises
+    ------
+    IncorrectUsernameOrPasswordException
+    InactiveUserException
+    PosNotFoundException
+    """
+    pos = await pos_crud.find_by_number(db=db, number=config_data.terminal_number)
+
+    user = await auth_crud.authenticate(
+        db=db,
+        username=pos.merchant.user.username,
+        password=config_data.password,
+    )
+    if not user:
+        raise IncorrectUsernameOrPasswordException()
+    elif not user.is_active:
+        raise InactiveUserException()
+
+    return ConfigurationPosOutput(
+        terminal_number=pos.number,
+        merchant_number=pos.merchant.number,
+        tel=pos.merchant.user.phone_number,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +383,6 @@ async def config(
     card = await card_crud.verify_by_number(db=db, number=card_data.card_track)
 
     # * Verify Card password
-
     verify_pass = verify_password(card_data.password, card.password)
     if not verify_pass:
         return None

@@ -53,6 +53,19 @@ class ConfigPosInput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class ConfigurationPosInput(BaseModel):
+    username: str
+    password: str
+
+
+# ---------------------------------------------------------------------------
+class ConfigurationPosOutput(BaseModel):
+    terminal_number: str
+    password: str
+    tel: str | None = None
+
+
+# ---------------------------------------------------------------------------
 class ConfigPosOutput(BaseModel):
     merchant_name: str
 
