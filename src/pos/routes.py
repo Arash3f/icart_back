@@ -326,7 +326,7 @@ async def config(
         raise PosNotFoundException()
 
     # * Verify Card number existence
-    card = await card_crud.verify_by_number(db=db, number=card_data.card_number)
+    card = await card_crud.verify_by_number(db=db, number=card_data.card_track)
 
     # * Verify Card password
 
@@ -375,7 +375,7 @@ async def purchase(
     if pos.merchant.number != input_data.merchant_number:
         raise MerchantNotFoundException()
     # * Verify Card number existence
-    card = await card_crud.verify_by_number(db=db, number=input_data.card_number)
+    card = await card_crud.verify_by_number(db=db, number=input_data.card_track)
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:

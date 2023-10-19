@@ -59,7 +59,7 @@ class ConfigPosOutput(BaseModel):
 
 # ---------------------------------------------------------------------------
 class BalanceInput(ConfigPosInput):
-    card_number: str
+    card_track: str
     password: str
 
 
