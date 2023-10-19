@@ -69,8 +69,9 @@ class BalanceOutput(ConfigPosInput):
 
 
 # ---------------------------------------------------------------------------
-class PurchaseInput(ConfigPosInput):
+class PurchaseInput(BaseModel):
     card_track: str
+    merchant_number: str
     password: str
     merchant_number: str
     terminal_number: str
