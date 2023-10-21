@@ -192,11 +192,9 @@ async def get_location(
         List of ability
     """
     # * Prepare filter fields
-    filter_data.is_main = True
+    is_main = True
     if filter_data.is_main is not None:
-        filter_data.is_main = (
-            (Location.parent_id.is_(None)) if filter_data.is_main else True
-        )
+        is_main = (Location.parent_id.is_(None)) if filter_data.is_main else True
 
     filter_data.parent_id = (
         (Location.parent_id == filter_data.parent_id) if filter_data.parent_id else True
@@ -208,7 +206,7 @@ async def get_location(
     # * Add filter fields
     query = select(Location).filter(
         and_(
-            filter_data.is_main,
+            is_main,
             filter_data.parent_id,
             filter_data.name,
         ),
