@@ -63,7 +63,7 @@ async def get_organization(
     db=Depends(deps.get_db),
     filter_data: OrganizationFilter,
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_ORGANIZATION]),
+        deps.get_current_user(),
     ),
     skip: int = 0,
     limit: int = 20,
