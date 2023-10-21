@@ -176,7 +176,7 @@ async def get_organization_additional_info(
         )
 
     return WalletAdditionalInfo(
-        income=income,
+        income=int(income),
         transaction_count=transaction_count,
         organization_users=organization_users,
         used_credit=0,
