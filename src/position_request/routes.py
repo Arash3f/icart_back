@@ -296,7 +296,7 @@ async def update_position_request(
                     new_merchant.selling_type = obj_current.selling_type
                     new_merchant.agent_id = parent_agent.id
                     new_merchant.location = location
-                    new_merchant.number = randint(100000, 999999)
+                    new_merchant.number = str(randint(100000, 999999))
                     new_merchant.contract = obj_current.contract
                     merchant_role = await role_crud.find_by_name(db=db, name="پذیرنده")
                     requester_user.role = merchant_role
