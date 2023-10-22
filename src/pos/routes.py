@@ -396,6 +396,7 @@ async def config(
         terminal_number=pos.number,
         merchant_number=pos.merchant.number,
         code=randint(100000, 999999),
+        date_time=str(jdatetime.datetime.now()),
     )
     return response
 
@@ -427,17 +428,18 @@ async def purchase(
     PosNotFoundException
     CardNotFoundException
     """
+    c_time = str(jdatetime.datetime.now())
     # * Verify pos existence
     pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
     # * Verify merchant number
     if pos.merchant.number != input_data.merchant_number:
-        raise MerchantNotFoundException()
+        raise MerchantNotFoundException(time=c_time)
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=input_data.card_track)
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
-        raise CardNotFoundException()
+        raise CardNotFoundException(time=c_time)
 
     agent = pos.merchant.agent
     merchant = pos.merchant

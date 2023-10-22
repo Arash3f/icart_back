@@ -1,6 +1,7 @@
 from typing import Type
 from uuid import UUID
 
+import jdatetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -97,7 +98,7 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
 
         obj = response.scalar_one_or_none()
         if not obj:
-            raise PosNotFoundException()
+            raise PosNotFoundException(time=str(jdatetime.datetime.now()))
 
         return obj
 

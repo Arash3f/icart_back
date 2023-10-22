@@ -282,7 +282,7 @@ async def update_position_request(
                 elif obj_current.target_position == PositionRequestType.ORGANIZATION:
                     new_org = Organization()
                     new_org.location = location
-                    new_org.agent.user_id = parent_agent
+                    new_org.agent_id = parent_agent.id
                     new_org.user_id = obj_current.requester_user_id
                     new_org.contract = obj_current.contract
                     org_role = await role_crud.find_by_name(db=db, name="سازمان")
@@ -294,7 +294,7 @@ async def update_position_request(
                     new_merchant.user_id = obj_current.requester_user_id
                     new_merchant.field_of_work = obj_current.field_of_work
                     new_merchant.selling_type = obj_current.selling_type
-                    new_merchant.agent.user_id = parent_agent
+                    new_merchant.agent_id = parent_agent.id
                     new_merchant.location = location
                     new_merchant.contract = obj_current.contract
                     merchant_role = await role_crud.find_by_name(db=db, name="پذیرنده")

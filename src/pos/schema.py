@@ -81,6 +81,7 @@ class BalanceInput(ConfigPosInput):
 class BalanceOutput(ConfigPosInput):
     amount: int
     code: int
+    date_time: str
 
 
 # ---------------------------------------------------------------------------

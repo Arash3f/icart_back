@@ -10,12 +10,13 @@ class PosNotFoundException(HTTPException):
     ? Exception when pos not found
     """
 
-    def __init__(self):
+    def __init__(self, time: str = None):
         self.status_code = 400
         self.detail = {
             "code": 3000,
             "persian_message": "پوز مورد نظر پیدا نشد!",
             "english_message": "Pos Not Found!",
+            "time": time,
         }
         self.headers = None
 
