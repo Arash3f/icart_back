@@ -49,5 +49,5 @@ class InstallmentsFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class InstallmentsFilter(BaseModel):
-    user_id: None | bool = None
+    user_id: None | UUID = None
     order_by: InstallmentsFilterOrderBy | None = None

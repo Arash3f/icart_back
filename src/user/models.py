@@ -12,6 +12,7 @@ from src.agent.models import Agent
 from src.cash.models import Cash
 from src.credit.models import Credit
 from src.database.base_class import Base, BaseMixin
+from src.installments.models import Installments
 from src.organization.models import Organization
 from src.ticket.models import Ticket
 from src.user_request.models import UserRequest
@@ -42,6 +43,8 @@ class User(Base, BaseMixin):
 
     # ! Relations
     merchant = relationship("Merchant", uselist=False, back_populates="user")
+
+    installments = relationship(Installments, back_populates="user")
 
     role_id = Column(UUID(as_uuid=True), ForeignKey("role.id", ondelete="RESTRICT"))
     role = relationship(

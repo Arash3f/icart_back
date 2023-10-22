@@ -2,6 +2,7 @@ import enum
 from datetime import datetime
 from uuid import UUID
 
+from jdatetime import datetime as jdatetime
 from pydantic import BaseModel, ConfigDict
 
 from src.schema import IDRequest
@@ -79,6 +80,7 @@ class BalanceInput(ConfigPosInput):
 # ---------------------------------------------------------------------------
 class BalanceOutput(ConfigPosInput):
     amount: int
+    code: int
 
 
 # ---------------------------------------------------------------------------
@@ -93,4 +95,4 @@ class PurchaseInput(ConfigPosInput):
 class PurchaseOutput(BaseModel):
     amount: int
     traction_code: str
-    date_time: datetime
+    date_time: str

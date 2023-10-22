@@ -6,6 +6,7 @@ from pytz import timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import jdatetime
 from src import deps
 from src.auth.exception import (
     IncorrectUsernameOrPasswordException,
@@ -14,6 +15,7 @@ from src.auth.exception import (
 from src.card.exception import CardNotFoundException
 from src.core.config import settings
 from src.core.security import verify_password
+from src.fee.models import Fee
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
 from src.merchant.exception import MerchantNotFoundException
@@ -302,12 +304,12 @@ async def config(
 
 
 # ---------------------------------------------------------------------------
-@router.post("/configuration", response_model=ConfigPosOutput)
+@router.post("/configuration", response_model=ConfigurationPosOutput)
 async def config(
     *,
     db: AsyncSession = Depends(deps.get_db),
     config_data: ConfigurationPosInput,
-) -> ConfigPosOutput:
+) -> ConfigurationPosOutput:
     """
     ! Config Pos
 
@@ -393,6 +395,7 @@ async def config(
         amount=card.wallet.user.cash.balance,
         terminal_number=pos.number,
         merchant_number=pos.merchant.number,
+        code=randint(100000, 999999),
     )
     return response
 
@@ -441,7 +444,7 @@ async def purchase(
     merchant_profit = (input_data.amount * (100 - 40)) / 100
     new_amount = input_data.amount - merchant_profit
     agent_profit = (new_amount * 40) / 100
-    icart_profit = new_amount - merchant_profit
+    icart_profit = new_amount - agent_profit
 
     icart_user = await user_crud.find_by_username(
         db=db,
@@ -449,7 +452,15 @@ async def purchase(
     )
 
     # * Calculate Fee
-    fee_value = 700
+    fee_response = await db.execute(
+        select(Fee).order_by(Fee.limit.asc()).where(Fee.limit >= input_data.amount),
+    )
+    obj_list = fee_response.scalars().all()
+
+    fee: Fee = obj_list[0]
+    fee_value = (input_data.amount * fee.percentage) / 100
+    if fee_value > fee.value_limit:
+        fee_value = fee.value_limit
 
     # * Verify wallet balance
     requester_user = card.wallet.user
@@ -534,7 +545,7 @@ async def purchase(
     response = PurchaseOutput(
         amount=input_data.amount,
         traction_code=str(code),
-        date_time=datetime.now(timezone("Asia/Tehran")),
+        date_time=str(jdatetime.datetime.now()),
     )
 
     await db.commit()

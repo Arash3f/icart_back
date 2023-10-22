@@ -73,7 +73,7 @@ async def find_installments(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions(permission.VIEW_INSTALLMENTS),
+        deps.get_current_user_with_permissions([permission.VIEW_INSTALLMENTS]),
     ),
     obj_data: IDRequest,
 ) -> InstallmentsRead:

@@ -35,6 +35,14 @@ class Installments(Base, BaseMixin):
         lazy="selectin",
     )
 
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    user = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="installments",
+        lazy="selectin",
+    )
+
     transaction_id = Column(
         UUID(as_uuid=True),
         ForeignKey("transaction.id"),
