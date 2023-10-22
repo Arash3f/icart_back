@@ -160,6 +160,8 @@ async def get_organization_additional_info(
         db=db,
         wallet_id=current_user.wallet.id,
     )
+    if income:
+        income = int(income)
     organization_users = 0
     if current_user.role.name == "سازمان":
         organization_users = await organization_crud.get_organization_users_count(
@@ -176,7 +178,7 @@ async def get_organization_additional_info(
         )
 
     return WalletAdditionalInfo(
-        income=int(income),
+        income=income,
         transaction_count=transaction_count,
         organization_users=organization_users,
         used_credit=0,
