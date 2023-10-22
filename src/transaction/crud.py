@@ -91,7 +91,7 @@ class TransactionCRUD(BaseCRUD[Transaction, TransactionCreate, None]):
                 Transaction.receiver_id == wallet_id,
             ),
         )
-        income = response.scalar()
+        income = response.scalar_one_or_none()
 
         return income
 
