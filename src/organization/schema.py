@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.contract.schema import ContractBase
+from src.contract.schema import ContractBase, ContractRead
 from src.location.schema import LocationRead
 from src.role.schema import RoleBase
 
@@ -36,7 +36,7 @@ class OrganizationRead(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # # ! Relation
-    contract: ContractBase | None = None
+    contract: ContractRead | None = None
     user: UserRead
     location: LocationRead | None = None
 

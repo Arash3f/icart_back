@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.contract.schema import ContractBase
+from src.contract.schema import ContractBase, ContractRead
 from src.location.schema import LocationRead
 from src.position_request.models import FieldOfWorkType, SellingType
 from src.user.schema import UserRead
@@ -26,7 +26,7 @@ class MerchantRead(MerchantBase):
     updated_at: datetime | None
 
     # # ! Relation
-    contract: ContractBase | None = None
+    contract: ContractRead | None = None
     user: UserRead
     location: LocationRead | None = None
 
