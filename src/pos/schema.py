@@ -64,6 +64,7 @@ class ConfigurationPosOutput(BaseModel):
     terminal_number: str
     password: str
     tel: str | None = None
+    date_time: str
 
 
 # ---------------------------------------------------------------------------
@@ -94,6 +95,21 @@ class PurchaseInput(ConfigPosInput):
 
 # ---------------------------------------------------------------------------
 class PurchaseOutput(BaseModel):
+    amount: int
+    traction_code: str
+    date_time: str
+
+
+# ---------------------------------------------------------------------------
+class InstallmentsPurchaseInput(ConfigPosInput):
+    card_track: str
+    password: str
+    amount: int
+    number_of_installments: int
+
+
+# ---------------------------------------------------------------------------
+class InstallmentsPurchaseOutput(BaseModel):
     amount: int
     traction_code: str
     date_time: str

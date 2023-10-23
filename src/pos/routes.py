@@ -16,6 +16,7 @@ from src.card.exception import CardNotFoundException
 from src.core.config import settings
 from src.core.security import verify_password
 from src.fee.models import Fee
+from src.installments.schema import InstallmentsCreate
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
 from src.merchant.exception import MerchantNotFoundException
@@ -43,6 +44,8 @@ from src.pos.schema import (
     PosPurchaseType,
     ConfigurationPosInput,
     ConfigurationPosOutput,
+    InstallmentsPurchaseOutput,
+    InstallmentsPurchaseInput,
 )
 from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
@@ -300,7 +303,12 @@ async def config(
     if pos.merchant.number != config_data.merchant_number:
         raise PosNotFoundException()
 
-    return ConfigPosOutput(merchant_name=pos.merchant.contract.name)
+    return ConfigurationPosOutput(
+        terminal_number=pos.number,
+        merchant_number=pos.merchant.number,
+        tel=pos.merchant.user.phone_number,
+        date_time=str(jdatetime.datetime.now()),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -347,6 +355,7 @@ async def config(
         terminal_number=pos.number,
         merchant_number=pos.merchant.number,
         tel=pos.merchant.user.phone_number,
+        date_time=str(jdatetime.datetime.now()),
     )
 
 
@@ -546,6 +555,162 @@ async def purchase(
     db.add(admin)
     response = PurchaseOutput(
         amount=input_data.amount,
+        traction_code=str(code),
+        date_time=str(jdatetime.datetime.now()),
+    )
+
+    await db.commit()
+    return response
+
+
+# ---------------------------------------------------------------------------
+@router.post("/installments/purchase", response_model=InstallmentsPurchaseOutput)
+async def installments_purchase(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    input_data: InstallmentsPurchaseInput,
+) -> InstallmentsPurchaseOutput:
+    """
+    ! Installments Purchase request
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    input_data
+        Necessary data for purchase
+
+    Returns
+    -------
+    res
+        result of operation
+
+    Raises
+    ------
+    PosNotFoundException
+    CardNotFoundException
+    """
+    c_time = str(jdatetime.datetime.now())
+    # * Verify pos existence
+    pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
+    # * Verify merchant number
+    if pos.merchant.number != input_data.merchant_number:
+        raise MerchantNotFoundException(time=c_time)
+    # * Verify Card number existence
+    card = await card_crud.verify_by_number(db=db, number=input_data.card_track)
+    # * Verify Card password
+    verify_pass = verify_password(input_data.password, card.password)
+    if not verify_pass:
+        raise CardNotFoundException(time=c_time)
+
+    # ! Create Installments
+    amount = int(input_data.amount / input_data.number_of_installments)
+    for i in range(input_data.number_of_installments):
+        new_installments = InstallmentsCreate()
+
+    # ! Pay First Section
+
+    agent = pos.merchant.agent
+    merchant = pos.merchant
+    merchant_profit = (amount * (100 - 40)) / 100
+    new_amount = amount - merchant_profit
+    agent_profit = (new_amount * 40) / 100
+    icart_profit = new_amount - agent_profit
+
+    icart_user = await user_crud.find_by_username(
+        db=db,
+        username=settings.ADMIN_USERNAME,
+    )
+
+    # * Calculate Fee
+    fee_response = await db.execute(
+        select(Fee).order_by(Fee.limit.asc()).where(Fee.limit >= amount),
+    )
+    obj_list = fee_response.scalars().all()
+
+    fee: Fee = obj_list[0]
+    fee_value = (amount * fee.percentage) / 100
+    if fee_value > fee.value_limit:
+        fee_value = fee.value_limit
+
+    # * Verify wallet balance
+    requester_user = card.wallet.user
+    merchant_user = pos.merchant.user
+    if input_data.type == PosPurchaseType.DIRECT:
+        # ! + Verify Fee
+        if requester_user.cash.balance < amount + fee_value:
+            raise LackOfMoneyException()
+        # * Increase & Decrease wallet
+        requester_user.cash.balance = requester_user.cash.balance - amount - fee_value
+        merchant_user.cash.balance = merchant_user.cash.balance + merchant_profit
+        agent.user.cash.balance = agent.user.cash.balance + agent_profit
+        icart_user.cash.balance = icart_user.cash.balance + icart_profit
+
+    else:
+        if requester_user.credit.balance < amount:
+            raise LackOfMoneyException()
+        # ! Verify Fee
+        if requester_user.cash.balance < fee_value:
+            raise LackOfMoneyException()
+        # * Increase & Decrease wallet
+        requester_user.cash.balance = requester_user.cash.balance - fee_value
+        requester_user.credit.balance = requester_user.credit.balance - amount
+        merchant_user.credit.balance = merchant_user.credit.balance + merchant_profit
+        agent.user.credit.balance = agent.user.credit.balance + agent_profit
+        icart_user.credit.balance = icart_user.credit.balance + icart_profit
+
+    code = randint(100000000000, 999999999999)
+    user_merchant_tr = TransactionCreate(
+        value=float(amount),
+        text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
+        value_type=TransactionValueType.CASH,
+        receiver_id=merchant.user.wallet.id,
+        transferor_id=card.wallet.id,
+        code=str(code),
+        reason=TransactionReasonEnum.PURCHASE,
+    )
+    admin = await user_crud.find_by_username(db=db, username=settings.ADMIN_USERNAME)
+    user_fee_tr = TransactionCreate(
+        value=float(fee_value),
+        text="کارمزد تراکنش",
+        value_type=TransactionValueType.CASH,
+        receiver_id=admin.wallet.id,
+        transferor_id=card.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.FEE,
+    )
+    admin.cash.balance += fee_value
+    icart_tr = TransactionCreate(
+        value=float(icart_profit),
+        text="سود از فروشنده {}".format(merchant.contract.name),
+        value_type=TransactionValueType.CASH,
+        receiver_id=icart_user.wallet.id,
+        transferor_id=merchant.user.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.PROFIT,
+    )
+    agent_tr = TransactionCreate(
+        value=float(agent_profit),
+        text="سود از فروشنده {}".format(merchant.contract.name),
+        value_type=TransactionValueType.CASH,
+        receiver_id=agent.user.wallet.id,
+        transferor_id=merchant.user.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.PROFIT,
+    )
+
+    await transaction_crud.create(db=db, obj_in=user_merchant_tr)
+    await transaction_crud.create(db=db, obj_in=icart_tr)
+    await transaction_crud.create(db=db, obj_in=agent_tr)
+    await transaction_crud.create(db=db, obj_in=user_fee_tr)
+    db.add(card)
+    db.add(pos)
+    db.add(icart_user)
+    db.add(agent)
+    db.add(merchant)
+    db.add(admin)
+    response = PurchaseOutput(
+        amount=amount,
         traction_code=str(code),
         date_time=str(jdatetime.datetime.now()),
     )
