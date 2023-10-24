@@ -45,8 +45,11 @@ class FieldOfWorkType(enum.Enum):
     STATIONERY_STORES = "STATIONERY_STORES"
     DTY_FRUITS_SHOP = "DTY_FRUITS_SHOP"
     DENTAL_CLINICS = "DENTAL_CLINICS"
-    BEAUTY_CLINICS = "BEAUTY_CLINICS"
-    CLINICS = "CLINICS"
+    BEAUTY = "BEAUTY"
+    MEDICAL = "MEDICAL"
+    TRANSPORTATION = "TRANSPORTATION"
+    CONFECTIONERY = "CONFECTIONERY"
+    RESTAURANT = "RESTAURANT"
     CLOTHING_STORES = "CLOTHING_STORES"
     HAIRDRESSERS = "HAIRDRESSERS"
     LASER_CENTERS = "LASER_CENTERS"
@@ -75,6 +78,8 @@ class PositionRequest(Base, BaseMixin):
     is_approve = Column(Boolean, default=False)
     target_position = Column(Enum(PositionRequestType))
     selling_type = Column(Enum(SellingType), nullable=True)
+    received_money = Column(String, nullable=True)
+    tracking_code = Column(String, nullable=True)
     status = Column(
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,

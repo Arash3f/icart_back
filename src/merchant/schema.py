@@ -32,6 +32,18 @@ class MerchantRead(MerchantBase):
 
 
 # ---------------------------------------------------------------------------
+class StoresRead(MerchantBase):
+    id: UUID
+
+    created_at: datetime
+    updated_at: datetime | None
+
+    # # ! Relation
+    user: UserRead
+    location: LocationRead | None = None
+
+
+# ---------------------------------------------------------------------------
 class MerchantFilterOrderFild(Enum):
     created_at = "created_at"
     best_sellers = "best_sellers"

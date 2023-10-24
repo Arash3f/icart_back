@@ -68,6 +68,8 @@ async def create_position_request(
     tel: Annotated[str, Form()],
     address: Annotated[str, Form()],
     employee_count: Annotated[int | None, Form()] = None,
+    received_money: Annotated[str | None, Form()] = None,
+    tracking_code: Annotated[str | None, Form()] = None,
     name: Annotated[str, Form()],
     signatory_name: Annotated[str, Form()],
     signatory_position: Annotated[str, Form()],
@@ -175,6 +177,8 @@ async def create_position_request(
     position_request.field_of_work = field_of_work
     position_request.postal_code = postal_code
     position_request.tel = tel
+    position_request.received_money = received_money
+    position_request.tracking_code = tracking_code
     position_request.address = address
     position_request.employee_count = employee_count
 
@@ -448,7 +452,6 @@ async def list_position_request(
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.asc())
 
-    query = select(PositionRequest)
     # * Not Have permissions
     if not verify_data.is_valid:
         query = query.where(
@@ -518,11 +521,6 @@ async def get_must_approve_position_request(
     filter_data.status = (
         (PositionRequest.status == filter_data.status) if filter_data.status else True
     )
-    filter_data.number = (
-        (PositionRequest.number.conyains(filter_data.number))
-        if filter_data.number
-        else True
-    )
 
     # * Add filter fields
     query = select(PositionRequest).filter(
@@ -531,7 +529,6 @@ async def get_must_approve_position_request(
             filter_data.target_position,
             filter_data.is_approve,
             filter_data.status,
-            filter_data.number,
         ),
     )
     # * Prepare order fields
@@ -546,8 +543,6 @@ async def get_must_approve_position_request(
                 query = query.order_by(PositionRequest.is_approve.desc())
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.desc())
-            elif field == PositionRequestFilterOrderFild.number:
-                query = query.order_by(PositionRequest.number.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == PositionRequestFilterOrderFild.field_of_work:
@@ -558,8 +553,6 @@ async def get_must_approve_position_request(
                 query = query.order_by(PositionRequest.is_approve.asc())
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.asc())
-            elif field == PositionRequestFilterOrderFild.number:
-                query = query.order_by(PositionRequest.number.asc())
 
     # * Not Have permissions
     if not verify_data.is_valid:

@@ -23,6 +23,8 @@ class PositionRequestBase(BaseModel):
     address: str | None
     employee_count: int | None
     selling_type: SellingType | None
+    received_money: str | None = None
+    tracking_code: str | None = None
     target_position: PositionRequestType
     model_config = ConfigDict(extra="forbid")
 
