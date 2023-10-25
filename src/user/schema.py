@@ -59,3 +59,9 @@ class UserMeResponse(UserRead):
 
     created_at: datetime
     updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+class UserFilter(BaseModel):
+    national_code: None | str = None
+    phone_number: None | str = None

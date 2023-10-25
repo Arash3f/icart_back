@@ -14,6 +14,8 @@ from src.organization.schema import (
 from src.schema import IDRequest
 from src.user.models import User
 from src.permission import permission_codes as permission
+from src.user.schema import UserRead, UserFilter
+from src.user.crud import user as user_crud
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/organization", tags=["organization"])
@@ -144,3 +146,70 @@ async def me(
         user_id=current_user.id,
     )
     return organization
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/list", response_model=List[UserRead])
+async def user_list(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: UserFilter,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    skip: int = 0,
+    limit: int = 20,
+) -> List[UserRead]:
+    """
+    ! Get All User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    filter_data
+        Filter data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+
+    Returns
+    -------
+    obj_list
+        List of user
+    """
+    organization = await organization_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+    # * Prepare filter fields
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code
+        else True
+    )
+    filter_data.phone_number = (
+        (User.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number
+        else True
+    )
+
+    # * Add filter fields
+    query = select(User).filter(
+        and_(
+            User.organization_id == organization.id,
+            filter_data.phone_number,
+            filter_data.national_code,
+        ),
+    )
+    # * Find All agent with filters
+    obj_list = await user_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
+    return obj_list

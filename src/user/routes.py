@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, UploadFile, File
+from sqlalchemy import select, and_
 
 from src import deps
 from src.core.config import settings
 from src.schema import ResultResponse
 from src.user.models import User
-from src.user.schema import UserMeResponse
+from src.user.schema import UserMeResponse, UserRead, UserFilter
 from src.utils.minio_client import MinioClient
-from typing import Annotated
+from typing import Annotated, List
 from src.user.crud import user as user_crud
 
 # ---------------------------------------------------------------------------
@@ -210,3 +211,65 @@ async def get_background_file(
         await db.commit()
 
     return ResultResponse(result="Image Deleted Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/list", response_model=List[UserRead])
+async def user_list(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: UserFilter,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    skip: int = 0,
+    limit: int = 20,
+) -> List[UserRead]:
+    """
+    ! Get All User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    filter_data
+        Filter data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+
+    Returns
+    -------
+    obj_list
+        List of user
+    """
+    # * Prepare filter fields
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code
+        else True
+    )
+    filter_data.phone_number = (
+        (User.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number
+        else True
+    )
+
+    # * Add filter fields
+    query = select(User).filter(
+        and_(
+            filter_data.phone_number,
+            filter_data.national_code,
+        ),
+    )
+    # * Find All agent with filters
+    obj_list = await user_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
+    return obj_list
