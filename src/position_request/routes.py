@@ -86,6 +86,8 @@ async def create_position_request(
     db
     tel
     address
+    received_money
+    tracking_code
     employee_count
     requester_national_code
     postal_code
@@ -251,6 +253,8 @@ async def update_position_request(
             )
         else:
             obj_current.status = PositionRequestStatusType.CLOSE
+            obj_current.is_approve = False
+            obj_current.reason = approve_data.reason
 
     # ? must approve from admin
     elif obj_current.status == PositionRequestStatusType.OPEN:
@@ -311,6 +315,7 @@ async def update_position_request(
             else:
                 obj_current.status = PositionRequestStatusType.CLOSE
                 obj_current.is_approve = False
+                obj_current.reason = approve_data.reason
 
         else:
             raise ApproveAccessDeniedException()
@@ -521,6 +526,18 @@ async def get_must_approve_position_request(
     filter_data.status = (
         (PositionRequest.status == filter_data.status) if filter_data.status else True
     )
+    filter_data.name = (
+        (PositionRequest.name.contains(filter_data.name)) if filter_data.name else True
+    )
+    filter_data.national_code = (
+        (
+            PositionRequest.requester_user.national_code.contains(
+                filter_data.national_code,
+            )
+        )
+        if filter_data.national_code
+        else True
+    )
 
     # * Add filter fields
     query = select(PositionRequest).filter(
@@ -529,6 +546,8 @@ async def get_must_approve_position_request(
             filter_data.target_position,
             filter_data.is_approve,
             filter_data.status,
+            filter_data.name,
+            filter_data.national_code,
         ),
     )
     # * Prepare order fields

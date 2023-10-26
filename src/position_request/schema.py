@@ -25,6 +25,7 @@ class PositionRequestBase(BaseModel):
     selling_type: SellingType | None
     received_money: str | None = None
     tracking_code: str | None = None
+    reason: str | None = None
     target_position: PositionRequestType
     model_config = ConfigDict(extra="forbid")
 
@@ -54,6 +55,7 @@ class PositionRequestRead(PositionRequestBase):
 class PositionRequestApproveIn(BaseModel):
     position_request_id: uuid.UUID
     is_approve: bool
+    reason: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -76,4 +78,6 @@ class PositionRequestFilter(BaseModel):
     target_position: PositionRequestType | None = None
     is_approve: bool | None = None
     status: PositionRequestStatusType | None = None
+    name: str | None = None
+    national_code: str | None = None
     order_by: PositionRequestFilterOrderBy | None = None

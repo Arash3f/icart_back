@@ -80,6 +80,7 @@ class PositionRequest(Base, BaseMixin):
     selling_type = Column(Enum(SellingType), nullable=True)
     received_money = Column(String, nullable=True)
     tracking_code = Column(String, nullable=True)
+    reason = Column(String, nullable=True)
     status = Column(
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,
