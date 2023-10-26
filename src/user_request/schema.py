@@ -24,6 +24,7 @@ class UserRequestBase(BaseModel):
 # ---------------------------------------------------------------------------
 class UserRequestRead(UserRequestBase):
     id: UUID
+    reason: str | None = None
 
     created_at: datetime
     updated_at: datetime | None
@@ -47,6 +48,7 @@ class CreateUserRequest(UserRequestBase):
 # ---------------------------------------------------------------------------
 class UpdateUserRequest(UserRequestBase):
     location_id: UUID | None = None
+    reason: str | None = None
     user_id: UUID
 
 
@@ -61,3 +63,5 @@ class UserRequestFilter(BaseModel):
     first_name: None | str = None
     location_id: None | UUID = None
     last_name: None | str = None
+    gt_created_date: datetime | None = None
+    lt_created_date: datetime | None = None

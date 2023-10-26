@@ -218,6 +218,16 @@ async def get_user_request(
         if filter_data.last_name
         else True
     )
+    filter_data.gt_created_date = (
+        (UserRequest.created_at >= filter_data.gt_created_date)
+        if filter_data.gt_created_date
+        else True
+    )
+    filter_data.lt_created_date = (
+        (UserRequest.created_at <= filter_data.lt_created_date)
+        if filter_data.lt_created_date
+        else True
+    )
 
     # * Add filter fields
     query = select(UserRequest).filter(
@@ -225,6 +235,8 @@ async def get_user_request(
             filter_data.first_name,
             filter_data.location_id,
             filter_data.last_name,
+            filter_data.gt_created_date,
+            filter_data.lt_created_date,
         ),
     )
     # * Find All agent with filters

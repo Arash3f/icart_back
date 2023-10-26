@@ -15,6 +15,7 @@ class UserRequest(Base, BaseMixin):
     father_name = Column(String, nullable=True)
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    reason = Column(String, nullable=True)
 
     national_card_front_version_id = Column(String, nullable=True)
     national_card_front_name = Column(String, nullable=True)
