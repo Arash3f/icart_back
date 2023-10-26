@@ -79,7 +79,7 @@ class BalanceInput(ConfigPosInput):
 # ---------------------------------------------------------------------------
 class BalanceOutput(ConfigPosInput):
     amount: int
-    code: int
+    traction_code: int
     date_time: str
 
 
@@ -94,7 +94,7 @@ class PurchaseInput(ConfigPosInput):
 # ---------------------------------------------------------------------------
 class PurchaseOutput(BaseModel):
     amount: int
-    code: str
+    traction_code: str
     date_time: str
 
 

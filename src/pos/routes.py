@@ -400,7 +400,7 @@ async def config(
         amount=card.wallet.user.cash.balance,
         terminal_number=pos.number,
         merchant_number=pos.merchant.number,
-        code=randint(100000, 999999),
+        traction_code=randint(100000, 999999),
         date_time=str(jdatetime.datetime.now()),
     )
     return response
@@ -551,7 +551,7 @@ async def purchase(
     db.add(admin)
     response = PurchaseOutput(
         amount=input_data.amount,
-        code=str(code),
+        traction_code=str(code),
         date_time=str(jdatetime.datetime.now()),
     )
 
@@ -707,7 +707,7 @@ async def installments_purchase(
     db.add(admin)
     response = PurchaseOutput(
         amount=amount,
-        code=str(code),
+        traction_code=str(code),
         date_time=str(jdatetime.datetime.now()),
     )
 

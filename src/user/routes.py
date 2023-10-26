@@ -5,10 +5,12 @@ from src import deps
 from src.core.config import settings
 from src.schema import ResultResponse
 from src.user.models import User
-from src.user.schema import UserMeResponse, UserRead, UserFilter
+from src.user.schema import UserMeResponse, UserRead, UserFilter, UpdateUserRequest
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
 from src.user.crud import user as user_crud
+from src.location.crud import location as location_crud
+from src.permission import permission_codes as permission
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/user", tags=["user"])
@@ -273,3 +275,56 @@ async def user_list(
         query=query,
     )
     return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.put(path="/update", response_model=UserRead)
+async def update_user(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_USER]),
+    ),
+    update_data: UpdateUserRequest,
+) -> UserRead:
+    """
+    ! Update User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update user
+
+    Returns
+    -------
+    obj
+        Updated user
+
+    Raises
+    ------
+    LocationNotFoundException
+    UserNotFoundException
+    """
+    # * Verify user existence
+    obj_current = await user_crud.verify_existence(
+        db=db,
+        user_id=update_data.where.id,
+    )
+
+    # * Verify location existence
+    if update_data.data.location_id:
+        await location_crud.verify_existence(
+            db=db,
+            location_id=update_data.data.parent_id,
+        )
+
+    obj = await location_crud.update(
+        db=db,
+        obj_current=obj_current,
+        obj_new=update_data.data,
+    )
+    return obj
