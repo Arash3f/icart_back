@@ -28,6 +28,7 @@ from src.role.crud import role as role_crud
 from src.schema import ResultResponse
 from src.user.crud import user as user_crud
 from src.user.models import User
+from src.user_message.models import UserMessage
 from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
 from src.wallet.models import Wallet
@@ -289,7 +290,7 @@ async def register(
         user=created_user,
     )
 
-    # ? Create Credit
+    # ? Create Cash
     cash = Cash(
         user=created_user,
     )
@@ -301,10 +302,20 @@ async def register(
         number=wallet_number,
     )
 
+    # ? Create User Message
+    user_message = UserMessage(
+        title="خوش آمدید",
+        text="{} عزیز ، عضویت شما را به خانواده آیکارت تبریک میگویم".format(
+            created_user.first_name,
+        ),
+        user_id=created_user.id,
+    )
+
     db.add(created_user)
     db.add(credit)
     db.add(cash)
     db.add(wallet)
+    db.add(user_message)
     await db.commit()
     await db.refresh(created_user)
 

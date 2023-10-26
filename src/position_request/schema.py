@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.auth.schema import UserBase
 from src.contract.schema import ContractRead
-from src.location.schema import LocationBase
+from src.location.schema import LocationBase, LocationComplex
 from src.position_request.models import (
     PositionRequestStatusType,
     PositionRequestType,
@@ -57,7 +57,7 @@ class PositionRequestRead(PositionRequestBase):
     requester_user: UserBase
     next_approve_user: UserBase | None
     contract: ContractRead
-    location: LocationBase
+    location: LocationComplex
     creator: UserBase
 
 

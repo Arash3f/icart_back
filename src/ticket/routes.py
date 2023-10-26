@@ -268,7 +268,9 @@ async def find_ticket(
 async def update_ticket_status(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    verify_data: User = Depends(
+        deps.is_user_have_permission([permission.RESPONSE_TICKET]),
+    ),
     update_data: TicketUpdate,
 ) -> TicketRead:
     """
@@ -278,8 +280,8 @@ async def update_ticket_status(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
+    verify_data
+        user's verified data
     update_data
         ticket new status
 
@@ -293,12 +295,20 @@ async def update_ticket_status(
     TicketNotFoundException
     AccessDeniedException
     """
-    # * Verify Ticket existence
-    ticket = await ticket_crud.verify_creator(
-        db=db,
-        user_id=current_user.id,
-        ticket_id=update_data.where.id,
-    )
+    # * Have permissions
+    if verify_data.is_valid:
+        # * Verify Ticket existence
+        ticket = await ticket_crud.verify_existence(
+            db=db,
+            ticket_id=update_data.where.id,
+        )
+    else:
+        # * Verify Ticket existence
+        ticket = await ticket_crud.verify_creator(
+            db=db,
+            user_id=verify_data.id,
+            ticket_id=update_data.where.id,
+        )
     # * Update Ticket Position
     updated_ticket = await ticket_crud.update(
         db=db,

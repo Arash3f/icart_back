@@ -18,6 +18,15 @@ class LocationBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class LocationComplex(BaseModel):
+    name: str
+    model_config = ConfigDict(extra="forbid")
+
+    # ! Relations
+    parent: LocationBase | None = None
+
+
+# ---------------------------------------------------------------------------
 class LocationCreate(LocationBase):
     pass
 
