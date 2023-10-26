@@ -15,6 +15,12 @@ from src.position_request.models import (
 
 
 # ---------------------------------------------------------------------------
+class UserRead(BaseModel):
+    national_code: str
+    location: LocationBase
+
+
+# ---------------------------------------------------------------------------
 class PositionRequestBase(BaseModel):
     is_approve: bool
     field_of_work: FieldOfWorkType | None
@@ -27,6 +33,10 @@ class PositionRequestBase(BaseModel):
     tracking_code: str | None = None
     reason: str | None = None
     target_position: PositionRequestType
+
+    # ! Relations
+    requester_user: UserRead
+
     model_config = ConfigDict(extra="forbid")
 
 
