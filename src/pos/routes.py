@@ -304,10 +304,8 @@ async def config(
         raise PosNotFoundException()
 
     return ConfigurationPosOutput(
-        terminal_number=pos.number,
-        merchant_number=pos.merchant.number,
+        merchant_name=pos.merchant.contract.name,
         tel=pos.merchant.user.phone_number,
-        date_time=str(jdatetime.datetime.now()),
     )
 
 
@@ -352,10 +350,8 @@ async def config(
         raise InactiveUserException()
 
     return ConfigurationPosOutput(
-        terminal_number=pos.number,
-        merchant_number=pos.merchant.number,
+        merchant_name=pos.merchant.contract.name,
         tel=pos.merchant.user.phone_number,
-        date_time=str(jdatetime.datetime.now()),
     )
 
 

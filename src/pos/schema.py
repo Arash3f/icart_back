@@ -61,9 +61,8 @@ class ConfigurationPosInput(BaseModel):
 
 # ---------------------------------------------------------------------------
 class ConfigurationPosOutput(BaseModel):
-    terminal_number: str
+    merchant_name: str
     tel: str | None = None
-    date_time: str
 
 
 # ---------------------------------------------------------------------------
