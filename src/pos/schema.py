@@ -94,7 +94,7 @@ class PurchaseInput(ConfigPosInput):
 # ---------------------------------------------------------------------------
 class PurchaseOutput(BaseModel):
     amount: int
-    traction_code: str
+    code: str
     date_time: str
 
 

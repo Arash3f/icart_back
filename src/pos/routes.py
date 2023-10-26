@@ -551,7 +551,7 @@ async def purchase(
     db.add(admin)
     response = PurchaseOutput(
         amount=input_data.amount,
-        traction_code=str(code),
+        code=str(code),
         date_time=str(jdatetime.datetime.now()),
     )
 
@@ -707,7 +707,7 @@ async def installments_purchase(
     db.add(admin)
     response = PurchaseOutput(
         amount=amount,
-        traction_code=str(code),
+        code=str(code),
         date_time=str(jdatetime.datetime.now()),
     )
 
