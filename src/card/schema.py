@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, conlist, constr
 
 from src.card.models import CardEnum
 from src.schema import IDRequest
@@ -25,21 +25,26 @@ class BuyCard(BaseModel):
 
 # ---------------------------------------------------------------------------
 class CardUpdatePasswordData(BaseModel):
-    password: str
-    re_password: str
-    new_password: str
+    password: constr(min_length=4, max_length=4)
+    re_password: constr(min_length=4, max_length=4)
+    new_password: constr(min_length=4, max_length=4)
 
 
 # ---------------------------------------------------------------------------
 class CreateCard(CardBase):
-    password: str
+    password: constr(min_length=4, max_length=4)
 
     wallet_id: UUID
 
 
 # ---------------------------------------------------------------------------
+class CardPasswordInput(BaseModel):
+    number: str
+
+
+# ---------------------------------------------------------------------------
 class CardUpdatePassword(BaseModel):
-    where: IDRequest
+    where: CardPasswordInput
     data: CardUpdatePasswordData
 
 
@@ -52,7 +57,7 @@ class CardRead(CardBase):
 
 # ---------------------------------------------------------------------------
 class CardDynamicPasswordOutput(BaseModel):
-    dynamic_password: int
+    dynamic_password: constr(min_length=6, max_length=6)
     model_config = ConfigDict(extra="forbid")
 
 
@@ -78,3 +83,9 @@ class CardFilter(BaseModel):
     type: None | CardEnum = None
     user_id: None | UUID = None
     order_by: CardFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class BuyCardResponse(BaseModel):
+    card_number: str
+    password: conlist(str, min_length=4, max_length=4)

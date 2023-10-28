@@ -77,6 +77,27 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         user: User,
         card_type: CardType,
     ) -> bool:
+        """
+        ! Verify user have card with type
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        user
+            Target User
+        card_type
+            Target Card Type
+
+        Returns
+        -------
+        res
+            Result of operation
+
+        Raises
+        ------
+        UserCardDuplicateException
+        """
         response = await db.execute(
             select(self.model).where(
                 Card.wallet == user.wallet,
@@ -89,6 +110,34 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
             raise UserCardDuplicateException()
 
         return True
+
+    async def find_by_number(self, *, db: AsyncSession, number: str) -> Card | None:
+        """
+        ! Find card By Number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        number
+            Target Card Number
+
+        Returns
+        -------
+        card
+            Found Item
+
+        Raises
+        ------
+        CardNotFoundException
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.number == number),
+        )
+
+        card_obj = response.scalar_one_or_none()
+
+        return card_obj
 
 
 # ---------------------------------------------------------------------------

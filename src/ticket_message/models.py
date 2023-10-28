@@ -30,4 +30,4 @@ class TicketMessage(Base, BaseMixin):
     )
 
     ticket_id = Column(UUID(as_uuid=True), ForeignKey("ticket.id"))
-    ticket = relationship("Ticket", foreign_keys=[ticket_id])
+    ticket = relationship("Ticket", foreign_keys=[ticket_id], lazy="selectin")

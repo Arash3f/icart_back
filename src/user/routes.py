@@ -11,6 +11,7 @@ from src.user.schema import (
     UserFilter,
     UpdateUserRequest,
     UserRead2,
+    UpdateUserActivityRequest,
 )
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
@@ -333,4 +334,47 @@ async def update_user(
         obj_current=obj_current,
         obj_new=update_data.data,
     )
+    return obj
+
+
+# ---------------------------------------------------------------------------
+@router.put(path="/update/activity", response_model=UserRead)
+async def update_user_activity(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_USER]),
+    ),
+    update_data: UpdateUserActivityRequest,
+) -> UserRead:
+    """
+    ! Update User Activity
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update user
+
+    Returns
+    -------
+    obj
+        Updated user
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    # * Verify user existence
+    obj = await user_crud.verify_existence(
+        db=db,
+        user_id=update_data.where.id,
+    )
+
+    obj.is_active = update_data.data.is_active
+    db.add(obj)
+    await db.commit()
     return obj

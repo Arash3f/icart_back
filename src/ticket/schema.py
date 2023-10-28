@@ -101,9 +101,19 @@ class TicketFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class TicketFilter(BaseModel):
     type: None | TicketType = None
+    answered: bool = False
+    waiting_for_reply: bool = False
     position: None | TicketPosition = None
     important: None | int = None
     number: None | int = None
     gt_created_date: datetime | None = None
     lt_created_date: datetime | None = None
     order_by: TicketFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class TicketInfo(BaseModel):
+    waiting_for_reply: int = 0
+    open: int = 0
+    answered: int = 0
+    closed: int = 0

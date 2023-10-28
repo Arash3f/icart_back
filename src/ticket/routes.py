@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy import case, desc, func, not_, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import query
 
 from src import deps
 from src.auth.exception import AccessDeniedException
@@ -20,6 +21,7 @@ from src.ticket.schema import (
     TicketUpdate,
     TicketFilter,
     TicketFilterOrderFild,
+    TicketInfo,
 )
 from src.ticket_message.crud import ticket_message as ticket_message_crud
 from src.ticket_message.crud import update_ticket_message_status
@@ -104,6 +106,17 @@ async def read_tickets(
         .offset(skip)
         .limit(limit)
     )
+
+    if filter_data.answered:
+        query.filter(
+            Ticket.messages.mapper.class_.supporter_status == True,
+            Ticket.position != TicketPosition.CLOSE,
+        )
+
+    if filter_data.waiting_for_reply:
+        query.filter(
+            Ticket.messages.mapper.class_.supporter_status == False,
+        )
 
     # * Prepare order fields
     if filter_data.order_by:
@@ -322,17 +335,16 @@ async def update_ticket_status(
 
 
 # ---------------------------------------------------------------------------
-@router.put("/info", response_model=ResultResponse)
-async def update_ticket_status(
+@router.get("/info", response_model=TicketInfo)
+async def ticket_info(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.RESPONSE_TICKET]),
     ),
-    update_data: TicketUpdate,
-) -> TicketRead:
+) -> TicketInfo:
     """
-    ! Update Ticket position
+    ! Get general information about system tickets
 
     Parameters
     ----------
@@ -340,43 +352,57 @@ async def update_ticket_status(
         Target database connection
     current_user
         current user
-    update_data
-        ticket new status
 
     Returns
     -------
-    updated_ticket
-        Updated ticket
-
-    Raises
-    ------
-    TicketNotFoundException
-    AccessDeniedException
+    info
+        General information
     """
-    ticket_count = 0
-    open_ticket_count = 0
+    info = TicketInfo()
 
-    # * Have permissions
-    if verify_data.is_valid:
-        # * Verify Ticket existence
-        ticket = await ticket_crud.verify_existence(
-            db=db,
-            ticket_id=update_data.where.id,
+    # ? Closed
+    closed_count_q = (
+        select(func.count())
+        .select_from(Ticket)
+        .filter(
+            Ticket.position == TicketPosition.CLOSE,
         )
-    else:
-        # * Verify Ticket existence
-        ticket = await ticket_crud.verify_creator(
-            db=db,
-            user_id=verify_data.id,
-            ticket_id=update_data.where.id,
-        )
-        if update_data.data.position != TicketPosition.CLOSE:
-            raise AccessDeniedException()
-
-    # * Update Ticket Position
-    await ticket_crud.update(
-        db=db,
-        obj_current=ticket,
-        obj_new=update_data.data,
     )
-    return ResultResponse(result="Ticket Updated Successfully")
+    response = await db.execute(closed_count_q)
+    info.closed = response.scalar()
+
+    # ? Open
+    open_q = (
+        select(func.count())
+        .select_from(Ticket)
+        .filter(
+            Ticket.position != TicketPosition.CLOSE,
+        )
+    )
+    response = await db.execute(open_q)
+    info.open = response.scalar()
+
+    # ? Waiting For Reply
+    waiting_for_reply_q = (
+        select(func.count(func.distinct(Ticket.id)))
+        .select_from(Ticket)
+        .filter(
+            Ticket.messages.mapper.class_.supporter_status == False,
+        )
+    )
+    response = await db.execute(waiting_for_reply_q)
+    info.waiting_for_reply = response.scalar()
+
+    # ? Answered
+    answered_q = (
+        select(func.count(func.distinct(Ticket.id)))
+        .select_from(Ticket)
+        .filter(
+            Ticket.messages.mapper.class_.supporter_status == True,
+            Ticket.position != TicketPosition.CLOSE,
+        )
+    )
+    response = await db.execute(answered_q)
+    info.answered = response.scalar()
+
+    return info

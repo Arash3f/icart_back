@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from src.schema import IDRequest
+
 
 # ---------------------------------------------------------------------------
 class UserBase(BaseModel):
@@ -50,3 +52,14 @@ class ForgetPasswordIn(BaseModel):
     national_code: str
     password: str
     code: int
+
+
+# ---------------------------------------------------------------------------
+class UpdateUserValidationData(BaseModel):
+    is_valid: bool
+
+
+# ---------------------------------------------------------------------------
+class UpdateUserValidationRequest(BaseModel):
+    where: IDRequest
+    data: UpdateUserValidationData

@@ -34,6 +34,23 @@ class User(Base, BaseMixin):
     one_time_password = Column(String, nullable=True)
     expiration_password_at = Column(DateTime(timezone=True), nullable=True)
     phone_number = Column(String, unique=False)
+    birth_place = Column(String, nullable=True)
+    postal_code = Column(String, nullable=True)
+    father_name = Column(String, nullable=True)
+    tel = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+
+    national_card_front_version_id = Column(String, nullable=True)
+    national_card_front_name = Column(String, nullable=True)
+
+    national_card_back_version_id = Column(String, nullable=True)
+    national_card_back_name = Column(String, nullable=True)
+
+    birth_certificate_version_id = Column(String, nullable=True)
+    birth_certificate_name = Column(String, nullable=True)
+
+    video_version_id = Column(String, nullable=True)
+    video_name = Column(String, nullable=True)
 
     image_version_id = Column(String, nullable=True)
     image_name = Column(String, nullable=True)

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from src.card.schema import CardRead
 from src.cash.schema import CashBase, CashBalanceResponse
 from src.credit.schema import CreditBase, CreditBalanceResponse
-from src.location.schema import LocationRead
+from src.location.schema import LocationRead, LocationComplex
 from src.role.schema import RoleRead, RoleBase
 from src.schema import IDRequest
 
@@ -47,11 +47,15 @@ class UserRead2(UserBase):
     national_code: str
     tel: str | None = None
     postal_code: str | None = None
+    father_name: str | None = None
+    address: str | None = None
+    is_active: bool
+    is_valid: bool
 
     # ! Relation
     wallet: WalletCardRead
     role: RoleBase
-    location: LocationRead | None
+    location: LocationComplex | None
 
 
 # ---------------------------------------------------------------------------
@@ -109,3 +113,14 @@ class UpdateUserData(BaseModel):
 class UpdateUserRequest(BaseModel):
     where: IDRequest
     data: UpdateUserData
+
+
+# ---------------------------------------------------------------------------
+class UpdateUserActivityData(BaseModel):
+    is_active: bool
+
+
+# ---------------------------------------------------------------------------
+class UpdateUserActivityRequest(BaseModel):
+    where: IDRequest
+    data: UpdateUserActivityData

@@ -1,12 +1,9 @@
 from datetime import datetime, timedelta
 from random import randint
-
-import jdatetime
 from fastapi import APIRouter, Depends
 from pytz import timezone
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.transaction.crud import transaction as transaction_crud
 
 from src import deps
 from src.auth.exception import AccessDeniedException
@@ -14,6 +11,7 @@ from src.card.crud import card as card_crud
 from src.transaction.schema import TransactionCreate
 from src.user.crud import user as user_crud
 from src.cash.crud import cash as cash_crud
+from src.transaction.crud import transaction as transaction_crud
 from src.card.models import Card, CardEnum
 from src.card.schema import (
     CardDynamicPasswordInput,
@@ -23,6 +21,7 @@ from src.card.schema import (
     CardFilterOrderFild,
     BuyCard,
     CreateCard,
+    BuyCardResponse,
 )
 from src.core.config import settings
 from src.core.security import hash_password, pwd_context
@@ -55,37 +54,19 @@ router = APIRouter(prefix="/card", tags=["card"])
 
 
 # ---------------------------------------------------------------------------
-@router.post("/buy", response_model=ResultResponse)
-async def update_card(
+@router.post("/buy", response_model=BuyCardResponse)
+async def buy_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
     data_in: BuyCard,
-) -> ResultResponse:
-    """
-    ! Buy new Card
-
-    Parameters
-    ----------
-    db
-        Target database connection
-    current_user
-        Requester User
-    data_in
-        Necessary data for buy card
-
-    Returns
-    -------
-    card
-        Updated card
-
-    Raises
-    ------
-    UserCardDuplicateException
-    LackOfMoneyException
-    """
+) -> BuyCardResponse:
     # * Verify card existence with this type
-    # await card_crud.verify_existence_with_type(db=db, user=current_user, card_type=data_in.type)
+    await card_crud.verify_existence_with_type(
+        db=db,
+        user=current_user,
+        card_type=data_in.type,
+    )
     icart_user = await user_crud.find_by_username(
         db=db,
         username=settings.ADMIN_USERNAME,
@@ -96,58 +77,55 @@ async def update_card(
     if current_user.cash.balance < 4900000:
         raise LackOfMoneyException()
 
-    # * Generate card number
-    if data_in.type == CardEnum.CREDIT:
-        card_number = generate_card_number(
-            card_type=CardType.Credit,
-            credit_type=CreditType.Rial,
-            company_type=CompanyType.Icart,
-        )
-    else:
-        card_number = generate_card_number(
-            card_type=CardType.Swipe,
-            credit_type=CreditType.Rial,
-            company_type=CompanyType.Icart,
-        )
-
     # ? Generate transaction
     transaction = TransactionCreate(
         value=float(4900000),
-        text="خرید کارت با شماره {}".format(card_number),
+        text="خرید کارت {}",
         value_type=TransactionValueType.CASH,
         receiver_id=icart_user.wallet.id,
         transferor_id=current_user.wallet.id,
         code=str(randint(100000000000, 999999999999)),
         reason=TransactionReasonEnum.PURCHASE,
     )
-
-    # ? Generate Card
-    expiration_at = datetime.now(timezone("Asia/Tehran")) - timedelta(
-        days=360,
-    )
-    card = CreateCard(
-        number=card_number,
-        cvv2=randint(100, 999),
-        # expiration_at=expiration_at,
-        type=data_in.type,
-        password=str(randint(1000, 9999)),
-        wallet_id=current_user.wallet.id,
-    )
-    await card_crud.create(db=db, obj_in=card)
     await transaction_crud.create(db=db, obj_in=transaction)
 
-    user_cash = await cash_crud.find_by_user_id(db=db, user=current_user)
-    print(user_cash.balance)
-    user_cash.balance -= 4900000
-    print(user_cash.balance)
+    # * Generate card number
+    if data_in.type == CardEnum.CREDIT:
+        card_number = await generate_card_number(
+            db=db,
+            card_type=CardType.Credit,
+            credit_type=CreditType.Rial,
+            company_type=CompanyType.Icart,
+        )
+    else:
+        card_number = await generate_card_number(
+            db=db,
+            card_type=CardType.Swipe,
+            credit_type=CreditType.Rial,
+            company_type=CompanyType.Icart,
+        )
 
-    icart_user.cash.balance += 4900000
-    db.add(icart_user)
-    db.add(user_cash)
-    print(user_cash.balance)
+    print(card_number)
 
+    # ? Generate Card
+    expiration_at = datetime.now(timezone("Asia/Tehran")) + timedelta(
+        days=360,
+    )
+    card_password = randint(1000, 9999)
+    card = Card(
+        number=card_number,
+        cvv2=randint(100, 999),
+        type=data_in.type,
+        password=hash_password(str(card_password)),
+        wallet_id=current_user.wallet.id,
+    )
+    card.expiration_at = expiration_at
+    db.add(card)
+
+    await cash_crud.decrease_cash_credit(db=db, user=current_user, amount=4900000)
+    await cash_crud.increase_cash_credit(db=db, user=icart_user, amount=4900000)
     await db.commit()
-    return ResultResponse(result="Card Created Successfully")
+    return BuyCardResponse(card_number=card_number, password=str(card_password))
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +159,10 @@ async def update_card(
     CardNotFoundException
     """
     # * Verify card existence
-    obj_current = await card_crud.verify_existence(db=db, card_id=update_data.where.id)
+    obj_current = await card_crud.verify_by_number(
+        db=db,
+        number=update_data.where.number,
+    )
     # * Verify old password
     verify = pwd_context.verify(update_data.data.password, obj_current.password)
     if not verify:

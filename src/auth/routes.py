@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pytz import timezone
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.permission import permission_codes as permission
 
 from src import deps
 from src.auth.crud import auth as auth_crud
@@ -19,6 +20,7 @@ from src.auth.schema import (
     OneTimePasswordRequestIn,
     UserRegisterIn,
     VerifyUsernameAndNationalCode,
+    UpdateUserValidationRequest,
 )
 from src.cash.models import Cash
 from src.core.config import settings
@@ -28,6 +30,7 @@ from src.role.crud import role as role_crud
 from src.schema import ResultResponse
 from src.user.crud import user as user_crud
 from src.user.models import User
+from src.user.schema import UserRead
 from src.user_message.models import UserMessage
 from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
@@ -353,3 +356,46 @@ async def forget_password(
     await db.commit()
     await db.refresh(user)
     return ResultResponse(result="password updated successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.put(path="/update/validation", response_model=UserRead)
+async def update_user_activity(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_USER]),
+    ),
+    update_data: UpdateUserValidationRequest,
+) -> UserRead:
+    """
+    ! Update User Validation
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update user
+
+    Returns
+    -------
+    obj
+        Updated user
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    # * Verify user existence
+    obj = await user_crud.verify_existence(
+        db=db,
+        user_id=update_data.where.id,
+    )
+
+    obj.is_valid = update_data.data.is_valid
+    db.add(obj)
+    await db.commit()
+    return obj
