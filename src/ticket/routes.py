@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.permission import permission_codes as permission
-from src.schema import VerifyUserDep
+from src.schema import VerifyUserDep, ResultResponse
 from src.ticket.crud import ticket as ticket_crud
-from src.ticket.models import Ticket
+from src.ticket.models import Ticket, TicketPosition
 from src.ticket.schema import (
     TicketComplexRead,
     TicketCreate,
@@ -264,7 +264,7 @@ async def find_ticket(
 
 
 # ---------------------------------------------------------------------------
-@router.put("/update", response_model=TicketRead)
+@router.put("/update/status", response_model=ResultResponse)
 async def update_ticket_status(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -309,10 +309,74 @@ async def update_ticket_status(
             user_id=verify_data.id,
             ticket_id=update_data.where.id,
         )
+        if update_data.data.position != TicketPosition.CLOSE:
+            raise AccessDeniedException()
+
     # * Update Ticket Position
-    updated_ticket = await ticket_crud.update(
+    await ticket_crud.update(
         db=db,
         obj_current=ticket,
         obj_new=update_data.data,
     )
-    return updated_ticket
+    return ResultResponse(result="Ticket Updated Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.put("/info", response_model=ResultResponse)
+async def update_ticket_status(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.RESPONSE_TICKET]),
+    ),
+    update_data: TicketUpdate,
+) -> TicketRead:
+    """
+    ! Update Ticket position
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        current user
+    update_data
+        ticket new status
+
+    Returns
+    -------
+    updated_ticket
+        Updated ticket
+
+    Raises
+    ------
+    TicketNotFoundException
+    AccessDeniedException
+    """
+    ticket_count = 0
+    open_ticket_count = 0
+
+    # * Have permissions
+    if verify_data.is_valid:
+        # * Verify Ticket existence
+        ticket = await ticket_crud.verify_existence(
+            db=db,
+            ticket_id=update_data.where.id,
+        )
+    else:
+        # * Verify Ticket existence
+        ticket = await ticket_crud.verify_creator(
+            db=db,
+            user_id=verify_data.id,
+            ticket_id=update_data.where.id,
+        )
+        if update_data.data.position != TicketPosition.CLOSE:
+            raise AccessDeniedException()
+
+    # * Update Ticket Position
+    await ticket_crud.update(
+        db=db,
+        obj_current=ticket,
+        obj_new=update_data.data,
+    )
+    return ResultResponse(result="Ticket Updated Successfully")

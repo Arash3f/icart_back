@@ -104,4 +104,6 @@ class TicketFilter(BaseModel):
     position: None | TicketPosition = None
     important: None | int = None
     number: None | int = None
+    gt_created_date: datetime | None = None
+    lt_created_date: datetime | None = None
     order_by: TicketFilterOrderBy | None = None

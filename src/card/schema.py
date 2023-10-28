@@ -6,17 +6,21 @@ from pydantic import BaseModel, ConfigDict
 
 from src.card.models import CardEnum
 from src.schema import IDRequest
-from src.wallet.schema import WalletRead
 
 
 # ---------------------------------------------------------------------------
 class CardBase(BaseModel):
     number: str
     cvv2: int
-    expiration_at: datetime
+    expiration_at: datetime | None = None
     type: CardEnum
 
     model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
+class BuyCard(BaseModel):
+    type: CardEnum
 
 
 # ---------------------------------------------------------------------------
@@ -24,6 +28,13 @@ class CardUpdatePasswordData(BaseModel):
     password: str
     re_password: str
     new_password: str
+
+
+# ---------------------------------------------------------------------------
+class CreateCard(CardBase):
+    password: str
+
+    wallet_id: UUID
 
 
 # ---------------------------------------------------------------------------

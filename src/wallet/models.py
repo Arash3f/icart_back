@@ -25,6 +25,6 @@ class Wallet(Base, BaseMixin):
 
     capital_transfer_receiver = relationship(CapitalTransfer, back_populates="receiver")
 
-    cards = relationship("Card", back_populates="wallet")
+    cards = relationship("Card", back_populates="wallet", lazy="selectin")
 
     cryptos = relationship(UserCrypto, back_populates="wallet")

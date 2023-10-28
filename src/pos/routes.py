@@ -1,8 +1,6 @@
-from datetime import datetime
 from random import randint
 
 from fastapi import APIRouter, Depends
-from pytz import timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

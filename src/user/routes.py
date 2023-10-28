@@ -5,7 +5,13 @@ from src import deps
 from src.core.config import settings
 from src.schema import ResultResponse
 from src.user.models import User
-from src.user.schema import UserMeResponse, UserRead, UserFilter, UpdateUserRequest
+from src.user.schema import (
+    UserMeResponse,
+    UserRead,
+    UserFilter,
+    UpdateUserRequest,
+    UserRead2,
+)
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
 from src.user.crud import user as user_crud
@@ -216,7 +222,7 @@ async def get_background_file(
 
 
 # ---------------------------------------------------------------------------
-@router.post(path="/list", response_model=List[UserRead])
+@router.post(path="/list", response_model=List[UserRead2])
 async def user_list(
     *,
     db=Depends(deps.get_db),
@@ -226,7 +232,7 @@ async def user_list(
     ),
     skip: int = 0,
     limit: int = 20,
-) -> List[UserRead]:
+) -> List[UserRead2]:
     """
     ! Get All User
 

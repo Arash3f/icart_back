@@ -4,14 +4,16 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.card.exception import CardNotFoundException
+from src.card.exception import CardNotFoundException, UserCardDuplicateException
 from src.card.models import Card
-from src.card.schema import CardUpdatePassword
+from src.card.schema import CardUpdatePassword, CreateCard
 from src.database.base_crud import BaseCRUD
+from src.user.models import User
+from src.utils.card_number import CardType
 
 
 # ---------------------------------------------------------------------------
-class CardCRUD(BaseCRUD[Card, None, CardUpdatePassword]):
+class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
     async def verify_existence(self, *, db: AsyncSession, card_id: UUID) -> Type[Card]:
         """
         ! Verify Card Existence
@@ -67,6 +69,26 @@ class CardCRUD(BaseCRUD[Card, None, CardUpdatePassword]):
             raise CardNotFoundException()
 
         return card_obj
+
+    async def verify_existence_with_type(
+        self,
+        *,
+        db: AsyncSession,
+        user: User,
+        card_type: CardType,
+    ) -> bool:
+        response = await db.execute(
+            select(self.model).where(
+                Card.wallet == user.wallet,
+                self.model.type == card_type,
+            ),
+        )
+
+        card_obj = response.scalar_one_or_none()
+        if card_obj:
+            raise UserCardDuplicateException()
+
+        return True
 
 
 # ---------------------------------------------------------------------------
