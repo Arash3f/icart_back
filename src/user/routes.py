@@ -281,6 +281,13 @@ async def user_list(
         limit=limit,
         query=query,
     )
+    for i in obj_list:
+        if i.location:
+            loc = await location_crud.verify_existence(
+                db=db,
+                location_id=i.location.parent_id,
+            )
+            i.location.parent = loc
     return obj_list
 
 
