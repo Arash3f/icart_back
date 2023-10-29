@@ -319,10 +319,11 @@ async def update_position_request(
                     user_id=obj_current.requester_user_id,
                 )
                 for i in open_requests:
-                    i.status = PositionRequestStatusType.CLOSE
-                    i.is_approve = False
-                    i.reason = "درخواست دیگری تایید شده است"
-                    db.add(i)
+                    if not i.id == obj_current.id:
+                        i.status = PositionRequestStatusType.CLOSE
+                        i.is_approve = False
+                        i.reason = "درخواست دیگری تایید شده است"
+                        db.add(i)
             else:
                 obj_current.status = PositionRequestStatusType.CLOSE
                 obj_current.is_approve = False
