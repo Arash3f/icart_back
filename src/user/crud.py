@@ -283,6 +283,39 @@ class UserCRUD(BaseCRUD[User, None, None]):
 
         return user
 
+    async def check_by_username_and_national_code(
+        self,
+        *,
+        db: AsyncSession,
+        username=str,
+        national_code=str,
+    ) -> Type[User] | None:
+        """
+        ! Check with username & national code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        username
+            Target User's username
+        national_code
+            Target User's national_code
+        Returns
+        -------
+        user
+            Found user | None
+        """
+        response = await db.execute(
+            select(self.model).where(
+                and_(User.username == username, User.national_code == national_code),
+            ),
+        )
+
+        user = response.scalar_one_or_none()
+
+        return user
+
 
 # ---------------------------------------------------------------------------
 user = UserCRUD(User)

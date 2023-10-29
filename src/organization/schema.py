@@ -63,3 +63,28 @@ class OrganizationFilter(BaseModel):
     user_id: None | UUID = None
     agent_id: None | UUID = None
     order_by: OrganizationFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class OrganizationGenerateUser(BaseModel):
+    name: str
+    last_name: str
+    national_code: str
+    phone_number: str
+    father_name: str
+    birth_place: str
+    location_id: UUID
+    postal_code: str
+    tel: str
+    address: str
+    considered_credit: int
+    personnel_number: str | None = None
+    organizational_section: str | None = None
+    job_class: str | None = None
+
+
+# ---------------------------------------------------------------------------
+class OrganizationAppendUser(BaseModel):
+    national_code: str
+    phone_number: str
+    considered_credit: int

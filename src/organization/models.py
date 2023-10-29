@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey
+from sqlalchemy import UUID, Column, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
@@ -8,6 +8,8 @@ from src.database.base_class import Base, BaseMixin
 # ---------------------------------------------------------------------------
 class Organization(Base, BaseMixin):
     __tablename__ = "organization"
+
+    total_considered_credit = Column(BigInteger, default=0)
 
     # ! Relations
     user_id = Column(

@@ -40,6 +40,11 @@ class User(Base, BaseMixin):
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
 
+    # ? Organization Users
+    personnel_number = Column(String, nullable=True)
+    organizational_section = Column(String, nullable=True)
+    job_class = Column(String, nullable=True)
+
     national_card_front_version_id = Column(String, nullable=True)
     national_card_front_name = Column(String, nullable=True)
 

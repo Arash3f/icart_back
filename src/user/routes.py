@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, UploadFile, File
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 
 from src import deps
+from src.auth.exception import AccessDeniedException
 from src.core.config import settings
 from src.schema import ResultResponse
 from src.user.models import User
@@ -16,6 +17,8 @@ from src.user.schema import (
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
 from src.user.crud import user as user_crud
+from src.organization.crud import organization as organization_crud
+from src.agent.crud import agent as agent_crud
 from src.location.crud import location as location_crud
 from src.permission import permission_codes as permission
 
@@ -385,3 +388,167 @@ async def update_user_activity(
     db.add(obj)
     await db.commit()
     return obj
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/organization/list", response_model=List[UserRead2])
+async def user_list(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: UserFilter,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    skip: int = 0,
+    limit: int = 20,
+) -> List[UserRead2]:
+    """
+    ! Get All Organization User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    filter_data
+        Filter data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+
+    Returns
+    -------
+    obj_list
+        List of user
+
+    Raises
+    ------
+    AccessDeniedException
+    """
+    if current_user.role.name != "سازمان":
+        raise AccessDeniedException()
+
+    organization_user = await organization_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    # * Prepare filter fields
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code
+        else True
+    )
+    filter_data.phone_number = (
+        (User.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number
+        else True
+    )
+
+    # * Add filter fields
+    query = select(User).filter(
+        and_(
+            filter_data.phone_number,
+            filter_data.national_code,
+            User.organization_id == organization_user.id,
+        ),
+    )
+    # * Find All agent with filters
+    obj_list = await user_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
+    for i in obj_list:
+        if i.location:
+            loc = await location_crud.verify_existence(
+                db=db,
+                location_id=i.location.parent_id,
+            )
+            i.location.parent = loc
+    return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/agent/list", response_model=List[UserRead2])
+async def user_list(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: UserFilter,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    skip: int = 0,
+    limit: int = 20,
+) -> List[UserRead2]:
+    """
+    ! Get All Agent User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    filter_data
+        Filter data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+
+    Returns
+    -------
+    obj_list
+        List of user
+
+    Raises
+    ------
+    AccessDeniedException
+    """
+    if current_user.role.name != "نماینده":
+        raise AccessDeniedException()
+
+    agent_user = await organization_crud.find_by_user_id(db=db, user_id=current_user.id)
+
+    # * Prepare filter fields
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code
+        else True
+    )
+    filter_data.phone_number = (
+        (User.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number
+        else True
+    )
+
+    # * Add filter fields
+    query = select(User).filter(
+        and_(
+            filter_data.phone_number,
+            filter_data.national_code,
+        ),
+        or_(
+            User.organization.mapper.class_.agent_id == agent_user.id,
+            User.agent_id == agent_user.id,
+        ),
+    )
+    # * Find All agent with filters
+    obj_list = await user_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
+    for i in obj_list:
+        if i.location:
+            loc = await location_crud.verify_existence(
+                db=db,
+                location_id=i.location.parent_id,
+            )
+            i.location.parent = loc
+    return obj_list

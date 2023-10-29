@@ -1,21 +1,38 @@
+from random import randint
 from typing import List
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import and_, select
 
 from src import deps
+from src.auth.exception import AccessDeniedException
+from src.cash.models import Cash
+from src.core.config import settings
+from src.credit.models import Credit
 from src.organization.crud import organization as organization_crud
+from src.location.crud import location as location_crud
+from src.transaction.crud import transaction as transaction_crud
+from src.agent.crud import agent as agent_crud
 from src.organization.models import Organization
 from src.organization.schema import (
     OrganizationRead,
     OrganizationFilter,
     OrganizationFilterOrderFild,
+    OrganizationGenerateUser,
+    OrganizationAppendUser,
 )
-from src.schema import IDRequest
+from src.schema import IDRequest, ResultResponse
+from src.transaction.models import TransactionValueType, TransactionReasonEnum
+from src.transaction.schema import TransactionCreate
+from src.user.exception import UsernameIsDuplicatedException
 from src.user.models import User
 from src.permission import permission_codes as permission
 from src.user.schema import UserRead, UserFilter
 from src.user.crud import user as user_crud
+from src.user_message.models import UserMessage
+from src.utils.sms import send_welcome_sms
+from src.wallet.exception import LackOfMoneyException
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/organization", tags=["organization"])
@@ -213,3 +230,254 @@ async def user_list(
         query=query,
     )
     return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/generate/user", response_model=ResultResponse)
+async def generate_user(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    generate_data: OrganizationGenerateUser,
+) -> ResultResponse:
+    """
+    ! Generate Organization User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    generate_data
+        Necessary data for generate new user for organization
+
+    Returns
+    -------
+    res
+        result of operation
+
+    Raises
+    ------
+    AccessDeniedException
+    UsernameIsDuplicatedException
+    LocationNotFoundException
+    OrganizationNotFoundException
+    """
+    # * Check requester role
+    if not current_user.role.name == "سازمان":
+        raise AccessDeniedException()
+    organization_user = await organization_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    # * Check user not exist
+    exist_user = await user_crud.check_by_username_and_national_code(
+        db=db,
+        username=generate_data.phone_number,
+        national_code=generate_data.national_code,
+    )
+    if exist_user:
+        raise UsernameIsDuplicatedException()
+
+    # * Check location exist
+    await location_crud.verify_existence(db=db, location_id=generate_data.location_id)
+
+    # * Update Organization considered credit
+    organization_user.total_considered_credit += generate_data.considered_credit
+    db.add(organization_user)
+
+    # ? Generate new User -> validation = False
+    new_user = User(
+        organization_id=organization_user.id,
+        name=generate_data.name,
+        last_name=generate_data.last_name,
+        national_code=generate_data.national_code,
+        phone_number=generate_data.phone_number,
+        father_name=generate_data.father_name,
+        birth_place=generate_data.birth_place,
+        location_id=generate_data.location_id,
+        postal_code=generate_data.postal_code,
+        tel=generate_data.tel,
+        address=generate_data.address,
+        considered_credit=generate_data.considered_credit,
+        personnel_number=generate_data.personnel_number,
+        organizational_section=generate_data.organizational_section,
+        job_class=generate_data.job_class,
+    )
+
+    # ? Create Credit
+    credit = Credit(
+        user=new_user,
+        considered=generate_data.considered_credit,
+    )
+
+    # ? Create Cash
+    cash = Cash(
+        user=new_user,
+    )
+
+    # ? Create Wallet
+    wallet_number = randint(100000, 999999)
+    wallet = Wallet(
+        user=new_user,
+        number=wallet_number,
+    )
+
+    # ? Create User Message
+    user_message = UserMessage(
+        title="خوش آمدید",
+        text="{} عزیز ، عضویت شما را به خانواده آیکارت تبریک میگویم".format(
+            new_user.first_name,
+        ),
+        user_id=new_user.id,
+    )
+
+    db.add(new_user)
+    db.add(credit)
+    db.add(cash)
+    db.add(wallet)
+    db.add(user_message)
+    await db.commit()
+    # * Send Register SMS
+    send_welcome_sms(
+        phone_number=generate_data.phone_number,
+        full_name="{} {}".format(new_user.first_name, new_user.last_name),
+    )
+    return ResultResponse(result="User Created Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/append/user", response_model=ResultResponse)
+async def append_user(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    append_data: OrganizationAppendUser,
+) -> ResultResponse:
+    """
+    ! Append Organization User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    append_data
+        Necessary data for append user to organization
+
+    Returns
+    -------
+    res
+        result of operation
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    # * Check requester role
+    if not current_user.role.name == "سازمان":
+        raise AccessDeniedException()
+    organization_user = await organization_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    # * Check user not exist
+    user = await user_crud.find_by_username_and_national_code(
+        db=db,
+        username=append_data.phone_number,
+        national_code=append_data.national_code,
+    )
+
+    # * Update Organization considered credit
+    organization_user.total_considered_credit += append_data.considered_credit
+    db.add(organization_user)
+
+    # ? Append new User
+    user.organization_id = organization_user.id
+    user.credit.considered = append_data.considered_credit
+
+    db.add(user)
+    await db.commit()
+    return ResultResponse(result="User Append Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/user/activation", response_model=ResultResponse)
+async def user_activation(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    obj_id: IDRequest,
+) -> ResultResponse:
+    """
+    ! Append Organization User
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    obj_id
+        User ID
+
+    Returns
+    -------
+    res
+        result of operation
+
+    Raises
+    ------
+    UserNotFoundException
+    AgentNotFoundException
+    LackOfMoneyException
+    """
+    # * Check requester role
+    if not current_user.role.name == "نماینده":
+        raise AccessDeniedException()
+    agent_user = await agent_crud.find_by_user_id(db=db, user_id=current_user.id)
+
+    # * Check Agent cash
+    if agent_user.user.cash.balance < 4900000:
+        raise LackOfMoneyException()
+
+    agent_user.user.cash.balance -= 4900000
+
+    # * Check user exist
+    user = await user_crud.verify_existence(
+        db=db,
+        user_id=obj_id.id,
+    )
+
+    icart_user = await user_crud.find_by_username(
+        db=db,
+        username=settings.ADMIN_USERNAME,
+    )
+
+    user.credit.active = True
+    transaction = TransactionCreate(
+        value=float(4900000),
+        text="پرداخت هزینه فعال سازی کاربر با کد ملی {}".format(user.national_code),
+        value_type=TransactionValueType.CASH,
+        receiver_id=icart_user.wallet.id,
+        transferor_id=agent_user.user.wallet.id,
+        code=str(randint(100000000000, 999999999999)),
+        reason=TransactionReasonEnum.REGISTER,
+    )
+
+    await transaction_crud.create(db=db, obj_in=transaction)
+
+    db.add(agent_user)
+    db.add(user)
+    await db.commit()
+    return ResultResponse(result="User Append Successfully")

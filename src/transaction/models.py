@@ -16,6 +16,7 @@ class TransactionReasonEnum(enum.Enum):
     PROFIT = "PROFIT"
     PURCHASE = "PURCHASE"
     FEE = "FEE"
+    REGISTER = "REGISTER"
 
 
 # ---------------------------------------------------------------------------
