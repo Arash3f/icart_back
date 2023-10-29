@@ -312,6 +312,17 @@ async def update_position_request(
                     db.add(new_merchant)
                 obj_current.status = PositionRequestStatusType.CLOSE
                 db.add(requester_user)
+
+                # ! Close All another requester position
+                open_requests = await position_request_crud.find_all_by_user_id(
+                    db=db,
+                    user_id=obj_current.requester_user_id,
+                )
+                for i in open_requests:
+                    i.status = PositionRequestStatusType.CLOSE
+                    i.is_approve = False
+                    i.reason = "درخواست دیگری تایید شده است"
+                    db.add(i)
             else:
                 obj_current.status = PositionRequestStatusType.CLOSE
                 obj_current.is_approve = False

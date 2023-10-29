@@ -113,6 +113,38 @@ class PositionRequestCRUD(BaseCRUD[PositionRequest, PositionRequestCreate, None]
 
         return obj
 
+    async def find_all_by_user_id(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> list[PositionRequest]:
+        """
+        ! Find All Position Request by user id
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        user_id
+            Target Agent user ID
+
+        Returns
+        -------
+        objs
+            Found Items
+
+        Raises
+        ------
+        PositionRequestNotFoundException
+        """
+        response = await db.execute(
+            select(self.model).where(PositionRequest.requester_user_id == user_id),
+        )
+
+        objs = response.scalars()
+        return objs
+
 
 # ---------------------------------------------------------------------------
 position_request = PositionRequestCRUD(PositionRequest)
