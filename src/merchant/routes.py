@@ -12,9 +12,13 @@ from src.merchant.schema import (
     MerchantFilter,
     MerchantFilterOrderFild,
     StoresRead,
+    Stores2
 )
 from src.user.models import User
 
+import base64
+from src.utils.minio_client import MinioClient
+from src.core.config import settings
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/merchant", tags=["merchant"])
 
@@ -212,3 +216,72 @@ async def me(
     """
     obj = await merchant_crud.find_by_user_id(db=db, user_id=current_user.id)
     return obj
+# ---------------------------------------------------------------------------
+# ---------> From Maziar
+@router.post("/stores2")
+async def get_stores_2(
+    *,
+    db=Depends(deps.get_db),
+    minio:MinioClient=Depends(deps.minio_auth),
+    skip: int = 0,
+    limit: int = 20,
+    filter_data: MerchantFilter) -> list[Stores2]:
+
+    """
+    ! Get All Merchant
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+    filter_data
+        Filter data
+
+    Returns
+    -------
+    obj_list
+        List of merchants
+    """
+    # * Prepare filter fields
+    filter_data.location_id = (
+        (Merchant.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True
+    )
+    filter_data.selling_type = (
+        (Merchant.selling_type == filter_data.selling_type)
+        if filter_data.selling_type
+        else True
+    )
+
+    # * Add filter fields
+    query = select(Merchant).filter(
+        and_(
+            filter_data.location_id,
+            filter_data.selling_type,
+        ),
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == MerchantFilterOrderFild.created_at:
+                query = query.order_by(Merchant.created_at.desc())
+            # elif field == MerchantFilterOrderFild.name:
+            #     query = query.order_by(Merchant.name.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == MerchantFilterOrderFild.created_at:
+                query = query.order_by(Merchant.created_at.asc())
+            # elif field == MerchantFilterOrderFild.name:
+            #     query = query.order_by(Merchant.name.asc())
+    obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
+
+    final_list = [Stores2(**obj,base64.encodebytes(minio.client.get_object(bucket_name=settings.MINIO_USER_IMAGE_BUCKET,
+                                                        object_name=obj.user.image_name,
+                                                        version_id=obj.user.image_version_id).read())) for obj in obj_list]
+    return final_list

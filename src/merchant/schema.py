@@ -61,3 +61,10 @@ class MerchantFilter(BaseModel):
     location_id: None | UUID = None
     selling_type: None | SellingType = None
     order_by: MerchantFilterOrderBy | None = None
+
+# ---------------------------------------------------------------------------
+# ---------> From Maziar
+
+
+class Stores2(StoresRead):
+    image_base64: str
