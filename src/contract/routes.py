@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy import select, or_, and_
 
 from src import deps
@@ -8,11 +9,54 @@ from src.contract.crud import contract as contract_crud
 from src.contract.exception import ContractNotFoundException
 from src.contract.models import Contract
 from src.contract.schema import ContractRead, ContractFilter, ContractFilterOrderFild
-from src.schema import IDRequest, VerifyUserDep
+from src.core.config import settings
+from src.schema import IDRequest, VerifyUserDep, ResultResponse
 from src.permission import permission_codes as permission
+from src.user.models import User
+from src.utils.minio_client import MinioClient
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/contract", tags=["contract"])
+
+
+# ---------------------------------------------------------------------------
+@router.put(path="/update/file", response_model=ResultResponse)
+async def update_contract_file(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_POSITION_REQUEST]),
+    ),
+    contract_id: Annotated[UUID, Form()],
+    minio: MinioClient = Depends(deps.minio_auth),
+    contract_file: Annotated[UploadFile, File()],
+) -> ResultResponse:
+    # * Find position request
+    contract = await contract_crud.verify_existence(db=db, contract_id=contract_id)
+
+    if contract.file_version_id:
+        minio.client.remove_object(
+            bucket_name=settings.MINIO_CONTRACT_BUCKET,
+            object_name=contract.file_name,
+            version_id=contract_file.file_version_id,
+        )
+        contract.file_name = None
+        contract.file_version_id = None
+
+    # * Save Contract File
+    contract_file = minio.client.put_object(
+        data=contract_file.file,
+        object_name=contract_file.filename,
+        bucket_name=settings.MINIO_CONTRACT_BUCKET,
+        length=-1,
+        part_size=10 * 1024 * 1024,
+    )
+
+    contract.file_version_id = contract_file.version_id
+    contract.file_name = contract_file.object_name
+    db.add(contract)
+    await db.commit()
+    return ResultResponse(result="Contract Updated Successfully")
 
 
 # ---------------------------------------------------------------------------
