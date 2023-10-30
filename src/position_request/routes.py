@@ -10,11 +10,13 @@ from fastapi import (
     File,
 )
 from sqlalchemy import or_, select, and_
+from sqlalchemy.orm import selectinload
 
 from src.auth.exception import AccessDeniedException
 from src.contract.exception import ContractNumberIsDuplicatedException
 from src.contract.models import Contract
 from src.core.config import settings
+from src.location.models import Location
 from src.permission import permission_codes as permission
 
 from src import deps

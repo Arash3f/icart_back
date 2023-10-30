@@ -59,7 +59,7 @@ class PositionRequestRead(PositionRequestBase):
     requester_user: UserBase
     next_approve_user: UserBase | None
     contract: ContractRead
-    location: LocationComplex
+    # location: LocationComplex
     creator: UserBase
 
 

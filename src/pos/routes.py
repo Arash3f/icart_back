@@ -394,7 +394,7 @@ async def config(
     # * Verify Card password
     verify_pass = verify_password(card_data.password, card.password)
     if not verify_pass:
-        return CardPasswordInValidException(time=c_time)
+        raise CardPasswordInValidException(time=c_time)
 
     response = BalanceOutput(
         amount=card.wallet.user.cash.balance,
