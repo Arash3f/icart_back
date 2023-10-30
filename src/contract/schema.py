@@ -26,6 +26,12 @@ class ContractBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class ContractName(BaseModel):
+    name: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class ContractCreate(ContractBase):
     file_version_id: str | None = None
     file_name: str | None = None

@@ -1,5 +1,6 @@
 import uuid
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -12,6 +13,7 @@ from src.position_request.models import (
     FieldOfWorkType,
     SellingType,
 )
+from src.schema import IDRequest
 
 
 # ---------------------------------------------------------------------------
@@ -91,3 +93,27 @@ class PositionRequestFilter(BaseModel):
     name: str | None = None
     national_code: str | None = None
     order_by: PositionRequestFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class PositionRequestUpdateData(BaseModel):
+    target_position: PositionRequestType
+    location_id: UUID
+    number: str
+    field_of_work: FieldOfWorkType | None = None
+    selling_type: SellingType | None = None
+    postal_code: str
+    tel: str
+    address: str
+    employee_count: int | None = None
+    received_money: str | None = None
+    tracking_code: str | None = None
+    name: str
+    signatory_name: str
+    signatory_position: str
+
+
+# ---------------------------------------------------------------------------
+class PositionRequestUpdate(BaseModel):
+    data: PositionRequestUpdateData
+    where: IDRequest

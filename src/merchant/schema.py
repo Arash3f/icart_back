@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.contract.schema import ContractBase, ContractRead
+from src.contract.schema import ContractBase, ContractRead, ContractName
 from src.location.schema import LocationRead
 from src.position_request.models import FieldOfWorkType, SellingType
 from src.user.schema import UserRead
@@ -40,6 +40,7 @@ class StoresRead(MerchantBase):
 
     # # ! Relation
     user: UserRead
+    contract: ContractName | None = None
     location: LocationRead | None = None
 
 

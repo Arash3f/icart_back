@@ -124,6 +124,10 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند درخواست های سمت را تایید کند",
         code=permission.APPROVE_POSITION_REQUEST,
     ),
+    PermissionCreate(
+        name="می تواند درخواست های سمت را ویرایش کند",
+        code=permission.UPDATE_POSITION_REQUEST,
+    ),
     # ! USER REQUEST
     PermissionCreate(
         name="می تواند درخواست های کاربران را تایید کند",

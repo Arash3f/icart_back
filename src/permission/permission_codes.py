@@ -29,6 +29,7 @@ DELETE_ORGANIZATION = 53
 VIEW_POSITION_REQUEST = 60
 CREATE_POSITION_REQUEST = 61
 APPROVE_POSITION_REQUEST = 62
+UPDATE_POSITION_REQUEST = 63
 # ---------------------------------------------------------------------------
 VIEW_CONTRACT = 70
 # ---------------------------------------------------------------------------
