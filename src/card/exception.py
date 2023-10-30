@@ -22,6 +22,22 @@ class CardNotFoundException(HTTPException):
         self.headers = None
 
 
+class CardPasswordInValidException(HTTPException):
+    """
+    ? Exception when card password is invalid
+    """
+
+    def __init__(self, time: str = None):
+        self.status_code = 400
+        self.detail = {
+            "code": 3202,
+            "persian_message": "رمز کارت اشتباه است!",
+            "english_message": "Card Password is Invalid!",
+            "time": time,
+        }
+        self.headers = None
+
+
 class UserCardDuplicateException(HTTPException):
     """
     ? Exception when user card duplicate

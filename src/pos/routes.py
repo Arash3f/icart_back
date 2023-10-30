@@ -10,7 +10,7 @@ from src.auth.exception import (
     IncorrectUsernameOrPasswordException,
     InactiveUserException,
 )
-from src.card.exception import CardNotFoundException
+from src.card.exception import CardNotFoundException, CardPasswordInValidException
 from src.core.config import settings
 from src.core.security import verify_password
 from src.fee.models import Fee
@@ -380,6 +380,8 @@ async def config(
     PosNotFoundException
     CardNotFoundException
     """
+    c_time = str(jdatetime.datetime.now())
+
     # * Verify pos existence
     pos = await pos_crud.find_by_number(db=db, number=card_data.terminal_number)
 
@@ -392,7 +394,7 @@ async def config(
     # * Verify Card password
     verify_pass = verify_password(card_data.password, card.password)
     if not verify_pass:
-        return None
+        return CardPasswordInValidException(time=c_time)
 
     response = BalanceOutput(
         amount=card.wallet.user.cash.balance,
@@ -442,7 +444,7 @@ async def purchase(
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
-        raise CardNotFoundException(time=c_time)
+        raise CardPasswordInValidException(time=c_time)
 
     agent = pos.merchant.agent
     merchant = pos.merchant
