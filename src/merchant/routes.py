@@ -12,13 +12,14 @@ from src.merchant.schema import (
     MerchantFilter,
     MerchantFilterOrderFild,
     StoresRead,
-    Stores2
+    Stores2,
 )
 from src.user.models import User
 
 import base64
 from src.utils.minio_client import MinioClient
 from src.core.config import settings
+
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/merchant", tags=["merchant"])
 
@@ -216,17 +217,19 @@ async def me(
     """
     obj = await merchant_crud.find_by_user_id(db=db, user_id=current_user.id)
     return obj
+
+
 # ---------------------------------------------------------------------------
 # ---------> From Maziar
 @router.post("/stores2")
 async def get_stores_2(
     *,
     db=Depends(deps.get_db),
-    minio:MinioClient=Depends(deps.minio_auth),
+    minio: MinioClient = Depends(deps.minio_auth),
     skip: int = 0,
     limit: int = 20,
-    filter_data: MerchantFilter) -> list[Stores2]:
-
+    filter_data: MerchantFilter,
+) -> list[Stores2]:
     """
     ! Get All Merchant
 
@@ -281,7 +284,20 @@ async def get_stores_2(
             #     query = query.order_by(Merchant.name.asc())
     obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
 
-    final_list = [Stores2(**obj,base64.encodebytes(minio.client.get_object(bucket_name=settings.MINIO_USER_IMAGE_BUCKET,
-                                                        object_name=obj.user.image_name,
-                                                        version_id=obj.user.image_version_id).read())) for obj in obj_list]
-    return final_list
+    all_data = []
+    for obj in obj_list:
+        image = None
+        if obj.user.image_version_id:
+            user_image = minio.client.get_object(
+                bucket_name=settings.MINIO_USER_IMAGE_BUCKET,
+                object_name=obj.user.image_name,
+                version_id=obj.user.image_version_id,
+            )
+            image = base64.encodebytes(user_image.read())
+
+        new = Stores2(
+            image_base64=image,
+            # **obj.model_dump()
+        )
+        all_data.append(new)
+    return all_data

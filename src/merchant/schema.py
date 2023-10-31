@@ -62,9 +62,10 @@ class MerchantFilter(BaseModel):
     selling_type: None | SellingType = None
     order_by: MerchantFilterOrderBy | None = None
 
+
 # ---------------------------------------------------------------------------
 # ---------> From Maziar
 
 
-class Stores2(StoresRead):
-    image_base64: str
+class Stores2(BaseModel):
+    image_base64: str | None = None
