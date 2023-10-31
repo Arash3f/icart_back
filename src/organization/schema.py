@@ -24,6 +24,7 @@ class UserRead(BaseModel):
     phone_number: str | None
     location: LocationRead | None
     national_code: str
+    is_active: bool
     model_config = ConfigDict(extra="forbid")
 
     # ! Relations

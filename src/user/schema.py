@@ -31,6 +31,7 @@ class UserRead(UserBase):
     last_name: str | None
     phone_number: str | None
     national_code: str
+    is_active: bool
 
     # ! Relation
     role: RoleBase
