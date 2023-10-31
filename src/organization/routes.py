@@ -1,7 +1,7 @@
 from random import randint
-from typing import List
+from typing import List, Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy import and_, select
 
 from src import deps
@@ -30,6 +30,7 @@ from src.permission import permission_codes as permission
 from src.user.schema import UserRead, UserFilter
 from src.user.crud import user as user_crud
 from src.user_message.models import UserMessage
+from src.utils.file import read_excel_file
 from src.utils.sms import send_welcome_sms
 from src.wallet.exception import LackOfMoneyException
 from src.wallet.models import Wallet
@@ -480,4 +481,19 @@ async def user_activation(
     db.add(agent_user)
     db.add(user)
     await db.commit()
+    return ResultResponse(result="User Append Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/upload/file", response_model=ResultResponse)
+async def upload_file(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+    image_file: Annotated[UploadFile, File()],
+) -> ResultResponse:
+    print(dir(image_file.file))
+    await read_excel_file(db=db, user_id=current_user.id)
     return ResultResponse(result="User Append Successfully")
