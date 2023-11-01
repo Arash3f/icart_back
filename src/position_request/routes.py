@@ -107,34 +107,28 @@ async def update_position_request(
         raise ContractNumberIsDuplicatedException()
 
     # * Update Contract
-    position_request.contract.number = update_position_request.data.number
-    position_request.contract.name = update_position_request.data.name
-    position_request.contract.signatory_name = (
-        update_position_request.data.signatory_name
-    )
-    position_request.contract.signatory_position = (
-        update_position_request.data.signatory_position
-    )
-    position_request.contract.employees_number = (
-        update_position_request.data.employee_count
-    )
-    position_request.contract.field_of_work = update_position_request.data.field_of_work
-    position_request.contract.postal_code = update_position_request.data.postal_code
-    position_request.contract.tel = update_position_request.data.tel
-    position_request.contract.address = update_position_request.data.address
+    position_request.contract.number = update_data.data.number
+    position_request.contract.name = update_data.data.name
+    position_request.contract.signatory_name = update_data.data.signatory_name
+    position_request.contract.signatory_position = update_data.data.signatory_position
+    position_request.contract.employees_number = update_data.data.employee_count
+    position_request.contract.field_of_work = update_data.data.field_of_work
+    position_request.contract.postal_code = update_data.data.postal_code
+    position_request.contract.tel = update_data.data.tel
+    position_request.contract.address = update_data.data.address
 
     # * Create Position Request
-    position_request.target_position = update_position_request.data.target_position
+    position_request.target_position = update_data.data.target_position
     position_request.location_id = location.id
-    position_request.selling_type = update_position_request.data.selling_type
-    position_request.name = update_position_request.data.name
-    position_request.field_of_work = update_position_request.data.field_of_work
-    position_request.postal_code = update_position_request.data.postal_code
-    position_request.tel = update_position_request.data.tel
-    position_request.received_money = update_position_request.data.received_money
-    position_request.tracking_code = update_position_request.data.tracking_code
-    position_request.address = update_position_request.data.address
-    position_request.employee_count = update_position_request.data.employee_count
+    position_request.selling_type = update_data.data.selling_type
+    position_request.name = update_data.data.name
+    position_request.field_of_work = update_data.data.field_of_work
+    position_request.postal_code = update_data.data.postal_code
+    position_request.tel = update_data.data.tel
+    position_request.received_money = update_data.data.received_money
+    position_request.tracking_code = update_data.data.tracking_code
+    position_request.address = update_data.data.address
+    position_request.employee_count = update_data.data.employee_count
 
     db.add(position_request)
     await db.commit()
