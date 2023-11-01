@@ -99,12 +99,13 @@ async def update_position_request(
     )
 
     # ! Verify contract number (duplicate)
-    number_duplicated = await contract_crud.find_by_number(
-        db=db,
-        number=update_data.data.number,
-    )
-    if number_duplicated:
-        raise ContractNumberIsDuplicatedException()
+    if position_request.contract.number != update_data.data.number:
+        number_duplicated = await contract_crud.find_by_number(
+            db=db,
+            number=update_data.data.number,
+        )
+        if number_duplicated:
+            raise ContractNumberIsDuplicatedException()
 
     # * Update Contract
     position_request.contract.number = update_data.data.number
