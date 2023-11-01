@@ -69,6 +69,10 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند کاربران را غیر فعال کند",
         code=permission.DEACTIVATE_USER,
     ),
+    PermissionCreate(
+        name="می تواند وارد اکانت کاربران بشود",
+        code=permission.LOGIN_AS_ADMIN,
+    ),
     # ! AGENT
     PermissionCreate(name="می تواند نماینده ها را ببیند", code=permission.VIEW_AGENT),
     PermissionCreate(name="می تواند نماینده اضافه کند", code=permission.CREATE_AGENT),

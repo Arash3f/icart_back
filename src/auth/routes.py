@@ -27,7 +27,7 @@ from src.core.config import settings
 from src.core.security import hash_password
 from src.credit.models import Credit
 from src.role.crud import role as role_crud
-from src.schema import ResultResponse
+from src.schema import ResultResponse, IDRequest
 from src.user.crud import user as user_crud
 from src.user.models import User
 from src.user.schema import UserRead
@@ -79,6 +79,41 @@ async def login(
         raise IncorrectUsernameOrPasswordException()
     elif not user.is_active:
         raise InactiveUserException()
+    # * Generate Access Token
+    access_token = await auth_crud.generate_access_token(user=user)
+    return access_token
+
+
+# ---------------------------------------------------------------------------
+@router.post("/login_from_admin")
+async def login_from_admin(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    data_in: IDRequest,
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.LOGIN_AS_ADMIN]),
+    ),
+) -> AccessToken:
+    """
+    ! Normal Login
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        user have permission
+
+    Returns
+    -------
+    access_token
+        User access token
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    user = await user_crud.verify_existence(db=db, user_id=data_in.id)
     # * Generate Access Token
     access_token = await auth_crud.generate_access_token(user=user)
     return access_token

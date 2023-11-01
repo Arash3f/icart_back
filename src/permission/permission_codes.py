@@ -15,6 +15,7 @@ CREATE_USER = 31
 UPDATE_USER = 32
 DEACTIVATE_USER = 33
 CHANGE_ROLE = 34
+LOGIN_AS_ADMIN = 35
 # ---------------------------------------------------------------------------
 VIEW_AGENT = 40
 CREATE_AGENT = 41
