@@ -1,6 +1,7 @@
 from typing import Type
 from uuid import UUID
 
+import jdatetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -66,7 +67,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
 
         card_obj = response.scalar_one_or_none()
         if not card_obj:
-            raise CardNotFoundException()
+            raise CardNotFoundException(time=str(jdatetime.datetime.now()))
 
         return card_obj
 

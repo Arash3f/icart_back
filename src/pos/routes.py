@@ -299,7 +299,7 @@ async def config(
     pos = await pos_crud.find_by_number(db=db, number=config_data.terminal_number)
 
     if pos.merchant.number != config_data.merchant_number:
-        raise PosNotFoundException()
+        raise PosNotFoundException(time=str(jdatetime.datetime.now()))
 
     return ConfigurationPosOutput(
         merchant_name=pos.merchant.contract.name,
@@ -343,9 +343,9 @@ async def config(
         password=config_data.password,
     )
     if not user:
-        raise IncorrectUsernameOrPasswordException()
+        raise IncorrectUsernameOrPasswordException(time=str(jdatetime.datetime.now()))
     elif not user.is_active:
-        raise InactiveUserException()
+        raise InactiveUserException(time=str(jdatetime.datetime.now()))
 
     return ConfigurationPosOutput(
         merchant_name=pos.merchant.contract.name,
@@ -386,7 +386,7 @@ async def config(
     pos = await pos_crud.find_by_number(db=db, number=card_data.terminal_number)
 
     if pos.merchant.number != card_data.merchant_number:
-        raise PosNotFoundException()
+        raise PosNotFoundException(time=c_time)
 
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=card_data.card_track)
@@ -475,7 +475,7 @@ async def purchase(
     if input_data.type == PosPurchaseType.DIRECT:
         # ! + Verify Fee
         if requester_user.cash.balance < input_data.amount + fee_value:
-            raise LackOfMoneyException()
+            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
         # * Increase & Decrease wallet
         requester_user.cash.balance = (
             requester_user.cash.balance - input_data.amount - fee_value
@@ -486,10 +486,10 @@ async def purchase(
 
     else:
         if requester_user.credit.balance < input_data.amount:
-            raise LackOfMoneyException()
+            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
         # ! Verify Fee
         if requester_user.cash.balance < fee_value:
-            raise LackOfMoneyException()
+            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
         # * Increase & Decrease wallet
         requester_user.cash.balance = requester_user.cash.balance - fee_value
         requester_user.credit.balance = (

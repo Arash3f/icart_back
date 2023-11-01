@@ -10,12 +10,13 @@ class IncorrectUsernameOrPasswordException(HTTPException):
     ? Exception When Username Or Password Is Incorrect
     """
 
-    def __init__(self):
+    def __init__(self, time: str = None):
         self.status_code = 400
         self.detail = {
             "code": 200,
             "english_message": "Incorrect username or password!",
             "persian_message": "نام کاربری یا رمز عبور اشتباه است!",
+            "time": time,
         }
         self.headers = None
 
@@ -25,12 +26,13 @@ class InactiveUserException(HTTPException):
     ? Exception When User is Inactive
     """
 
-    def __init__(self):
+    def __init__(self, time: str = None):
         self.status_code = 400
         self.detail = {
             "code": 203,
             "english_message": "User Is Inactive!",
             "persian_message": "کاربر مورد نظر غیر فعال است!",
+            "time": time,
         }
         self.headers = None
 

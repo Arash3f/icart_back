@@ -40,11 +40,12 @@ class LackOfMoneyException(HTTPException):
     ? Exception when wallet's cache does not have enough money
     """
 
-    def __init__(self):
+    def __init__(self, time: str = None):
         self.status_code = 400
         self.detail = {
             "code": 2205,
             "persian_message": "موجودی نقدی شما کم است!",
             "english_message": "Lack Of Money Exception!",
+            "time": time,
         }
         self.headers = None
