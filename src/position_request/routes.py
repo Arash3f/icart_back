@@ -89,8 +89,8 @@ async def update_position_request(
         position_request_id=update_data.where.id,
     )
 
-    if position_request.status == PositionRequestStatusType.CLOSE:
-        raise PositionRequestClosedException()
+    # if position_request.status == PositionRequestStatusType.CLOSE:
+    #     raise PositionRequestClosedException()
 
     # * Verify location existence
     location = await location_crud.verify_existence(
