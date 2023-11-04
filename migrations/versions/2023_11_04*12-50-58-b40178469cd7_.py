@@ -86,7 +86,7 @@ def upgrade() -> None:
         "ALTER TYPE fieldofworktype RENAME VALUE 'TRANSPORTATION' TO 'CHILDREN_CLOTHING'",
     )
     op.execute(
-        "ALTER TYPE fieldofworktype RENAME VALUE 'CONFECTIONARY' TO 'BAGS_AND_SHOES'",
+        "ALTER TYPE fieldofworktype ADD VALUE 'BAGS_AND_SHOES'",
     )
     op.execute(
         "ALTER TYPE fieldofworktype RENAME VALUE 'RESTAURANT' TO 'INTERIOR_DECORATION_DESIGNER'",
