@@ -50,5 +50,5 @@ class NewsFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class NewsFilter(BaseModel):
-    title: str | None | bool = None
+    title: str | None = None
     order_by: NewsFilterOrderBy | None = None

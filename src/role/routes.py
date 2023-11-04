@@ -7,6 +7,7 @@ from src.permission import permission_codes as permission
 from src.permission.crud import permission as permission_crud
 from src.role.crud import role as role_crud
 from src.role.crud import role_permission as role_permission_crud
+from src.role.exception import RoleNotFoundException
 from src.role.models import Role
 from src.role.schema import (
     PermissionsToRole,
@@ -57,7 +58,17 @@ async def delete_role(
     RoleHaveUserException
     """
     # * Verify role existence
-    await role_crud.verify_existence(db=db, role_id=delete_data.id)
+    obj_current = await role_crud.verify_existence(db=db, role_id=delete_data.id)
+
+    if (
+        obj_current.name == "ادمین"
+        or obj_current.name == "نماینده"
+        or obj_current.name == "پذیرنده"
+        or obj_current.name == "سازمان"
+        or obj_current.name == "کاربر ساده"
+    ):
+        raise RoleNotFoundException()
+
     # * Verify Role connections
     await role_crud.verify_connections(db=db, role_id=delete_data.id)
     # * Delete Role
@@ -138,6 +149,14 @@ async def update_role(
     """
     # * Verify role existence
     obj_current = await role_crud.verify_existence(db=db, role_id=update_data.where.id)
+    if (
+        obj_current.name == "ادمین"
+        or obj_current.name == "نماینده"
+        or obj_current.name == "پذیرنده"
+        or obj_current.name == "سازمان"
+        or obj_current.name == "کاربر ساده"
+    ):
+        raise RoleNotFoundException()
     # * Verify role's name duplicate
     await role_crud.verify_duplicate_name(
         db=db,

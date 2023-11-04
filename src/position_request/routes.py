@@ -19,6 +19,8 @@ from src.permission import permission_codes as permission
 
 from src import deps
 from src.agent.crud import agent as agent_crud
+from src.merchant.crud import merchant as merchant_crud
+from src.organization.crud import organization as organization_crud
 from src.agent.models import Agent
 from src.location.crud import location as location_crud
 from src.merchant.models import Merchant
@@ -130,6 +132,33 @@ async def update_position_request(
     position_request.tracking_code = update_data.data.tracking_code
     position_request.address = update_data.data.address
     position_request.employee_count = update_data.data.employee_count
+
+    if position_request.target_position == PositionRequestType.AGENT:
+        agent = await agent_crud.find_by_user_id(
+            db=db,
+            user_id=position_request.requester_user_id,
+        )
+        agent.location = location
+
+        db.add(agent)
+    elif position_request.target_position == PositionRequestType.ORGANIZATION:
+        org = await organization_crud.find_by_user_id(
+            db=db,
+            user_id=position_request.requester_user_id,
+        )
+        org.location = location
+
+        db.add(org)
+    elif position_request.target_position == PositionRequestType.MERCHANT:
+        merchant = await merchant_crud.find_by_user_id(
+            db=db,
+            user_id=position_request.requester_user_id,
+        )
+        merchant.field_of_work = update_data.data.field_of_work
+        merchant.selling_type = update_data.data.selling_type
+        merchant.location = location
+
+        db.add(merchant)
 
     db.add(position_request)
     await db.commit()

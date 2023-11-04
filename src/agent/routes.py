@@ -6,6 +6,7 @@ from sqlalchemy import select, and_, func
 from src import deps
 from src.ability.crud import ability as ability_crud
 from src.agent.crud import agent as agent_crud
+from src.location.models import Location
 from src.user.crud import user as user_crud
 from src.agent.models import Agent
 from src.agent.schema import (
@@ -152,10 +153,40 @@ async def get_agent_list(
     filter_data.is_main = (
         (Agent.is_main == True) if filter_data.is_main is not None else True
     )
+    filter_data.first_name = (
+        (Agent.user.mapper.class_.first_name.contains(filter_data.first_name))
+        if filter_data.first_name is not None
+        else True
+    )
+    filter_data.last_name = (
+        (Agent.user.mapper.class_.last_name.contains(filter_data.last_name))
+        if filter_data.last_name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (Agent.user.mapper.class_.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
+    filter_data.location_id = (
+        (Agent.locations.any(Location.id == filter_data.location_id))
+        if filter_data.is_main is not None
+        else True
+    )
+    filter_data.phone_number = (
+        (Agent.user.mapper.class_.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number is not None
+        else True
+    )
     # * Add filter fields
     query = select(Agent).filter(
         and_(
             filter_data.is_main,
+            filter_data.first_name,
+            filter_data.last_name,
+            filter_data.national_code,
+            filter_data.location_id,
+            filter_data.phone_number,
         ),
     )
     # * Prepare order fields

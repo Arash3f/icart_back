@@ -38,7 +38,7 @@ async def update_contract_file(
         minio.client.remove_object(
             bucket_name=settings.MINIO_CONTRACT_BUCKET,
             object_name=contract.file_name,
-            version_id=contract_file.file_version_id,
+            version_id=contract.file_version_id,
         )
         contract.file_name = None
         contract.file_version_id = None
