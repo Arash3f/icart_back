@@ -269,14 +269,27 @@ async def user_list(
         if filter_data.phone_number
         else True
     )
+    filter_data.full_search = (
+        (
+            or_(
+                User.username.contains(filter_data.full_search),
+                User.first_name.contains(filter_data.full_search),
+                User.last_name.contains(filter_data.full_search),
+            )
+        )
+        if filter_data.full_search
+        else True
+    )
 
     # * Add filter fields
     query = select(User).filter(
         and_(
             filter_data.phone_number,
             filter_data.national_code,
+            filter_data.full_search,
         ),
     )
+    query = query.order_by(User.created_at.desc())
     # * Find All agent with filters
     obj_list = await user_crud.get_multi(
         db=db,

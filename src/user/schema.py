@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -49,6 +50,7 @@ class UserRead2(UserBase):
     tel: str | None = None
     postal_code: str | None = None
     father_name: str | None = None
+    birth_place: str | None = None
     address: str | None = None
     is_active: bool
     is_valid: bool
@@ -96,6 +98,7 @@ class UserMeResponse(UserRead):
 class UserFilter(BaseModel):
     national_code: None | str = None
     phone_number: None | str = None
+    full_search: str | None = None
 
 
 # ---------------------------------------------------------------------------
