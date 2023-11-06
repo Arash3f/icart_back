@@ -552,6 +552,7 @@ async def purchase(
     response = PurchaseOutput(
         amount=input_data.amount,
         traction_code=str(code),
+        fee=fee_value,
         date_time=str(jdatetime.datetime.now()),
     )
 

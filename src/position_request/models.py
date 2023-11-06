@@ -25,7 +25,9 @@ class SellingType(enum.Enum):
     CASH = "CASH"
     CREDIT = "CREDIT"
     INSTALLMENT = "INSTALLMENT"
-    BOTH = "BOTH"
+    CASH_INSTALLMENT = "CASH_INSTALLMENT"
+    CREDIT_INSTALLMENT = "CREDIT_INSTALLMENT"
+    ALL_THREE = "ALL_THREE"
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +103,7 @@ class PositionRequest(Base, BaseMixin):
     received_money = Column(String, nullable=True)
     tracking_code = Column(String, nullable=True)
     reason = Column(String, nullable=True)
+    geo = Column(String, nullable=True)
     status = Column(
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,

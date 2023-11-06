@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.auth.schema import UserBase
 from src.contract.schema import ContractRead
-from src.location.schema import LocationBase, LocationComplex
+from src.location.schema import LocationBase
 from src.position_request.models import (
     PositionRequestStatusType,
     PositionRequestType,
@@ -34,6 +34,7 @@ class PositionRequestBase(BaseModel):
     received_money: str | None = None
     tracking_code: str | None = None
     reason: str | None = None
+    geo: str | None = None
     target_position: PositionRequestType
 
     # ! Relations
@@ -108,6 +109,7 @@ class PositionRequestUpdateData(BaseModel):
     employee_count: int | None = None
     received_money: str | None = None
     tracking_code: str | None = None
+    geo: str | None = None
     name: str
     signatory_name: str
     signatory_position: str

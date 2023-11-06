@@ -132,6 +132,7 @@ async def update_position_request(
     position_request.tracking_code = update_data.data.tracking_code
     position_request.address = update_data.data.address
     position_request.employee_count = update_data.data.employee_count
+    position_request.geo = update_data.data.geo
 
     if position_request.target_position == PositionRequestType.AGENT:
         agent = await agent_crud.find_by_user_id(
@@ -156,6 +157,7 @@ async def update_position_request(
         )
         merchant.field_of_work = update_data.data.field_of_work
         merchant.selling_type = update_data.data.selling_type
+        merchant.geo = update_data.data.geo
         merchant.location = location
 
         db.add(merchant)
@@ -184,6 +186,7 @@ async def create_position_request(
     employee_count: Annotated[int | None, Form()] = None,
     received_money: Annotated[str | None, Form()] = None,
     tracking_code: Annotated[str | None, Form()] = None,
+    geo: Annotated[str | None, Form()] = None,
     name: Annotated[str, Form()],
     signatory_name: Annotated[str, Form()],
     signatory_position: Annotated[str, Form()],
@@ -215,6 +218,7 @@ async def create_position_request(
     signatory_name
     signatory_position
     contract_file
+    geo
     current_user
 
     Returns
@@ -297,6 +301,7 @@ async def create_position_request(
     position_request.tracking_code = tracking_code
     position_request.address = address
     position_request.employee_count = employee_count
+    position_request.geo = geo
 
     db.add(position_request)
     db.add(create_contract)
@@ -307,7 +312,7 @@ async def create_position_request(
 
 # ---------------------------------------------------------------------------
 @router.put(path="/approve", response_model=PositionRequestRead)
-async def update_position_request(
+async def approve_position_request(
     *,
     db=Depends(deps.get_db),
     approve_data: PositionRequestApproveIn,
@@ -418,6 +423,7 @@ async def update_position_request(
                     new_merchant.selling_type = obj_current.selling_type
                     new_merchant.agent_id = parent_agent.id
                     new_merchant.location = location
+                    new_merchant.geo = obj_current.geo
                     new_merchant.number = str(randint(100000, 999999))
                     new_merchant.contract = obj_current.contract
                     merchant_role = await role_crud.find_by_name(db=db, name="پذیرنده")

@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship
 from src.contract.models import Contract
 from src.database.base_class import Base, BaseMixin
 from src.installments.models import Installments
-from src.invoice.models import Invoice
 from src.pos.models import Pos
 from src.position_request.models import FieldOfWorkType, SellingType
 
@@ -15,7 +14,8 @@ class Merchant(Base, BaseMixin):
 
     number = Column(String, index=True, unique=True, nullable=False)
     field_of_work = Column(Enum(FieldOfWorkType), nullable=True)
-    selling_type = Column(Enum(SellingType), default=SellingType.BOTH)
+    selling_type = Column(Enum(SellingType), default=SellingType.ALL_THREE)
+    geo = Column(String, nullable=True)
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))

@@ -32,6 +32,21 @@ class ContractName(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class PositionRequestShortInfo(BaseModel):
+    tel: str | None
+    address: str | None
+
+
+# ---------------------------------------------------------------------------
+class ContractShortInfo(BaseModel):
+    name: str | None = None
+
+    # ! Relation
+    position_request: PositionRequestShortInfo
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class ContractCreate(ContractBase):
     file_version_id: str | None = None
     file_name: str | None = None

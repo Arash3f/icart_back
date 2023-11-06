@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.contract.schema import ContractBase, ContractRead, ContractName
+from src.contract.schema import ContractRead, ContractShortInfo
 from src.location.schema import LocationRead
 from src.position_request.models import FieldOfWorkType, SellingType
 from src.user.schema import UserRead
@@ -15,6 +15,7 @@ class MerchantBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     number: str
     field_of_work: FieldOfWorkType | None
+    geo: str | None
     selling_type: SellingType
 
 
@@ -40,7 +41,7 @@ class StoresRead(MerchantBase):
 
     # # ! Relation
     user: UserRead
-    contract: ContractName | None = None
+    contract: ContractShortInfo | None = None
     location: LocationRead | None = None
 
 
