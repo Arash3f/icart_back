@@ -150,9 +150,6 @@ async def get_agent_list(
         List of ability
     """
     # * Prepare filter fields
-    filter_data.is_main = (
-        (Agent.is_main == True) if filter_data.is_main is not None else True
-    )
     filter_data.first_name = (
         (Agent.user.mapper.class_.first_name.contains(filter_data.first_name))
         if filter_data.first_name is not None
@@ -189,6 +186,10 @@ async def get_agent_list(
             filter_data.phone_number,
         ),
     )
+
+    if filter_data.is_main is not None:
+        query.filter(Agent.is_main == filter_data.is_main)
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:

@@ -108,13 +108,13 @@ async def read_tickets(
     )
 
     if filter_data.answered:
-        query.filter(
+        query = query.filter(
             Ticket.messages.mapper.class_.supporter_status == True,
             Ticket.position != TicketPosition.CLOSE,
         )
 
     if filter_data.waiting_for_reply:
-        query.filter(
+        query = query.filter(
             Ticket.messages.mapper.class_.supporter_status == False,
         )
 
