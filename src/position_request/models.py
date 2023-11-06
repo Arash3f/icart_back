@@ -83,9 +83,6 @@ class FieldOfWorkType(enum.Enum):
     COSMETIC = "COSMETIC"
     PROTEIN_STORE = "PROTEIN_STORE"
     CHANDELIERS_AND_ELECTRICAL_APPLIANCES = "CHANDELIERS_AND_ELECTRICAL_APPLIANCES"
-    DENTAL_CLINICS = "DENTAL_CLINICS"
-    BEAUTY_CLINICS = "BEAUTY_CLINICS"
-    HAIR_TRANSPLANT = "HAIR_TRANSPLANT"
 
 
 # ---------------------------------------------------------------------------
