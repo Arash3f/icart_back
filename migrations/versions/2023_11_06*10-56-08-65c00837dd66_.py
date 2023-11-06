@@ -41,14 +41,14 @@ def upgrade() -> None:
     op.execute("ALTER TYPE fieldofworktype ADD VALUE 'COSMETIC'")
 
     op.execute(
-        "ALTER TYPE fieldofworktype RENAME VALUE 'MOBILE_STORE' TO 'HAIR_TRANSPLANT'",
+        "ALTER TYPE fieldofworktype ADD VALUE 'HAIR_TRANSPLANT'",
     )
     op.execute(
-        "ALTER TYPE fieldofworktype RENAME VALUE 'AUDIO_AND_VIDEO_PRODUCT_STORE' TO 'BEAUTY_CLINICS'",
+        "ALTER TYPE fieldofworktype ADD VALUE 'BEAUTY_CLINICS'",
     )
-    op.execute(
-        "ALTER TYPE fieldofworktype RENAME VALUE 'KITCHEN_ACCESSORIES_STORE' TO 'DENTAL_CLINICS'",
-    )
+    # op.execute(
+    #     "ALTER TYPE fieldofworktype ADD VALUE 'DENTAL_CLINICS'",
+    # )
 
     # ### end Alembic commands ###
 
