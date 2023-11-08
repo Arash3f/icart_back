@@ -10,8 +10,11 @@ class CreditBase(BaseModel):
     consumed: int
     remaining: int
     transferred: int
+    considered: int
+    paid: int
     debt: int
     balance: int
+    active: bool
     model_config = ConfigDict(extra="forbid")
 
 
