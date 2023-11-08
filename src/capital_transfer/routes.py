@@ -34,6 +34,8 @@ from src.user.crud import user as user_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
+from src.cash.crud import cash as cash_crud
+from src.credit.crud import credit as credit_crud
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/capital_transfer", tags=["capital_transfer"])
@@ -290,6 +292,7 @@ async def approve_capital_transfer(
     if obj_current.finish:
         raise CapitalTransferFinishException()
 
+    # ! Reject
     if not obj_data.approve:
         obj_current.finish = True
         obj_current.status = CapitalTransferStatusEnum.FAILED

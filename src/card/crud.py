@@ -15,7 +15,12 @@ from src.utils.card_number import CardType
 
 # ---------------------------------------------------------------------------
 class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
-    async def verify_existence(self, *, db: AsyncSession, card_id: UUID) -> Type[Card]:
+    async def verify_existence(
+        self,
+        *,
+        db: AsyncSession,
+        card_id: UUID,
+    ) -> Type[Card] | CardNotFoundException:
         """
         ! Verify Card Existence
 
@@ -41,7 +46,12 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
 
         return obj
 
-    async def verify_by_number(self, *, db: AsyncSession, number: str) -> Card:
+    async def verify_by_number(
+        self,
+        *,
+        db: AsyncSession,
+        number: str,
+    ) -> Card | CardNotFoundException:
         """
         ! Verify Existence By Number
 
@@ -77,7 +87,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         db: AsyncSession,
         user: User,
         card_type: CardType,
-    ) -> bool:
+    ) -> bool | UserCardDuplicateException:
         """
         ! Verify user have card with type
 
@@ -127,10 +137,6 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         -------
         card
             Found Item
-
-        Raises
-        ------
-        CardNotFoundException
         """
         response = await db.execute(
             select(self.model).where(self.model.number == number),
