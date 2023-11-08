@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 
-# !!!!!!!!!!!!
+# !!!!!!!!!!!!!
 # ! Code 77XX !
-# !!!!!!!!!!!!
+# !!!!!!!!!!!!!
 
 
 class CashNotFoundException(HTTPException):
