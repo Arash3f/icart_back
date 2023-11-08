@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict
 class CashBase(BaseModel):
     received: int
     consumed: int
-    remaining: int
     transferred: int
     debt: int
     balance: int
