@@ -59,6 +59,7 @@ async def get_merchant(
 async def get_merchant_list(
     *,
     db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
     skip: int = 0,
     limit: int = 20,
     filter_data: MerchantFilter,
