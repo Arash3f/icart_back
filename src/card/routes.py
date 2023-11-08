@@ -20,7 +20,6 @@ from src.card.schema import (
     CardFilter,
     CardFilterOrderFild,
     BuyCard,
-    CreateCard,
     BuyCardResponse,
 )
 from src.core.config import settings
