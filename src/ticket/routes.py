@@ -152,6 +152,7 @@ async def read_tickets(
             id=buf["Ticket"].id,
             unread_user=buf["count"],
             unread_supporter=buf["count_1"],
+            position=buf["Ticket"].position,
             updated_at=buf["Ticket"].updated_at,
             created_at=buf["Ticket"].created_at,
         )

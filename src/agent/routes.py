@@ -188,7 +188,7 @@ async def get_agent_list(
     )
 
     if filter_data.is_main is not None:
-        query.filter(Agent.is_main == filter_data.is_main)
+        query = query.filter(Agent.is_main == filter_data.is_main)
 
     # * Prepare order fields
     if filter_data.order_by:

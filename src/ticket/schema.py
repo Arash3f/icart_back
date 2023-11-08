@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 from typing import List
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, conint
 
@@ -48,6 +49,7 @@ class TicketUpdate(BaseModel):
 class TicketReadV2(BaseModel):
     id: uuid.UUID
     title: str
+    position: TicketPosition
     type: TicketType
     unread_user: int | None = None
     unread_supporter: int | None = None
