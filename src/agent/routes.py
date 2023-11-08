@@ -167,7 +167,7 @@ async def get_agent_list(
     )
     filter_data.location_id = (
         (Agent.locations.any(Location.id == filter_data.location_id))
-        if filter_data.is_main is not None
+        if filter_data.location_id is not None
         else True
     )
     filter_data.phone_number = (
@@ -178,7 +178,6 @@ async def get_agent_list(
     # * Add filter fields
     query = select(Agent).filter(
         and_(
-            filter_data.is_main,
             filter_data.first_name,
             filter_data.last_name,
             filter_data.national_code,
