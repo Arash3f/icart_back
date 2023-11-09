@@ -20,7 +20,11 @@ from src.card.crud import card as card_crud
 from src.merchant.exception import MerchantNotFoundException
 from src.permission import permission_codes as permission
 from src.pos.crud import pos as pos_crud
-from src.transaction.models import TransactionValueType, TransactionReasonEnum
+from src.transaction.models import (
+    TransactionValueType,
+    TransactionReasonEnum,
+    TransactionStatusEnum,
+)
 from src.transaction.schema import TransactionCreate
 from src.user.crud import user as user_crud
 from src.auth.crud import auth as auth_crud
@@ -501,6 +505,7 @@ async def purchase(
 
     code = randint(100000000000, 999999999999)
     user_merchant_tr = TransactionCreate(
+        status=TransactionStatusEnum.ACCEPTED,
         value=float(input_data.amount),
         text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
@@ -511,6 +516,7 @@ async def purchase(
     )
     admin = await user_crud.find_by_username(db=db, username=settings.ADMIN_USERNAME)
     user_fee_tr = TransactionCreate(
+        status=TransactionStatusEnum.ACCEPTED,
         value=float(fee_value),
         text="کارمزد تراکنش",
         value_type=TransactionValueType.CASH,
@@ -521,6 +527,7 @@ async def purchase(
     )
     admin.cash.balance += fee_value
     icart_tr = TransactionCreate(
+        status=TransactionStatusEnum.ACCEPTED,
         value=float(icart_profit),
         text="سود از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
@@ -530,6 +537,7 @@ async def purchase(
         reason=TransactionReasonEnum.PROFIT,
     )
     agent_tr = TransactionCreate(
+        status=TransactionStatusEnum.ACCEPTED,
         value=float(agent_profit),
         text="سود از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
