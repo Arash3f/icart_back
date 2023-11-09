@@ -84,6 +84,23 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند نماینده ها را حذف کند",
         code=permission.DELETE_AGENT,
     ),
+    # ! AGENT ABILITY
+    PermissionCreate(
+        name="می تواند توانایی نماینده ها را ببیند",
+        code=permission.VIEW_ABILITY,
+    ),
+    PermissionCreate(
+        name="می تواند توانایی نماینده اضافه کند",
+        code=permission.CREATE_ABILITY,
+    ),
+    PermissionCreate(
+        name="می تواند توانایی نماینده ها را بروزرسانی کند",
+        code=permission.UPDATE_ABILITY,
+    ),
+    PermissionCreate(
+        name="می تواند توانایی نماینده ها را حذف کند",
+        code=permission.DELETE_ABILITY,
+    ),
     # ! ORGANIZATION
     PermissionCreate(
         name="می تواند سازمان ها را ببیند",

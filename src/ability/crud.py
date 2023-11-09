@@ -47,6 +47,44 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
 
         return found_ability
 
+    async def verify_existence_by_name(
+        self,
+        *,
+        db: AsyncSession,
+        name: str,
+    ) -> Type[Ability]:
+        """
+        ! Verify Ability Existence by name
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        name
+            Target Item name
+
+        Returns
+        -------
+        found_ability
+            Found Item
+
+        Raises
+        ------
+        AbilityNotFoundException
+            Ability with this id not exist
+        """
+        response = await db.execute(
+            select(self.model).where(
+                self.model.name == name,
+            ),
+        )
+
+        found_ability = response.scalar_one_or_none()
+        if not found_ability:
+            raise AbilityNotFoundException()
+
+        return found_ability
+
     async def verify_list_existence(
         self,
         *,
@@ -121,6 +159,26 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
             raise AbilityNameIsDuplicatedException()
 
         return True
+
+    async def find_by_name(self, db: AsyncSession, name: str) -> Ability | None:
+        """
+        ! Find ability by name
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        name
+            Target ability's name
+
+        Returns
+        -------
+        obj
+            Found ability
+        """
+        response = await db.execute(select(self.model).where(self.model.name == name))
+        obj = response.scalar_one_or_none()
+        return obj
 
 
 # ---------------------------------------------------------------------------

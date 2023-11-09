@@ -18,6 +18,8 @@ from src.role.crud import role_permission as role_permission_crud
 from src.role.schema import RoleCreate, RolePermissionCreate
 from src.user.crud import user as user_crud
 from src.wallet.models import Wallet
+from src.ability.utils.agent_permissions import default_abilities, linked_abilities
+from src.ability.crud import ability as ability_crud
 
 # ---------------------------------------------------------------------------
 admin_role = RoleCreate(name="ادمین")
@@ -54,6 +56,17 @@ async def init_db(db: AsyncSession) -> None:
         role_exist = await role_crud.find_by_name(db=db, name=role.name)
         if not role_exist:
             await role_crud.create(db=db, obj_in=role)
+
+    # ! Generate default agent abilities
+    for ability in default_abilities:
+        # Check roles except admin exists or not
+        ability_exist = await ability_crud.find_by_name(db=db, name=ability.name)
+        if not ability_exist:
+            await ability_crud.create(db=db, obj_in=ability)
+
+    # ! Verify linked agent abilities
+    for link in linked_abilities:
+        await ability_crud.verify_existence_by_name(db=db, name=link.ability_name)
 
     # ! Generate Admin user
     admin_user = await user_crud.find_by_username(
