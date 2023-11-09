@@ -19,6 +19,12 @@ class TransactionReasonEnum(enum.Enum):
     REGISTER = "REGISTER"
 
 
+class TransactionStatusEnum(enum.Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    FAILED = "FAILED"
+    ACCEPTED = "ACCEPTED"
+
+
 # ---------------------------------------------------------------------------
 class Transaction(Base, BaseMixin):
     __tablename__ = "transaction"
@@ -28,7 +34,11 @@ class Transaction(Base, BaseMixin):
     value_type = Column(Enum(TransactionValueType), nullable=False)
     code = Column(String, nullable=True)
     reason = Column(Enum(TransactionReasonEnum), nullable=True)
-
+    status = Column(
+        Enum(TransactionStatusEnum),
+        nullable=False,
+        default=TransactionStatusEnum.ACCEPTED,
+    )
     # ! Relations
     receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)
     receiver = relationship("Wallet", foreign_keys=[receiver_id], lazy="selectin")

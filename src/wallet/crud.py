@@ -16,7 +16,7 @@ class WalletCRUD(BaseCRUD[Wallet, None, None]):
         *,
         db: AsyncSession,
         wallet_id: UUID,
-    ) -> Type[Wallet]:
+    ) -> Type[Wallet] | WalletNotFoundException:
         """
         ! Verify Wallet Existence
 
@@ -42,7 +42,12 @@ class WalletCRUD(BaseCRUD[Wallet, None, None]):
 
         return obj
 
-    async def verify_by_user_id(self, *, db: AsyncSession, user_id: UUID) -> Wallet:
+    async def verify_by_user_id(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> Wallet | WalletNotFoundException:
         """
         ! Verify Wallet Existence By user id
 
@@ -70,7 +75,12 @@ class WalletCRUD(BaseCRUD[Wallet, None, None]):
 
         return obj
 
-    async def find_by_user_id(self, *, db: AsyncSession, user_id: UUID) -> Wallet:
+    async def find_by_user_id(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> Wallet | WalletNotFoundException:
         """
         ! Find wallet by user id
 

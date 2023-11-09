@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    BigInteger,
 )
 from sqlalchemy.orm import relationship
 
@@ -33,7 +34,7 @@ class CapitalTransferStatusEnum(enum.Enum):
 class CapitalTransfer(Base, BaseMixin):
     __tablename__ = "capital_transfer"
 
-    value = Column(Float, nullable=False)
+    value = Column(BigInteger, nullable=False)
     transfer_type = Column(Enum(CapitalTransferEnum))
     finish = Column(Boolean, default=False)
     code = Column(Integer, unique=True, index=True, nullable=True)

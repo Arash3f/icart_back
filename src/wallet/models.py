@@ -10,8 +10,6 @@ from src.user_crypto.models import UserCrypto
 class Wallet(Base, BaseMixin):
     __tablename__ = "wallet"
 
-    cash_balance = Column(Integer, default=0)
-    credit_balance = Column(Integer, default=0)
     number = Column(Integer, unique=True, index=True)
 
     # ! Relations

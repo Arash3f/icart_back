@@ -47,8 +47,7 @@ async def get_wallet(
 
     Raises
     ------
-
-
+    WalletNotFoundException
     """
     # * Verify wallet existence
     wallet = await wallet_crud.verify_existence(db=db, wallet_id=read_data.id)
@@ -110,6 +109,10 @@ async def get_my_wallet(
     -------
     wallet
         my wallet
+
+    Raises
+    ------
+    WalletNotFoundException
     """
     # * Verify wallet existence
     wallet = await wallet_crud.verify_by_user_id(db=db, user_id=current_user.id)

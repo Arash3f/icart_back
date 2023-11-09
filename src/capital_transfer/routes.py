@@ -34,8 +34,8 @@ from src.user.crud import user as user_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
-from src.cash.crud import cash as cash_crud
-from src.credit.crud import credit as credit_crud
+from src.cash.crud import cash as cash_crud, CashField, TypeOperation
+from src.credit.crud import credit as credit_crud, CreditField
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/capital_transfer", tags=["capital_transfer"])
@@ -308,10 +308,24 @@ async def approve_capital_transfer(
         obj_current.finish = True
         if obj_current.transfer_type == CapitalTransferEnum.Credit:
             tr_type = TransactionValueType.CREDIT
+            await credit_crud.update_credit_by_user(
+                db=db,
+                credit_field=CreditField.BALANCE,
+                type_operation=TypeOperation.INCREASE,
+                user=receiver_wallet.user,
+                amount=obj_current.value,
+            )
             receiver_wallet.credit_balance += obj_current.value
         elif obj_current.transfer_type == CapitalTransferEnum.Cash:
             tr_type = TransactionValueType.CASH
-            receiver_wallet.cash_balance += obj_current.value
+            await cash_crud.update_cash_by_user(
+                db=db,
+                cash_field=CashField.BALANCE,
+                type_operation=TypeOperation.INCREASE,
+                user=receiver_wallet.user,
+                amount=obj_current.value,
+            )
+
         # ? Create Transaction
         transaction_create = Transaction(
             value=obj_current.value,

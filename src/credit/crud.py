@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.credit.exception import CreditNotFoundException
 from src.credit.models import Credit
 from src.database.base_crud import BaseCRUD
+from src.user.models import User
 
 
 class TypeOperation(enum.Enum):
@@ -91,13 +92,13 @@ class CreditCRUD(BaseCRUD[Credit, None, None]):
 
         return obj
 
-    async def update_credit_balance_by_user_id(
+    async def update_credit_by_user(
         self,
         *,
         db: AsyncSession,
         type_operation: TypeOperation,
         credit_field: CreditField,
-        user_id: UUID,
+        user: User,
         amount: int,
     ) -> bool | CreditNotFoundException:
         """
@@ -111,7 +112,7 @@ class CreditCRUD(BaseCRUD[Credit, None, None]):
             type of operation -> + or -
         credit_field
             which field must update?
-        user_id
+        user
             target user id
         amount
             balance value
@@ -126,7 +127,7 @@ class CreditCRUD(BaseCRUD[Credit, None, None]):
         CreditNotFoundException
         """
         response = await db.execute(
-            select(self.model).where(self.model.user.id == user_id),
+            select(self.model).where(self.model.user == user),
         )
 
         obj = response.scalar_one_or_none()
