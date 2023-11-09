@@ -7,14 +7,12 @@ from pydantic import BaseModel, ConfigDict
 
 from src.capital_transfer.models import CapitalTransferEnum, CapitalTransferStatusEnum
 from src.schema import IDRequest
-from src.transaction.models import TransactionStatusEnum
 
 
 # ---------------------------------------------------------------------------
 class CapitalTransferBase(BaseModel):
     transfer_type: CapitalTransferEnum
     value: int
-    status: TransactionStatusEnum
     model_config = ConfigDict(extra="forbid")
 
     file_version_id: str | None = None

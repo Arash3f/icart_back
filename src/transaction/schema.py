@@ -5,7 +5,11 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from src.schema import Duration
-from src.transaction.models import TransactionValueType, TransactionReasonEnum
+from src.transaction.models import (
+    TransactionValueType,
+    TransactionReasonEnum,
+    TransactionStatusEnum,
+)
 
 
 class TransactionChartType(enum.Enum):
@@ -18,6 +22,7 @@ class TransactionBase(BaseModel):
     value: float
     text: str
     value_type: TransactionValueType
+    status: TransactionStatusEnum
     model_config = ConfigDict(extra="forbid")
 
 
