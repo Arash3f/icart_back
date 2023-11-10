@@ -30,3 +30,21 @@ class ImportantDataRead(ImportantDataBase):
 # ---------------------------------------------------------------------------
 class ImportantDataCreate(ImportantDataBase):
     pass
+
+
+# ---------------------------------------------------------------------------
+class SystemAdditionalInfo(BaseModel):
+    agent_count: int = 0
+    organization_count: int = 0
+    merchant_count: int = 0
+    user_count: int = 0
+    sales_agent_count: int = 0
+
+
+# ---------------------------------------------------------------------------
+class SystemRequestInfo(BaseModel):
+    new_agent_count: int = 0
+    new_organization_count: int = 0
+    new_merchant_count: int = 0
+    new_user_count: int = 0
+    new_sales_agent_count: int = 0

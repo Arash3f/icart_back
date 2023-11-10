@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, String
+from sqlalchemy import UUID, Column, ForeignKey, String, Boolean
 from sqlalchemy.orm import relationship
 
 from src.database.base_class import Base, BaseMixin
@@ -16,6 +16,8 @@ class UserRequest(Base, BaseMixin):
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
     reason = Column(String, nullable=True)
+
+    status = Column(Boolean, default=False)
 
     national_card_front_version_id = Column(String, nullable=True)
     national_card_front_name = Column(String, nullable=True)

@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -25,6 +24,7 @@ class UserRequestBase(BaseModel):
 class UserRequestRead(UserRequestBase):
     id: UUID
     reason: str | None = None
+    status: bool | None = None
 
     created_at: datetime
     updated_at: datetime | None

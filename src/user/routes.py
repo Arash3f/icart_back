@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, UploadFile, File
-from sqlalchemy import select, and_, or_
+from jdatetime import timedelta
+from sqlalchemy import select, and_, or_, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.core.config import settings
-from src.schema import ResultResponse
+from src.schema import ResultResponse, ChartResponse, ChartFilterInput, Duration
 from src.user.models import User
 from src.user.schema import (
     UserMeResponse,
@@ -18,7 +20,6 @@ from src.utils.minio_client import MinioClient
 from typing import Annotated, List
 from src.user.crud import user as user_crud
 from src.organization.crud import organization as organization_crud
-from src.agent.crud import agent as agent_crud
 from src.location.crud import location as location_crud
 from src.permission import permission_codes as permission
 
@@ -565,3 +566,70 @@ async def user_list(
             )
             i.location.parent = loc
     return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/acquisition/statistics", response_model=List[ChartResponse])
+async def user_list(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    filter_data: ChartFilterInput,
+) -> list[ChartResponse]:
+    """
+    ! Get user acquisition statistics
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester user
+    filter_data
+        filter data
+
+    Returns
+    -------
+    chart_data
+        chart final data
+    """
+    start = filter_data.duration.start_date
+    end = filter_data.duration.end_date
+    unit = filter_data.unit
+
+    chart_data: list[ChartResponse] = []
+
+    # ? calculate durations
+    buf_time = start
+    while buf_time < end:
+        buf_end = buf_time + timedelta(
+            days=unit,
+        )
+        duration = Duration(
+            start_date=buf_time,
+            end_date=buf_end,
+        )
+        obj = ChartResponse(
+            duration=duration,
+            value=0,
+        )
+
+        query = (
+            select(func.count())
+            .select_from(User)
+            .filter(
+                and_(
+                    User.created_at >= obj.duration.start_date,
+                    User.created_at < obj.duration.end_date,
+                ),
+            )
+        )
+        response = await db.execute(
+            query,
+        )
+        obj.value = response.scalar()
+
+        chart_data.append(obj)
+        buf_time = buf_end
+
+    return chart_data
