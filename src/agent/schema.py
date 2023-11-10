@@ -17,7 +17,7 @@ class AgentBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-class AgentUpdateData(AgentBase):
+class AgentUpdateData(BaseModel):
     # ! Relations
     abilities: list[UUID]
 

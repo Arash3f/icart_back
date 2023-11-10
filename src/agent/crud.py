@@ -17,7 +17,7 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
         *,
         db: AsyncSession,
         agent_id: UUID,
-    ) -> Type[Agent]:
+    ) -> Type[Agent] | AgentNotFoundException:
         """
         ! Verify Agent Existence
 
@@ -43,7 +43,12 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
 
         return obj
 
-    async def find_by_user_id(self, *, db: AsyncSession, user_id: UUID) -> Agent:
+    async def find_by_user_id(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> Agent | AgentNotFoundException:
         """
         ! Find Agent by user id
 

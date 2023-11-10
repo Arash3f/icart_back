@@ -8,6 +8,7 @@ from src.ability.crud import ability as ability_crud
 from src.agent.crud import agent as agent_crud
 from src.location.models import Location
 from src.user.crud import user as user_crud
+from src.log.crud import log as log_crud
 from src.agent.models import Agent
 from src.agent.schema import (
     AgentFilter,
@@ -76,6 +77,16 @@ async def update_agent(
     agent = await agent_crud.update_agents_profit_rate(
         db=db,
         target_agent=obj_current,
+    )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        detail="توانایی نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            agent.name,
+            current_user.id,
+        ),
     )
 
     return agent
