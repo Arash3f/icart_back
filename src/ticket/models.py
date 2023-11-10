@@ -43,4 +43,9 @@ class Ticket(Base, BaseMixin):
     )
 
     creator_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
-    creator = relationship("User", foreign_keys=[creator_id], back_populates="tickets")
+    creator = relationship(
+        "User",
+        foreign_keys=[creator_id],
+        back_populates="tickets",
+        lazy="selectin",
+    )

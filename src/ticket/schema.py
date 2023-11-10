@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, conint
 from src.schema import IDRequest
 from src.ticket.models import TicketPosition, TicketType
 from src.ticket_message.schema import TicketMessageRead
+from src.user.schema import WalletCardRead
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +74,18 @@ class TicketRead(TicketBase):
 
 
 # ---------------------------------------------------------------------------
+class _UserRead(BaseModel):
+    id: UUID
+    first_name: str | None
+    last_name: str | None
+    phone_number: str | None
+    national_code: str
+
+    # ! Relation
+    wallet: WalletCardRead
+
+
+# ---------------------------------------------------------------------------
 class TicketComplexRead(TicketBase):
     id: uuid.UUID
     position: TicketPosition
@@ -82,7 +95,7 @@ class TicketComplexRead(TicketBase):
     updated_at: datetime | None
 
     # ! Relations
-    creator_id: uuid.UUID
+    creator: _UserRead
     messages: List[TicketMessageRead]
 
 

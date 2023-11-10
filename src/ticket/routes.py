@@ -4,7 +4,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy import case, desc, func, not_, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import query
 
 from src import deps
 from src.auth.exception import AccessDeniedException
