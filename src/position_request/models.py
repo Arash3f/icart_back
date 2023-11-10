@@ -3,6 +3,7 @@ import enum
 from sqlalchemy import UUID, Boolean, Column, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
+from src.ability.models import Ability
 from src.contract.models import Contract
 from src.database.base_class import Base, BaseMixin
 
@@ -12,6 +13,7 @@ class PositionRequestType(enum.Enum):
     AGENT = "AGENT"
     ORGANIZATION = "ORGANIZATION"
     MERCHANT = "MERCHANT"
+    SALES_AGENT = "SALES_AGENT"
 
 
 # ---------------------------------------------------------------------------
@@ -146,3 +148,17 @@ class PositionRequest(Base, BaseMixin):
         back_populates="requests",
         lazy="selectin",
     )
+
+    abilities = relationship(
+        Ability,
+        secondary="position_request_ability",
+        back_populates="position_requests",
+        lazy="selectin",
+    )
+
+
+# ---------------------------------------------------------------------------
+class PositionRequestAbility(Base, BaseMixin):
+    __tablename__ = "position_request_ability"
+    position_request_id = Column(UUID(as_uuid=True), ForeignKey("position_request.id"))
+    ability_id = Column(UUID(as_uuid=True), ForeignKey("ability.id"))

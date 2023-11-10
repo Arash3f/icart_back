@@ -48,6 +48,7 @@ from src.role.crud import role as role_crud
 from src.schema import VerifyUserDep, IDRequest, ResultResponse
 from src.user.crud import user as user_crud
 from src.contract.crud import contract as contract_crud
+from src.ability.crud import ability as ability_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 
@@ -178,6 +179,7 @@ async def create_position_request(
     target_position: Annotated[PositionRequestType, Form()],
     location_id: Annotated[UUID, Form()],
     number: Annotated[str, Form()],
+    abilities_id_list: Annotated[list[UUID], Form()] = [],
     field_of_work: Annotated[FieldOfWorkType | None, Form()] = None,
     selling_type: Annotated[SellingType | None, Form()] = None,
     postal_code: Annotated[str, Form()],
@@ -206,6 +208,7 @@ async def create_position_request(
     received_money
     tracking_code
     employee_count
+    abilities_id_list
     requester_national_code
     postal_code
     field_of_work
@@ -231,6 +234,7 @@ async def create_position_request(
     AccessDeniedException
     UserNotFoundException
     ContractNumberIsDuplicatedException
+    AbilityNotFoundException
     """
     # * Verify creator existence and verify role
     if current_user.role.name != "نماینده":
@@ -243,6 +247,13 @@ async def create_position_request(
     )
     if not requester_user.role.name == "کاربر ساده":
         raise AccessDeniedException()
+
+    # * verify abilities_id_list
+    origin_agent_abilities = []
+    if target_position == PositionRequestType.SALES_AGENT:
+        for ability_id in abilities_id_list:
+            ability = await ability_crud.verify_existence(db=db, ability_id=ability_id)
+            origin_agent_abilities.append(ability)
 
     # * Verify location existence
     location = await location_crud.verify_existence(
@@ -302,6 +313,7 @@ async def create_position_request(
     position_request.address = address
     position_request.employee_count = employee_count
     position_request.geo = geo
+    position_request.abilities = origin_agent_abilities
 
     db.add(position_request)
     db.add(create_contract)
@@ -401,9 +413,28 @@ async def approve_position_request(
                     new_agent.user_id = obj_current.requester_user_id
                     new_agent.location = location
                     new_agent.parent = parent_agent
+                    new_agent.is_main = True
+                    new_agent.profit_rate = 40
                     new_agent.contract = obj_current.contract
                     agent_role = await role_crud.find_by_name(db=db, name="نماینده")
                     requester_user.role = agent_role
+
+                    db.add(new_agent)
+                elif obj_current.target_position == PositionRequestType.SALES_AGENT:
+                    new_agent = Agent()
+                    new_agent.user_id = obj_current.requester_user_id
+                    new_agent.is_main = False
+                    new_agent.abilities = obj_current.abilities
+                    new_agent.location = location
+                    new_agent.parent = parent_agent
+                    new_agent.contract = obj_current.contract
+                    agent_role = await role_crud.find_by_name(db=db, name="نماینده")
+                    requester_user.role = agent_role
+
+                    new_agent.profit_rate = await agent_crud.calculate_profit(
+                        db=db,
+                        number_of_ability=len(obj_current.abilities),
+                    )
 
                     db.add(new_agent)
                 elif obj_current.target_position == PositionRequestType.ORGANIZATION:

@@ -11,43 +11,6 @@ from src.agent.schema import AgentUpdate
 from src.database.base_crud import BaseCRUD
 
 
-# ---------------------------------------------------------------------------
-async def update_profit_rate(*, target_agent: Agent, db: AsyncSession) -> Agent:
-    """
-    ! Update Agent Interest rates
-
-    Parameters
-    ----------
-    target_agent
-        Target Agent
-    db
-        Target database connection
-
-    Returns
-    -------
-    target_agent
-        Updated agent
-
-    """
-    # * Find All Agent Ability
-    response = await db.execute(select(Ability))
-    all_agent_ability_count = len(response.scalars().all())
-    # * Calculate interest rates
-    new_profit_rate = (len(target_agent.abilities) * 100) / all_agent_ability_count
-    target_agent.profit_rate = new_profit_rate
-    # * Check agent main field
-    if new_profit_rate == 100:
-        target_agent.is_main = True
-    else:
-        target_agent.is_main = False
-
-    # ? Update
-    db.add(target_agent)
-    await db.commit()
-
-    return target_agent
-
-
 class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
     async def verify_existence(
         self,
@@ -113,7 +76,7 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
 
     async def update_auto_data(self, *, db: AsyncSession) -> bool:
         """
-        ! Update All Agent profit_rate And calculate is_main
+        ! Update All Agent profit_rate
 
         Parameters
         ----------
@@ -128,8 +91,12 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
         # * Find All Ability
         response = await db.execute(select(Ability))
         all_agent_ability_count = len(response.scalars().all())
-        # * Find All Agent
-        response = await db.execute(select(self.model))
+        # * Find All Agent, is_main = False
+        response = await db.execute(
+            select(self.model).filter(
+                self.model.is_main == False,
+            ),
+        )
         all_agents = response.scalars().all()
 
         mappings = []
@@ -158,6 +125,36 @@ class AgentCRUD(BaseCRUD[Agent, None, AgentUpdate]):
         await db.commit()
 
         return True
+
+    async def calculate_profit(
+        self,
+        *,
+        db: AsyncSession,
+        number_of_ability: int,
+    ) -> float:
+        """
+        ! Calculate profit by number of active ability
+
+        Parameters
+        ----------
+        db
+            database connection
+        number_of_ability
+            number of active ability
+
+        Returns
+        -------
+        profit_rate
+            agent profit_rate
+        """
+        # * Find All Ability
+        response = await db.execute(select(Ability))
+        all_agent_ability_count = len(response.scalars().all())
+
+        # * Calculate interest rates
+        profit_rate = (number_of_ability * 100) / all_agent_ability_count
+
+        return profit_rate
 
 
 # ---------------------------------------------------------------------------

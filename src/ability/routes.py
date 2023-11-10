@@ -101,6 +101,7 @@ async def create_ability(
     # ? Update All Agent profit_rate and is_main field
     await agent_crud.update_auto_data(db=db)
 
+    await db.refresh(ability)
     return ability
 
 
