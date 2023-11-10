@@ -90,11 +90,13 @@ async def get_log(
     filter_data.user_id = (
         (Log.user_id == filter_data.user_id) if filter_data.user_id else True
     )
+    filter_data.type = (Log.type == filter_data.type) if filter_data.type else True
 
     # * Add filter fields
     query = select(Log).filter(
         and_(
             filter_data.user_id,
+            filter_data.type,
         ),
     )
     # * Find All agent with filters

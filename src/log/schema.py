@@ -5,12 +5,13 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from src.auth.schema import UserBase
-from src.schema import IDRequest
+from src.log.models import LogType
 
 
 # ---------------------------------------------------------------------------
 class LogBase(BaseModel):
     detail: str | None = None
+    type: LogType | None = None
     model_config = ConfigDict(extra="forbid")
 
     # ! Relations
@@ -36,3 +37,4 @@ class LogRead(LogBase):
 # ---------------------------------------------------------------------------
 class LogFilter(BaseModel):
     user_id: None | UUID = None
+    type: LogType | None = None
