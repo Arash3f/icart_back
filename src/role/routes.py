@@ -6,6 +6,7 @@ from src import deps
 from src.permission import permission_codes as permission
 from src.permission.crud import permission as permission_crud
 from src.role.crud import role as role_crud
+from src.log.crud import log as log_crud
 from src.role.crud import role_permission as role_permission_crud
 from src.role.exception import RoleNotFoundException
 from src.role.models import Role
@@ -73,6 +74,16 @@ async def delete_role(
     await role_crud.verify_connections(db=db, role_id=delete_data.id)
     # * Delete Role
     await role_crud.delete(db=db, item_id=delete_data.id)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        detail="نقش {} با موفقیت توسط کاربر {} حذف شد".format(
+            obj_current.name,
+            current_user.national_code,
+        ),
+    )
 
     return DeleteResponse(result="Role Deleted Successfully")
 

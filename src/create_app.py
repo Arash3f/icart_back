@@ -34,6 +34,7 @@ from src.wallet.routes import router as wallet_router
 from src.cash.routes import router as cash_router
 from src.user_request.routes import router as user_request_router
 from src.position_request.routes import router as position_request_router
+from src.log.routes import router as log_router
 
 
 # ---------------------------------------------------------------------------
@@ -74,6 +75,7 @@ def create_fastapi_app():
     app.include_router(cash_router)
     app.include_router(user_request_router)
     app.include_router(installments_router)
+    app.include_router(log_router)
     app.add_middleware(
         middleware_class=CORSMiddleware,
         allow_origins=["*"],

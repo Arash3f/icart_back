@@ -13,6 +13,7 @@ from src.cash.models import Cash
 from src.credit.models import Credit
 from src.database.base_class import Base, BaseMixin
 from src.installments.models import Installments
+from src.log.models import Log
 from src.organization.models import Organization
 from src.ticket.models import Ticket
 from src.user_request.models import UserRequest
@@ -132,4 +133,5 @@ class User(Base, BaseMixin):
 
     ticket_messages = relationship("TicketMessage", back_populates="creator")
     tickets = relationship(Ticket, back_populates="creator")
+    logs = relationship(Log, back_populates="user")
     user_messages = relationship("UserMessage", back_populates="user")

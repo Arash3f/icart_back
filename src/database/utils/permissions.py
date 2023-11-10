@@ -167,4 +167,9 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند اقساط را ببیند",
         code=permission.VIEW_INSTALLMENTS,
     ),
+    # ! LOG
+    PermissionCreate(
+        name="می تواند لاگ های سیستم را ببیند",
+        code=permission.VIEW_LOG,
+    ),
 ]
