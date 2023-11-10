@@ -6,10 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
 from src.fee.exception import (
-    FeeLimitIsDuplicatedException,
+    FeeIsDuplicatedException,
     FeeNotFoundException,
 )
-from src.fee.models import Fee
+from src.fee.models import Fee, FeeTypeEnum, FeeUserType
 from src.fee.schema import FeeCreate, FeeUpdate
 
 
@@ -46,7 +46,13 @@ class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
         *,
         db: AsyncSession,
         limit: int,
+        value_type: FeeTypeEnum,
+        user_type: FeeUserType,
+        is_percentage: bool,
         exception_limit: int = None,
+        exception_user_type: FeeUserType = None,
+        exception_value_type: FeeTypeEnum = None,
+        exception_is_percentage: bool = None,
     ) -> Fee:
         """
         ! Verify fee limit duplicate
@@ -57,8 +63,17 @@ class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
             Target database connection
         limit
             Target Item limit
+        value_type
+            Target value type
+        user_type
+            Target fee user type
+        is_percentage
+            fee user percentage or value
         exception_limit
             Exception fee limit
+        exception_user_type
+        exception_value_type
+        exception_is_percentage
 
         Returns
         -------
@@ -67,19 +82,82 @@ class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
 
         Raises
         ------
-        FeeLimitIsDuplicatedException
+        FeeIsDuplicatedException
         """
-        response = await db.execute(
-            select(self.model).where(
-                and_(self.model.limit == limit, self.model.limit != exception_limit),
+        query = select(self.model).where(
+            and_(
+                self.model.limit == limit,
+                self.model.limit != exception_limit,
+                self.model.type == value_type,
+                self.model.type != exception_value_type,
+                self.model.user_type == user_type,
+                self.model.user_type != exception_user_type,
             ),
+        )
+        if is_percentage and is_percentage != exception_is_percentage:
+            print("!@3")
+
+            query = query.filter(
+                self.model.value.is_(None),
+            )
+        elif not is_percentage and is_percentage != exception_is_percentage:
+            print("!@3")
+            query = query.filter(
+                self.model.percentage.is_(None),
+            )
+        response = await db.execute(
+            query,
         )
 
         obj = response.scalar_one_or_none()
         if obj:
-            raise FeeLimitIsDuplicatedException()
+            raise FeeIsDuplicatedException()
 
         return obj
+
+    async def calculate_fee(
+        self,
+        db: AsyncSession,
+        amount: int,
+        value_type: FeeTypeEnum,
+        user_type: FeeUserType,
+    ) -> int:
+        """
+        ! Calculate Fee
+
+        Parameters
+        ----------
+        db
+            database connection
+        amount
+            value of transaction
+        value_type
+            type of value
+        user_type
+            type of user
+
+        Returns
+        -------
+        response
+            fee of value
+        """
+        fee_response = await db.execute(
+            select(self.model)
+            .order_by(self.model.limit.asc())
+            .where(
+                self.model.limit >= amount,
+                self.model.type == value_type,
+                self.model.user_type == user_type,
+            ),
+        )
+
+        target_fee = fee_response.scalars().first()
+        if fee.percentage:
+            fee_value = int((amount * target_fee.percentage) / 100)
+        elif fee.value:
+            fee_value = fee.value
+
+        return fee_value
 
 
 # ---------------------------------------------------------------------------

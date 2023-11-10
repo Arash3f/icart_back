@@ -45,9 +45,9 @@ async def delete_fee(
     FeeNotFoundException
     """
     # * Verify fee existence
-    await fee_crud.verify_existence(db=db, user_crypto_id=delete_data.id)
+    await fee_crud.verify_existence(db=db, fee_id=delete_data.id)
     # * Delete Fee
-    await fee_crud.delete(db=db, id=delete_data.id)
+    await fee_crud.delete(db=db, item_id=delete_data.id)
 
     return DeleteResponse(result="Fee Deleted Successfully")
 
@@ -85,11 +85,21 @@ async def create_fee(
     FeeLimitIsDuplicatedException
     """
     # ! Cannot set percentage & value together
-    if create_data.value and create_data.percentage:
+    if create_data.value is not None and create_data.percentage is not None:
         raise InCorrectDataException()
 
+    is_percentage = False
+    if create_data.value is None:
+        is_percentage = True
+
     # * Verify fee's limit duplicate
-    await fee_crud.verify_duplicate_limit(db=db, limit=create_data.limit)
+    await fee_crud.verify_duplicate_limit(
+        db=db,
+        limit=create_data.limit,
+        user_type=create_data.user_type,
+        value_type=create_data.type,
+        is_percentage=is_percentage,
+    )
     # * Create Fee
     fee = await fee_crud.create(db=db, obj_in=create_data)
 
@@ -126,17 +136,35 @@ async def update_fee(
     Raises
     ------
     FeeNotFoundException
-    FeeLimitIsDuplicatedException
+    FeeIsDuplicatedException
     """
+    # ! Cannot set percentage & value together
+    if update_data.data.value is not None and update_data.data.percentage is not None:
+        raise InCorrectDataException()
     # * Verify fee existence
     obj_current = await fee_crud.verify_existence(
         db=db,
-        user_crypto_id=update_data.where.id,
+        fee_id=update_data.where.id,
     )
+
+    is_percentage = False
+    if update_data.data.value is None:
+        is_percentage = True
+
+    exception_is_percentage = False
+    if obj_current.value is None:
+        exception_is_percentage = True
+
     # * Verify fee's limit duplicate
     await fee_crud.verify_duplicate_limit(
         db=db,
         limit=update_data.data.limit,
+        user_type=update_data.data.user_type,
+        value_type=update_data.data.type,
+        is_percentage=is_percentage,
+        exception_user_type=obj_current.user_type,
+        exception_value_type=obj_current.type,
+        exception_is_percentage=exception_is_percentage,
         exception_limit=obj_current.limit,
     )
     # * Update fee
@@ -215,5 +243,5 @@ async def find_fee(
     FeeNotFoundException
     """
     # * Verify fee existence
-    fee = await fee_crud.verify_existence(db=db, user_crypto_id=read_data.id)
+    fee = await fee_crud.verify_existence(db=db, fee_id=read_data.id)
     return fee

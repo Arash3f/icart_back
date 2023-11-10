@@ -20,17 +20,17 @@ class FeeNotFoundException(HTTPException):
         self.headers = None
 
 
-class FeeLimitIsDuplicatedException(HTTPException):
+class FeeIsDuplicatedException(HTTPException):
     """
-    ? Exception when fee's limit is duplicated
+    ? Exception when fee is duplicated
     """
 
     def __init__(self):
         self.status_code = 400
         self.detail = {
             "code": 801,
-            "persian_message": "سقف کارمزد تکراری است!",
-            "english_message": "Fee Limit Is Duplicated!",
+            "persian_message": "کارمزد تکراری است!",
+            "english_message": "Fee Is Duplicated!",
         }
         self.headers = None
 

@@ -3,17 +3,17 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, conint
 
-from src.fee.models import FeeTypeEnum
+from src.fee.models import FeeTypeEnum, FeeUserType
 from src.schema import IDRequest
 
 
 # ---------------------------------------------------------------------------
 class FeeBase(BaseModel):
     limit: int
+    type: FeeTypeEnum
+    user_type: FeeUserType
     percentage: conint(ge=0, le=100) | None = None
     value: int | None = None
-    value_limit: int
-    type: FeeTypeEnum
 
     model_config = ConfigDict(extra="forbid")
 
