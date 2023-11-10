@@ -20,7 +20,7 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
         *,
         db: AsyncSession,
         ability_id: UUID,
-    ) -> Type[Ability]:
+    ) -> Type[Ability] | AbilityNotFoundException:
         """
         ! Verify Ability Existence
 
@@ -52,7 +52,7 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
         *,
         db: AsyncSession,
         name: str,
-    ) -> Type[Ability]:
+    ) -> Type[Ability] | AbilityNotFoundException:
         """
         ! Verify Ability Existence by name
 
@@ -90,8 +90,9 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
         *,
         db: AsyncSession,
         list_ids: List[UUID],
-    ) -> Sequence[Ability]:
+    ) -> Sequence[Ability] | AbilityNotFoundException:
         """
+        Verify list of abilities existence
 
         Parameters
         ----------
@@ -108,8 +109,7 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
         Raises
         ------
         AbilityNotFoundException
-            Some of abilities not exist
-
+            Some of the abilities not exist
         """
         response = await db.execute(
             select(self.model).where(self.model.id.in_(list_ids)),
@@ -125,7 +125,7 @@ class AbilityCRUD(BaseCRUD[Ability, AbilityCreate, AbilityUpdate]):
         db: AsyncSession,
         name: str,
         exception_name: str = None,
-    ) -> bool:
+    ) -> bool | AbilityNameIsDuplicatedException:
         """
         ! Verify Ability duplicate name with exception
 

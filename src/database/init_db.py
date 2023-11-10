@@ -6,6 +6,7 @@ from src.auth.schema import UserInDB
 from src.core.config import settings
 from src.core.security import hash_password
 from src.credit.models import Credit
+from src.database.utils.default_permission import default_role_permission
 from src.database.utils.locations import location_in
 from src.database.utils.permissions import permissions_in
 from src.important_data.crud import important_data as important_data_crud
@@ -114,7 +115,20 @@ async def init_db(db: AsyncSession) -> None:
             )
             await role_permission_crud.create(db=db, obj_in=role_permission_in)
 
-    # ! Generate all project permissions
+    # ? Add default role permissions
+    for obj in default_role_permission:
+        role_exist = await role_crud.verify_existence_by_name(db=db, name=obj.name)
+        for perm_code in obj.permissions:
+            permission = await permission_crud.find_by_code(
+                db=db,
+                code=perm_code,
+            )
+            role_permission_in = RolePermissionCreate(
+                role_id=role_exist.id,
+                permission_id=permission.id,
+            )
+            await role_permission_crud.create(db=db, obj_in=role_permission_in)
+    # ! Generate all project locations
     for location in location_in:
         # Check if location exists or not
         location_exist = await location_crud.find_by_name(db=db, name=location.name)

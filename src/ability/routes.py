@@ -5,6 +5,7 @@ from sqlalchemy import select, and_
 
 from src import deps
 from src.ability.crud import ability as ability_crud
+from src.ability.exception import CanNotUpdateBaseAbilityException
 from src.ability.models import Ability
 from src.ability.schema import (
     AbilityCreate,
@@ -13,7 +14,9 @@ from src.ability.schema import (
     AbilityRead,
     AbilityUpdate,
 )
+from src.ability.utils.agent_permissions import linked_abilities
 from src.agent.crud import agent as agent_crud
+from src.log.crud import log as log_crud
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
 from src.permission import permission_codes as permission
@@ -52,13 +55,30 @@ async def delete_ability(
     Raises
     ------
     AbilityNotFoundException
+    CanNotUpdateBaseAbilityException
     """
     # * Verify ability existence
-    await ability_crud.verify_existence(db=db, ability_id=delete_data.id)
+    ability = await ability_crud.verify_existence(db=db, ability_id=delete_data.id)
+
+    # ! Can not delete base ability
+    for linked_ability in linked_abilities:
+        if linked_ability.ability_name == ability.name:
+            raise CanNotUpdateBaseAbilityException()
+
     # * Delete Ability
     await ability_crud.delete(db=db, item_id=delete_data.id)
     # ? Update All Agent profit_rate and is_main field
     await agent_crud.update_auto_data(db=db)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        detail="توانایی نماینده {} با موفقیت توسط کاربر {} حذف شد".format(
+            ability.name,
+            current_user.id,
+        ),
+    )
 
     return DeleteResponse(result="Ability Deleted Successfully")
 
@@ -100,8 +120,17 @@ async def create_ability(
     ability = await ability_crud.create(db=db, obj_in=create_data)
     # ? Update All Agent profit_rate and is_main field
     await agent_crud.update_auto_data(db=db)
-
     await db.refresh(ability)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        detail="توانایی نماینده {} با موفقیت توسط کاربر {} ساخته شد".format(
+            ability.name,
+            current_user.id,
+        ),
+    )
     return ability
 
 
@@ -136,12 +165,19 @@ async def update_ability(
     ------
     AbilityNotFoundException
     AbilityNameIsDuplicatedException
+    CanNotUpdateBaseAbilityException
     """
     # * Verify ability existence
     obj_current = await ability_crud.verify_existence(
         db=db,
         user_crypto_id=update_data.where.id,
     )
+
+    # ! Can not delete base ability
+    for linked_ability in linked_abilities:
+        if linked_ability.ability_name == obj_current.name:
+            raise CanNotUpdateBaseAbilityException()
+
     # * Verify ability name duplicate
     await ability_crud.verify_duplicate_name(
         db=db,
@@ -155,6 +191,15 @@ async def update_ability(
         obj_new=update_data.data,
     )
 
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        detail="توانایی نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            ability.name,
+            current_user.id,
+        ),
+    )
     return ability
 
 
@@ -163,7 +208,9 @@ async def update_ability(
 async def find_ability(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_ABILITY]),
+    ),
     obj_data: IDRequest,
 ) -> AbilityRead:
     """
@@ -198,7 +245,9 @@ async def find_ability(
 async def read_ability_list(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_ABILITY]),
+    ),
     filter_data: AbilityFilter,
     skip: int = 0,
     limit: int = 20,
