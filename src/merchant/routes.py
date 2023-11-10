@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, and_
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.merchant.crud import merchant as merchant_crud
@@ -12,11 +13,61 @@ from src.merchant.schema import (
     MerchantFilter,
     MerchantFilterOrderFild,
     StoresRead,
+    MerchantUpdate,
 )
 from src.user.models import User
+from src.permission import permission_codes as permission
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/merchant", tags=["merchant"])
+
+
+# ---------------------------------------------------------------------------
+@router.put("/update", response_model=MerchantRead)
+async def update_fee(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_MERCHANT]),
+    ),
+    update_data: MerchantUpdate,
+) -> MerchantRead:
+    """
+    ! Update Merchant profits
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update profits
+
+    Returns
+    -------
+    merchant
+        Updated merchant
+
+    Raises
+    ------
+    MerchantNotFoundException
+    """
+    # * Verify merchant existence
+    obj_current = await merchant_crud.verify_existence(
+        db=db,
+        merchant_id=update_data.where.id,
+    )
+
+    obj_current.blue_profit = update_data.data.blue_profit
+    obj_current.silver_profit = update_data.data.silver_profit
+    obj_current.gold_profit = update_data.data.gold_profit
+
+    # * Update merchant
+    db.add(obj_current)
+    await db.commit()
+    await db.refresh(obj_current)
+    return obj_current
 
 
 # ---------------------------------------------------------------------------
@@ -24,7 +75,9 @@ router = APIRouter(prefix="/merchant", tags=["merchant"])
 async def get_merchant(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_MERCHANT]),
+    ),
     item_id: UUID,
 ) -> MerchantRead:
     """
@@ -59,7 +112,9 @@ async def get_merchant(
 async def get_merchant_list(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_MERCHANT]),
+    ),
     skip: int = 0,
     limit: int = 20,
     filter_data: MerchantFilter,
@@ -108,14 +163,10 @@ async def get_merchant_list(
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.desc())
-            # elif field == MerchantFilterOrderFild.name:
-            #     query = query.order_by(Merchant.name.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.asc())
-            # elif field == MerchantFilterOrderFild.name:
-            #     query = query.order_by(Merchant.name.asc())
     obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
     return obj_list
 
@@ -173,14 +224,10 @@ async def get_merchant_list(
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.desc())
-            # elif field == MerchantFilterOrderFild.name:
-            #     query = query.order_by(Merchant.name.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.asc())
-            # elif field == MerchantFilterOrderFild.name:
-            #     query = query.order_by(Merchant.name.asc())
     obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
     return obj_list
 

@@ -2,11 +2,12 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, conint
 
 from src.contract.schema import ContractRead, ContractShortInfo
 from src.location.schema import LocationRead
 from src.position_request.models import FieldOfWorkType, SellingType
+from src.schema import IDRequest
 from src.user.schema import UserRead
 
 
@@ -17,6 +18,10 @@ class MerchantBase(BaseModel):
     field_of_work: FieldOfWorkType | None
     geo: str | None
     selling_type: SellingType
+
+    blue_profit: conint(ge=0, le=100) = 0
+    silver_profit: conint(ge=0, le=100) = 0
+    gold_profit: conint(ge=0, le=100) = 0
 
 
 # ---------------------------------------------------------------------------
@@ -43,6 +48,19 @@ class StoresRead(MerchantBase):
     user: UserRead
     contract: ContractShortInfo | None = None
     location: LocationRead | None = None
+
+
+# ---------------------------------------------------------------------------
+class MerchantUpdateData(BaseModel):
+    blue_profit: conint(ge=0, le=100) = 0
+    silver_profit: conint(ge=0, le=100) = 0
+    gold_profit: conint(ge=0, le=100) = 0
+
+
+# ---------------------------------------------------------------------------
+class MerchantUpdate(BaseModel):
+    where: IDRequest
+    data: MerchantUpdateData
 
 
 # ---------------------------------------------------------------------------

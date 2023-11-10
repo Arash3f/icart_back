@@ -7,11 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.base_crud import BaseCRUD
 from src.merchant.exception import MerchantNotFoundException
 from src.merchant.models import Merchant
+from src.merchant.schema import MerchantUpdate
 from src.user.models import User
 
 
 # ---------------------------------------------------------------------------
-class MerchantCRUD(BaseCRUD[Merchant, None, None]):
+class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
     async def verify_existence(
         self,
         *,

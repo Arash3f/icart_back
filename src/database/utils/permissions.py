@@ -172,4 +172,13 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند لاگ های سیستم را ببیند",
         code=permission.VIEW_LOG,
     ),
+    # ! MERCHANT
+    PermissionCreate(
+        name="می تواند پذیرنده ها را ببیند",
+        code=permission.VIEW_MERCHANT,
+    ),
+    PermissionCreate(
+        name="می تواند درصد سود پذیرنده ها را ویرایش کند",
+        code=permission.UPDATE_MERCHANT,
+    ),
 ]

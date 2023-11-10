@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, String, Enum
+from sqlalchemy import UUID, Column, ForeignKey, String, Enum, Integer, CheckConstraint
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
@@ -16,6 +16,23 @@ class Merchant(Base, BaseMixin):
     field_of_work = Column(Enum(FieldOfWorkType), nullable=True)
     selling_type = Column(Enum(SellingType), default=SellingType.ALL_THREE)
     geo = Column(String, nullable=True)
+
+    # ? PROFIT
+    blue_profit = Column(
+        Integer,
+        CheckConstraint("blue_profit >= 0 AND blue_profit <= 100"),
+        default=0,
+    )
+    silver_profit = Column(
+        Integer,
+        CheckConstraint("silver_profit >= 0 AND silver_profit <= 100"),
+        default=0,
+    )
+    gold_profit = Column(
+        Integer,
+        CheckConstraint("gold_profit >= 0 AND gold_profit <= 100"),
+        default=0,
+    )
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
