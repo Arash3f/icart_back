@@ -3,6 +3,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.permission.crud import permission as permission_crud
 from src.role.crud import role as role_crud
@@ -79,6 +80,7 @@ async def delete_role(
     await log_crud.auto_generate(
         db=db,
         user_id=current_user.id,
+        log_type=LogType.DELETE_ROLE,
         detail="نقش {} با موفقیت توسط کاربر {} حذف شد".format(
             obj_current.name,
             current_user.national_code,

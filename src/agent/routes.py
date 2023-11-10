@@ -7,6 +7,7 @@ from src import deps
 from src.ability.crud import ability as ability_crud
 from src.agent.crud import agent as agent_crud
 from src.location.models import Location
+from src.log.models import LogType
 from src.user.crud import user as user_crud
 from src.log.crud import log as log_crud
 from src.agent.models import Agent
@@ -82,6 +83,7 @@ async def update_agent(
     # ? Generate Log
     await log_crud.auto_generate(
         db=db,
+        log_type=LogType.UPDATE_AGENT,
         user_id=current_user.id,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
             agent.name,

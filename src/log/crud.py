@@ -7,7 +7,7 @@ from src.database.base_crud import BaseCRUD
 from src.log.exception import (
     LogNotFoundException,
 )
-from src.log.models import Log
+from src.log.models import Log, LogType
 from src.log.schema import LogCreate
 from src.user.crud import user as user_crud
 from src.user.exception import UserNotFoundException
@@ -51,6 +51,7 @@ class LogCRUD(BaseCRUD[Log, LogCreate, None]):
         *,
         db: AsyncSession,
         user_id: UUID,
+        log_type: LogType,
         detail: str | None = None,
     ) -> Type[Log] | UserNotFoundException:
         """
@@ -64,6 +65,8 @@ class LogCRUD(BaseCRUD[Log, LogCreate, None]):
             Target user
         detail
             log detail
+        log_type
+            log type
 
         Returns
         -------
@@ -79,6 +82,7 @@ class LogCRUD(BaseCRUD[Log, LogCreate, None]):
         new_obj = self.model(
             user_id=user.id,
             detail=detail,
+            type=log_type,
         )
         db.add(new_obj)
         await db.commit()

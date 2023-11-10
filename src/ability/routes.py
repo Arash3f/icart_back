@@ -17,6 +17,7 @@ from src.ability.schema import (
 from src.ability.utils.agent_permissions import linked_abilities
 from src.agent.crud import agent as agent_crud
 from src.log.crud import log as log_crud
+from src.log.models import LogType
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
 from src.permission import permission_codes as permission
@@ -74,6 +75,7 @@ async def delete_ability(
     await log_crud.auto_generate(
         db=db,
         user_id=current_user.id,
+        log_type=LogType.DELETE_ABILITY,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} حذف شد".format(
             ability.name,
             current_user.id,
@@ -125,6 +127,7 @@ async def create_ability(
     # ? Generate Log
     await log_crud.auto_generate(
         db=db,
+        log_type=LogType.ADD_ROLE,
         user_id=current_user.id,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} ساخته شد".format(
             ability.name,
@@ -194,6 +197,7 @@ async def update_ability(
     # ? Generate Log
     await log_crud.auto_generate(
         db=db,
+        log_type=LogType.UPDATE_ABILITY,
         user_id=current_user.id,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
             ability.name,
