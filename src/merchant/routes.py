@@ -76,7 +76,7 @@ async def get_merchant(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_MERCHANT]),
+        deps.get_current_user(),
     ),
     item_id: UUID,
 ) -> MerchantRead:
