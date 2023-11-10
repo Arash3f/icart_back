@@ -115,6 +115,7 @@ class TicketFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class TicketFilter(BaseModel):
+    creator_id: UUID | None = None
     type: None | TicketType = None
     admin_visited: bool = False
     waiting_for_reply: bool = False

@@ -86,6 +86,11 @@ async def read_tickets(
     filter_data.position = (
         (Ticket.position == filter_data.position) if filter_data.position else True
     )
+    filter_data.creator_id = (
+        (Ticket.creator_id == filter_data.creator_id)
+        if filter_data.creator_id
+        else True
+    )
     filter_data.important = (
         (Ticket.important == filter_data.important) if filter_data.important else True
     )
@@ -99,6 +104,7 @@ async def read_tickets(
                 filter_data.type,
                 filter_data.position,
                 filter_data.important,
+                filter_data.creator_id,
                 filter_data.number,
             ),
         )

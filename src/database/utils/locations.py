@@ -98,4 +98,6 @@ location_in: list[LocationInitCreate] = [
     LocationInitCreate(name="فاریاب", parent_name="کرمان"),
     LocationInitCreate(name="جازموریان", parent_name="کرمان"),
     LocationInitCreate(name="گنبکی", parent_name="کرمان"),
+    LocationInitCreate(name="البرز", parent_name=None),
+    LocationInitCreate(name="کرج", parent_name="البرز"),
 ]
