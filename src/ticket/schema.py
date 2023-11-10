@@ -103,7 +103,7 @@ class TicketFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class TicketFilter(BaseModel):
     type: None | TicketType = None
-    answered: bool = False
+    admin_visited: bool = False
     waiting_for_reply: bool = False
     position: None | TicketPosition = None
     important: None | int = None
@@ -117,5 +117,5 @@ class TicketFilter(BaseModel):
 class TicketInfo(BaseModel):
     waiting_for_reply: int = 0
     open: int = 0
-    answered: int = 0
+    admin_visited: int = 0
     closed: int = 0

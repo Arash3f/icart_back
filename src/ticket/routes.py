@@ -107,7 +107,7 @@ async def read_tickets(
         .limit(limit)
     )
 
-    if filter_data.answered:
+    if filter_data.admin_visited:
         query = query.filter(
             Ticket.messages.mapper.class_.supporter_status == True,
             Ticket.position != TicketPosition.CLOSE,
@@ -395,7 +395,7 @@ async def ticket_info(
     info.waiting_for_reply = response.scalar()
 
     # ? Answered
-    answered_q = (
+    admin_visited_q = (
         select(func.count(func.distinct(Ticket.id)))
         .select_from(Ticket)
         .filter(
@@ -403,7 +403,7 @@ async def ticket_info(
             Ticket.position != TicketPosition.CLOSE,
         )
     )
-    response = await db.execute(answered_q)
-    info.answered = response.scalar()
+    response = await db.execute(admin_visited_q)
+    info.admin_visited = response.scalar()
 
     return info
