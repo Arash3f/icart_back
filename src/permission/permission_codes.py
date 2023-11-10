@@ -37,7 +37,6 @@ VIEW_CONTRACT = 70
 VIEW_CAPITAL_TRANSFER = 80
 APPROVE_CAPITAL_TRANSFER = 81
 # ---------------------------------------------------------------------------
-VIEW_LOCATION = 90
 CREATE_LOCATION = 91
 UPDATE_LOCATION = 92
 # ---------------------------------------------------------------------------

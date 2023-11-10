@@ -15,7 +15,12 @@ from src.fee.schema import FeeCreate, FeeUpdate
 
 # ---------------------------------------------------------------------------
 class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
-    async def verify_existence(self, *, db: AsyncSession, fee_id: UUID) -> Type[Fee]:
+    async def verify_existence(
+        self,
+        *,
+        db: AsyncSession,
+        fee_id: UUID,
+    ) -> Type[Fee] | FeeNotFoundException:
         """
         ! Verify Fee Existence
 
@@ -53,7 +58,7 @@ class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
         exception_user_type: FeeUserType = None,
         exception_value_type: FeeTypeEnum = None,
         exception_is_percentage: bool = None,
-    ) -> Fee:
+    ) -> Fee | FeeIsDuplicatedException:
         """
         ! Verify fee limit duplicate
 
@@ -95,13 +100,10 @@ class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
             ),
         )
         if is_percentage and is_percentage != exception_is_percentage:
-            print("!@3")
-
             query = query.filter(
                 self.model.value.is_(None),
             )
         elif not is_percentage and is_percentage != exception_is_percentage:
-            print("!@3")
             query = query.filter(
                 self.model.percentage.is_(None),
             )

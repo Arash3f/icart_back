@@ -18,7 +18,7 @@ class CapitalTransferCRUD(BaseCRUD[CapitalTransfer, CapitalTransferCreate, None]
         *,
         db: AsyncSession,
         capital_transfer_id: UUID,
-    ) -> Type[CapitalTransfer]:
+    ) -> Type[CapitalTransfer] | CapitalTransferNotFoundException:
         """
         ! Verify CapitalTransfer Existence
 

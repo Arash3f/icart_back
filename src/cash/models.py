@@ -9,6 +9,7 @@ class Cash(Base, BaseMixin):
     __tablename__ = "cash"
 
     balance = Column(BigInteger, default=0)
+    cash_back = Column(BigInteger, default=0)
 
     # ! Maybe it will be used in the future
     received = Column(BigInteger, default=0)

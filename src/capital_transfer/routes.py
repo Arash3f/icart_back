@@ -27,6 +27,7 @@ from src.capital_transfer.schema import (
     CapitalTransferApprove,
 )
 from src.core.config import settings
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import IDRequest, VerifyUserDep
 from src.transaction.models import Transaction, TransactionValueType
@@ -34,6 +35,7 @@ from src.user.crud import user as user_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
+from src.log.crud import log as log_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.credit.crud import credit as credit_crud, CreditField
 
@@ -248,6 +250,17 @@ async def create_capital_transfer(
     )
     capital_transfer = await capital_transfer_crud.create(db=db, obj_in=create_data)
 
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.UPDATE_AGENT,
+        user_id=current_user.id,
+        detail="درخواست اعتبار با شناسه {} با موفقیت توسط کاربر {} ایجاد شد".format(
+            capital_transfer.code,
+            current_user.username,
+        ),
+    )
+
     return capital_transfer
 
 
@@ -341,4 +354,16 @@ async def approve_capital_transfer(
     db.add(obj_current)
     await db.commit()
     await db.refresh(obj_current)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.APPROVE_CAPITAL_TRANSFER,
+        user_id=current_user.id,
+        detail="درخواست اعتبار با شناسه {} با موفقیت توسط ادمین {} تایید شد".format(
+            obj_current.code,
+            current_user.username,
+        ),
+    )
+
     return obj_current

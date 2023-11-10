@@ -22,7 +22,7 @@ class LocationCRUD(BaseCRUD[Location, LocationCreate, LocationUpdate]):
         db: AsyncSession,
         location_id: UUID,
         parent_exception: bool = False,
-    ) -> Type[Location]:
+    ) -> Type[Location] | LocationNotFoundException | LocationParentNotFoundException:
         """
         ! Verify Location Existence
 
@@ -82,7 +82,7 @@ class LocationCRUD(BaseCRUD[Location, LocationCreate, LocationUpdate]):
         db: AsyncSession,
         name: str,
         exception_name: str = None,
-    ) -> Location:
+    ) -> Location | LocationNameIsDuplicatedException:
         """
         ! Verify location name is duplicated
 

@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import and_, select, desc
 
 from src import deps
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest, VerifyUserDep
 from src.user.crud import user as user_crud
 from src.user.models import User
 from src.user_message.crud import user_message as user_message_crud
+from src.log.crud import log as log_crud
 from src.user_message.models import UserMessage
 from src.user_message.schema import (
     UserMessageCreate,
@@ -54,9 +56,25 @@ async def delete_user_message(
     UserMessageNotFoundException
     """
     # * Verify user_message existence
-    await user_message_crud.verify_existence(db=db, user_message_id=delete_data.id)
+    user_message = await user_message_crud.verify_existence(
+        db=db,
+        user_message_id=delete_data.id,
+    )
     # * Delete user message
     await user_message_crud.delete(db=db, id=delete_data.id)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.DELETE_USER_MESSAGE,
+        detail="پیام کاربر {} با عنوان {} با موفقیت توسط کاربر {} حذف شد".format(
+            user_message.user.username,
+            user_message.title,
+            current_user.username,
+        ),
+    )
+
     return DeleteResponse(result="User Message Deleted Successfully")
 
 
@@ -95,6 +113,19 @@ async def create_user_message(
     await user_crud.verify_existence(db=db, user_id=create_data.user_id)
     # * create user message
     obj = await user_message_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.ADD_USER_MESSAGE,
+        detail="پیام کاربر {} با عنوان {} با موفقیت توسط کاربر {} ایحاد شد".format(
+            obj.user.username,
+            obj.title,
+            current_user.username,
+        ),
+    )
+
     return obj
 
 

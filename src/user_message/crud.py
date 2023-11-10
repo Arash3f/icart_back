@@ -16,7 +16,7 @@ class UserMessageCRUD(BaseCRUD[UserMessage, UserMessageCreate, UserMessageUpdate
         *,
         db: AsyncSession,
         user_message_id: UUID,
-    ) -> Type[UserMessage]:
+    ) -> Type[UserMessage] | UserMessageNotFoundException:
         """
         ! Verify UserMessage Existence
 

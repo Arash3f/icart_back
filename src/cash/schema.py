@@ -11,6 +11,7 @@ class CashBase(BaseModel):
     transferred: int
     debt: int
     balance: int
+    cash_back: int
     model_config = ConfigDict(extra="forbid")
 
 

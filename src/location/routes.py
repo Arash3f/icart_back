@@ -1,10 +1,11 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import or_, select, and_
+from sqlalchemy import select, and_
 
 from src import deps
 from src.location.crud import location as location_crud
+from src.log.crud import log as log_crud
 from src.location.models import Location
 from src.location.schema import (
     LocationCreate,
@@ -13,6 +14,7 @@ from src.location.schema import (
     LocationUpdate,
     LocationFilterOrderFild,
 )
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import IDRequest
 from src.user.models import User
@@ -65,6 +67,18 @@ async def create_location(
     await location_crud.verify_duplicate_name(db=db, name=create_data.name)
 
     obj = await location_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.ADD_LOCATION,
+        user_id=current_user.id,
+        detail="منطقه {} با موفقیت توسط کاربر {} ساخته شد".format(
+            obj.name,
+            current_user.id,
+        ),
+    )
+
     return obj
 
 
@@ -125,6 +139,17 @@ async def update_location(
         obj_current=obj_current,
         obj_new=update_data.data,
     )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.UPDATE_LOCATION,
+        user_id=current_user.id,
+        detail="منطقه {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj.name,
+            current_user.id,
+        ),
+    )
     return obj
 
 
@@ -133,7 +158,6 @@ async def update_location(
 async def find_location(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
     obj_data: IDRequest,
 ) -> LocationRead:
     """
@@ -143,8 +167,6 @@ async def find_location(
     ----------
     db
         Target database connection
-    current_user
-        Requester User
     obj_data
         Target Location's ID
 

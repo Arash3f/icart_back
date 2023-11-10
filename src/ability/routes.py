@@ -78,7 +78,7 @@ async def delete_ability(
         log_type=LogType.DELETE_ABILITY,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} حذف شد".format(
             ability.name,
-            current_user.id,
+            current_user.username,
         ),
     )
 
@@ -131,7 +131,7 @@ async def create_ability(
         user_id=current_user.id,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} ساخته شد".format(
             ability.name,
-            current_user.id,
+            current_user.username,
         ),
     )
     return ability
@@ -201,7 +201,7 @@ async def update_ability(
         user_id=current_user.id,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
             ability.name,
-            current_user.id,
+            current_user.username,
         ),
     )
     return ability

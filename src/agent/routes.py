@@ -87,7 +87,7 @@ async def update_agent(
         user_id=current_user.id,
         detail="توانایی نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
             agent.name,
-            current_user.id,
+            current_user.username,
         ),
     )
 

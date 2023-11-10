@@ -39,7 +39,6 @@ permissions_in: list[PermissionCreate] = [
     PermissionCreate(name="مشاهده تیکت ها", code=permission.VIEW_TICKET),
     PermissionCreate(name="جواب دادن به تیکت", code=permission.RESPONSE_TICKET),
     # ! LOCATION
-    PermissionCreate(name="مشاهده منطقه ها", code=permission.VIEW_LOCATION),
     PermissionCreate(name="ساخت منطقه", code=permission.CREATE_LOCATION),
     PermissionCreate(name="ویرایش منطقه", code=permission.UPDATE_LOCATION),
     # ! POS

@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.exception import InCorrectDataException
 from src.fee.crud import fee as fee_crud
+from src.log.crud import log as log_crud
 from src.fee.schema import FeeBase, FeeCreate, FeeRead, FeeUpdate
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
@@ -45,9 +47,20 @@ async def delete_fee(
     FeeNotFoundException
     """
     # * Verify fee existence
-    await fee_crud.verify_existence(db=db, fee_id=delete_data.id)
+    fee = await fee_crud.verify_existence(db=db, fee_id=delete_data.id)
     # * Delete Fee
     await fee_crud.delete(db=db, item_id=delete_data.id)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.DELETE_FEE,
+        detail="کارمزد سقف {} با موفقیت توسط کاربر {} حذف شد".format(
+            fee.limit,
+            current_user.username,
+        ),
+    )
 
     return DeleteResponse(result="Fee Deleted Successfully")
 
@@ -102,6 +115,17 @@ async def create_fee(
     )
     # * Create Fee
     fee = await fee_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.ADD_FEE,
+        detail="کارمزد سقف {} با موفقیت توسط کاربر {} ایجاد شد".format(
+            fee.limit,
+            current_user.username,
+        ),
+    )
 
     return fee
 
@@ -172,6 +196,17 @@ async def update_fee(
         db=db,
         obj_current=obj_current,
         obj_new=update_data.data,
+    )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_FEE,
+        detail="کارمزد سقف {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            fee.limit,
+            current_user.username,
+        ),
     )
 
     return fee
