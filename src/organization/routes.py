@@ -1,10 +1,15 @@
 from random import randint
 from typing import List, Annotated
 
-from fastapi import APIRouter, Depends, UploadFile, File
+import pandas as pd
+import os
+from itertools import chain
+
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy import and_, select
 
 from src import deps
+from src.core.security import hash_password
 from src.auth.exception import AccessDeniedException
 from src.cash.models import Cash
 from src.core.config import settings
@@ -468,7 +473,8 @@ async def user_activation(
     user.credit.active = True
     transaction = TransactionCreate(
         value=float(4900000),
-        text="پرداخت هزینه فعال سازی کاربر با کد ملی {}".format(user.national_code),
+        text="پرداخت هزینه فعال سازی کاربر با کد ملی {}".format(
+            user.national_code),
         value_type=TransactionValueType.CASH,
         receiver_id=icart_user.wallet.id,
         transferor_id=agent_user.user.wallet.id,
@@ -485,15 +491,134 @@ async def user_activation(
 
 
 # ---------------------------------------------------------------------------
-@router.post(path="/upload/file", response_model=ResultResponse)
+@router.post(path="/upload/file")
 async def upload_file(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user(),
-    ),
-    image_file: Annotated[UploadFile, File()],
-) -> ResultResponse:
-    print(dir(image_file.file))
-    await read_excel_file(db=db, user_id=current_user.id)
-    return ResultResponse(result="User Append Successfully")
+    current_user: User = Depends(deps.get_current_user()),
+    excel_file: Annotated[UploadFile, File()]):
+    result = dict()
+    missing_data = list()
+    invalid_username = list()
+    invalid_location = list()
+    duplicate_user = list()
+    success_insert = list()
+    
+    # Get organization user
+    organization_user = await organization_crud.find_by_user_id(db=db,user_id=current_user.id)
+    if not organization_user:
+
+    # Check file format
+    file_format = os.path.splitext(excel_file.filename)[1]
+    if file_format not in ['.xlsx', '.xls']:
+        raise HTTPException(detail="فرمت فایل صحیح نمیباشد")
+
+    excel_data = pd.read_excel(excel_file.file, index_col=0, header=1)
+
+    col_dict = {'identity': ['نام', 'نام خانوادگی', 'کد ملی', 'شماره همراه', 'نام پدر', 'محل تولد'],
+                'address': ['استان', 'شهر', 'کد پستی', 'شماره ثابت', 'آدرس'],
+                'organization': ['شماره پرسنلی', 'بخش سازمان', 'طبقه شغلی'],
+                'credit': ['میزان ریالی']}
+
+    flatten_col = list(chain.from_iterable(col_dict))
+    if flatten_col != excel_data.columns:
+        raise HTTPException("فایل نامعتبر است")
+
+    required_data = excel_data[chain.from_iterable([col_dict['identity'],col_dict['address'],col_dict['credit']])]
+
+    has_null_data = excel_data[required_data.isna().any(axis=1)]
+    missing_data.append(f'کاربران ردیف {has_null_data.index.values} دارای اطلاعات ناقص هستند')
+    valid_data = excel_data[~required_data.isna().any(axis=1)]
+
+    for index,row in valid_data.iterrows():
+        # Apply inser user
+        if len(row['شماره همراه']) != 11:
+            invalid_username.append(f'کاربر ردیف {index} به دلیل نامعتبر بودن شماره تلفن ثبت نشد')
+
+        else:
+            # ! find location
+            location = await location_crud.find_by_name(db=db, name=row['شهر'])
+
+            if not location:
+                invalid_location.append(f'کاربر ردیف {index} به دلیل پیدا نشدن شهر ثبت نشد')
+            else:
+                # * Check user not exist
+                exist_user = await user_crud.check_by_username_and_national_code(
+                    db=db,
+                    username=row['شماره همراه'],
+                    national_code=row['کد ملی'],
+                )
+                if exist_user:
+                    if exist_user.credit.considered:
+                        organization_user.total_considered_credit -= (
+                            exist_user.credit.considered
+                        )
+                    organization_user.total_considered_credit += int(row[15].value)
+                    db.add(organization_user)
+
+                    # ? Append new User
+                    exist_user.organization_id = organization_user.id
+                    exist_user.credit.considered = int(row[15].value)
+                else:
+                    # * Update Organization considered credit
+                    organization_user.total_considered_credit += int(row[15].value)
+                    db.add(organization_user)
+
+                    find_user = await user_crud.check_by_username_or_national_code(
+                        db=db,
+                        username=row['شماره همراه'],
+                        national_code=row['کد ملی'],
+                    )
+                    if find_user:
+                        duplicate_user.append(f'کاربر ردیف {index} به دلیل تکراری بودن شماره همراه یا کد ملی ثبت نشد')
+                    else:
+                        # ? Generate new User -> validation = False
+                        new_user = User(
+                            organization_id=organization_user.id,
+                            first_name=row['نام'],
+                            last_name=row['نام خانوادگی'],
+                            national_code=row['کد ملی'],
+                            phone_number=row['شماره همراه'],
+                            father_name=row['نام پدر'],
+                            birth_place=row['محل تولد'],
+                            location_id=location.id,
+                            postal_code=row['کد پستی'],
+                            tel=row['شماره ثابت'],
+                            address=row['آدرس'],
+                            personnel_number=row['شماره پرسنلی'],
+                            organizational_section=row['بخش سازمان'],
+                            job_class=row['طبقه شغلی'],
+                            password=hash_password(str(123456789)),
+                        )
+
+                        # ? Create Credit
+                        credit = Credit(
+                            user=new_user,
+                            considered=int(row[15].value),
+                        )
+
+                        # ? Create Cash
+                        cash = Cash(
+                            user=new_user,
+                        )
+
+                        # ? Create Wallet
+                        wallet_number = randint(100000, 999999)
+                        wallet = Wallet(
+                            user=new_user,
+                            number=wallet_number,
+                        )
+
+                        db.add(new_user)
+                        db.add(credit)
+                        db.add(cash)
+                        db.add(wallet)
+
+                        await db.commit()
+                        success_insert.append(f'کاربر ردیف {index} با موفقیت ثبت شد')
+    result.update({'missing data': missing_data,
+                   'invalid_username':invalid_username,
+                   'invalid_location':invalid_location,
+                   'duplicate_user':duplicate_user,
+                   'success_insert':success_insert})
+    return result
