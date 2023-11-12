@@ -617,8 +617,8 @@ async def upload_file(
                         await db.commit()
                         success_insert.append(f'کاربر ردیف {index} با موفقیت ثبت شد')
     result.update({'missing data': missing_data,
-                   'invalid_username':invalid_username,
-                   'invalid_location':invalid_location,
-                   'duplicate_user':duplicate_user,
-                   'success_insert':success_insert})
+                   'invalid username':invalid_username,
+                   'invalid location':invalid_location,
+                   'duplicate user':duplicate_user,
+                   'success insert':success_insert})
     return result
