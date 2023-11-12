@@ -232,9 +232,9 @@ async def get_stores(
         if filter_data.location_id
         else True
     )
-    filter_data.user_id = (
-        (Merchant.agent.mapper.class_.user_id == filter_data.user_id)
-        if filter_data.user_id
+    filter_data.selling_type = (
+        (Merchant.selling_type == filter_data.selling_type)
+        if filter_data.selling_type
         else True
     )
 
