@@ -30,11 +30,16 @@ from src.core.config import settings
 from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import IDRequest, VerifyUserDep
-from src.transaction.models import Transaction, TransactionValueType
+from src.transaction.models import (
+    Transaction,
+    TransactionValueType,
+    TransactionReasonEnum,
+)
 from src.user.crud import user as user_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
+from src.transaction.crud import transaction as transaction_crud
 from src.log.crud import log as log_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.credit.crud import credit as credit_crud, CreditField
@@ -264,106 +269,109 @@ async def create_capital_transfer(
     return capital_transfer
 
 
-# # ---------------------------------------------------------------------------
-# @router.put(path="/approve", response_model=CapitalTransferRead)
-# async def approve_capital_transfer(
-#     *,
-#     db: AsyncSession = Depends(deps.get_db),
-#     obj_data: CapitalTransferApprove,
-#     current_user: User = Depends(
-#         deps.get_current_user_with_permissions([permission.APPROVE_CAPITAL_TRANSFER]),
-#     ),
-# ) -> CapitalTransferRead:
-#     """
-#     ! Approve CapitalTransfer
-#
-#     Parameters
-#     ----------
-#     db
-#         Target database connection
-#     obj_data
-#         Capital transfer id and approve value
-#     current_user
-#         Requester User
-#
-#     Returns
-#     -------
-#     obj_current
-#         Updated capital transfer
-#
-#     Raises
-#     ------
-#     CapitalTransferNotFoundException
-#     CapitalTransferFinishException
-#     """
-#     # ? Verify capital_transfer existence
-#     obj_current = await capital_transfer_crud.verify_existence(
-#         db=db,
-#         capital_transfer_id=obj_data.where.id,
-#     )
-#
-#     if obj_current.finish:
-#         raise CapitalTransferFinishException()
-#
-#     # ! Reject
-#     if not obj_data.approve:
-#         obj_current.finish = True
-#         obj_current.status = CapitalTransferStatusEnum.FAILED
-#
-#     else:
-#         receiver_wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
-#         admin_user = await user_crud.verify_existence_by_username(
-#             db=db,
-#             username=settings.ADMIN_USERNAME,
-#         )
-#
-#         # * Update capital transfer
-#         obj_current.finish = True
-#         if obj_current.transfer_type == CapitalTransferEnum.Credit:
-#             tr_type = TransactionValueType.CREDIT
-#             await credit_crud.update_credit_by_user(
-#                 db=db,
-#                 credit_field=CreditField.BALANCE,
-#                 type_operation=TypeOperation.INCREASE,
-#                 user=receiver_wallet.user,
-#                 amount=obj_current.value,
-#             )
-#             receiver_wallet.credit_balance += obj_current.value
-#         elif obj_current.transfer_type == CapitalTransferEnum.Cash:
-#             tr_type = TransactionValueType.CASH
-#             await cash_crud.update_cash_by_user(
-#                 db=db,
-#                 cash_field=CashField.BALANCE,
-#                 type_operation=TypeOperation.INCREASE,
-#                 user=receiver_wallet.user,
-#                 amount=obj_current.value,
-#             )
-#
-#         # ? Create Transaction
-#         transaction_create = Transaction(
-#             value=obj_current.value,
-#             receiver_id=obj_current.receiver_id,
-#             transferor_id=admin_user.wallet.id,
-#             value_type=tr_type,
-#             text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
-#             capital_transfer=obj_current,
-#         )
-#         db.add(transaction_create)
-#         db.add(receiver_wallet)
-#
-#     db.add(obj_current)
-#     await db.commit()
-#     await db.refresh(obj_current)
-#
-#     # ? Generate Log
-#     await log_crud.auto_generate(
-#         db=db,
-#         log_type=LogType.APPROVE_CAPITAL_TRANSFER,
-#         user_id=current_user.id,
-#         detail="درخواست اعتبار با شناسه {} با موفقیت توسط ادمین {} تایید شد".format(
-#             obj_current.code,
-#             current_user.username,
-#         ),
-#     )
-#
-#     return obj_current
+# ---------------------------------------------------------------------------
+@router.put(path="/approve", response_model=CapitalTransferRead)
+async def approve_capital_transfer(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    obj_data: CapitalTransferApprove,
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.APPROVE_CAPITAL_TRANSFER]),
+    ),
+) -> CapitalTransferRead:
+    """
+    ! Approve CapitalTransfer
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    obj_data
+        Capital transfer id and approve value
+    current_user
+        Requester User
+
+    Returns
+    -------
+    obj_current
+        Updated capital transfer
+
+    Raises
+    ------
+    CapitalTransferNotFoundException
+    CapitalTransferFinishException
+    """
+    # ? Verify capital_transfer existence
+    obj_current = await capital_transfer_crud.verify_existence(
+        db=db,
+        capital_transfer_id=obj_data.where.id,
+    )
+
+    if obj_current.finish:
+        raise CapitalTransferFinishException()
+
+    # ! Reject
+    if not obj_data.approve:
+        obj_current.finish = True
+        obj_current.status = CapitalTransferStatusEnum.FAILED
+
+    else:
+        receiver_wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
+        admin_user = await user_crud.verify_existence_by_username(
+            db=db,
+            username=settings.ADMIN_USERNAME,
+        )
+
+        # * Update capital transfer
+        obj_current.finish = True
+        if obj_current.transfer_type == CapitalTransferEnum.Credit:
+            tr_type = TransactionValueType.CREDIT
+            await credit_crud.update_credit_by_user(
+                db=db,
+                credit_field=CreditField.BALANCE,
+                type_operation=TypeOperation.INCREASE,
+                user=receiver_wallet.user,
+                amount=obj_current.value,
+            )
+            receiver_wallet.credit_balance += obj_current.value
+        elif obj_current.transfer_type == CapitalTransferEnum.Cash:
+            tr_type = TransactionValueType.CASH
+            await cash_crud.update_cash_by_user(
+                db=db,
+                cash_field=CashField.BALANCE,
+                type_operation=TypeOperation.INCREASE,
+                user=receiver_wallet.user,
+                amount=obj_current.value,
+            )
+
+        # ? Create Transaction
+        code = await transaction_crud.generate_code(db=db)
+        transaction_create = Transaction(
+            value=obj_current.value,
+            receiver_id=obj_current.receiver_id,
+            transferor_id=admin_user.wallet.id,
+            value_type=tr_type,
+            text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
+            capital_transfer=obj_current,
+            code=code,
+            reason=TransactionReasonEnum.WALLET_CHARGING,
+        )
+        db.add(transaction_create)
+        db.add(receiver_wallet)
+
+    db.add(obj_current)
+    await db.commit()
+    await db.refresh(obj_current)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.APPROVE_CAPITAL_TRANSFER,
+        user_id=current_user.id,
+        detail="درخواست اعتبار با شناسه {} با موفقیت توسط ادمین {} تایید شد".format(
+            obj_current.code,
+            current_user.username,
+        ),
+    )
+
+    return obj_current

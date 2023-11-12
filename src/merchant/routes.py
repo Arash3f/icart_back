@@ -267,7 +267,7 @@ async def get_stores(
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.asc())
-    obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
+    obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list
 
 

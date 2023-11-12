@@ -1,3 +1,4 @@
+from random import randint
 from typing import Type
 from uuid import UUID
 
@@ -6,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
 from src.transaction.exception import TransactionNotFoundException
-from src.transaction.models import Transaction
-from src.transaction.schema import TransactionCreate
+from src.transaction.models import Transaction, TransactionRow
+from src.transaction.schema import TransactionCreate, TransactionRowCreate
 
 
 # ---------------------------------------------------------------------------
@@ -95,6 +96,143 @@ class TransactionCRUD(BaseCRUD[Transaction, TransactionCreate, None]):
 
         return income
 
+    async def find_by_code(
+        self,
+        *,
+        db: AsyncSession,
+        code: int,
+    ) -> Type[TransactionRow]:
+        """
+        ! Find Transaction by code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        code
+            Capital transaction row code
+
+        Returns
+        -------
+        found_item
+            Found Item
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.code == code),
+        )
+
+        found_item = response.scalar_one_or_none()
+        return found_item
+
+    async def generate_code(self, *, db: AsyncSession) -> int:
+        """
+        ! Generate code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+
+        Returns
+        -------
+        code
+            generated code
+        """
+        code = 0
+        while not code:
+            generate_code = randint(100000, 999999)
+            is_duplicate = await self.find_by_code(db=db, code=generate_code)
+            if not is_duplicate:
+                code = generate_code
+
+        return code
+
+
+# ---------------------------------------------------------------------------
+class TransactionRowCRUD(BaseCRUD[TransactionRow, TransactionRowCreate, None]):
+    async def verify_existence(
+        self,
+        *,
+        db: AsyncSession,
+        transaction_row_id: UUID,
+    ) -> Type[TransactionRow]:
+        """
+        ! Verify Transaction Existence
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        transaction_row_id
+            Target Item ID
+
+        Returns
+        -------
+        obj
+            Found Item
+
+        Raises
+        ------
+        TransactionNotFoundException
+        """
+        obj = await db.get(entity=self.model, ident=transaction_row_id)
+        if not obj:
+            raise TransactionNotFoundException()
+
+        return obj
+
+    async def find_by_code(
+        self,
+        *,
+        db: AsyncSession,
+        code: int,
+    ) -> Type[TransactionRow]:
+        """
+        ! Find Transaction row by code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        code
+            Capital transaction row code
+
+        Returns
+        -------
+        found_item
+            Found Item
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.code == code),
+        )
+
+        found_item = response.scalar_one_or_none()
+        return found_item
+
+    async def generate_code(self, *, db: AsyncSession) -> int:
+        """
+        ! Generate code
+
+        Parameters
+        ----------
+        db
+            Target database connection
+
+        Returns
+        -------
+        code
+            generated code
+        """
+        code = 0
+        while not code:
+            generate_code = randint(100000, 999999)
+            is_duplicate = await self.find_by_code(db=db, code=generate_code)
+            if not is_duplicate:
+                code = generate_code
+
+        return code
+
 
 # ---------------------------------------------------------------------------
 transaction = TransactionCRUD(Transaction)
+transaction_row = TransactionRowCRUD(TransactionRow)

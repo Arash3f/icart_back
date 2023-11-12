@@ -32,13 +32,13 @@ class TransactionRowCreate(TransactionRowBase):
     receiver_id: UUID
     transferor_id: UUID
     reason: TransactionReasonEnum
-    code: str | None = None
+    code: int | None = None
 
 
 # ---------------------------------------------------------------------------
 class TransactionRowRead(TransactionRowBase):
     id: UUID
-    code: str | None = None
+    code: int | None = None
     reason: TransactionReasonEnum | None
 
     created_at: datetime
@@ -64,13 +64,13 @@ class TransactionCreate(TransactionBase):
     receiver_id: UUID
     transferor_id: UUID
     reason: TransactionReasonEnum
-    code: str | None = None
+    code: int | None = None
 
 
 # ---------------------------------------------------------------------------
 class TransactionRead(TransactionBase):
     id: UUID
-    code: str | None = None
+    code: int | None = None
     reason: TransactionReasonEnum | None
 
     created_at: datetime

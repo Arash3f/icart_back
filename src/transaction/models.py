@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import UUID, Column, Enum, Float, ForeignKey, String
+from sqlalchemy import UUID, Column, Enum, Float, ForeignKey, String, Integer
 from sqlalchemy.orm import relationship
 
 from src.database.base_class import Base, BaseMixin
@@ -32,7 +32,7 @@ class Transaction(Base, BaseMixin):
     value = Column(Float, nullable=False)
     text = Column(String, nullable=False)
     value_type = Column(Enum(TransactionValueType), nullable=False)
-    code = Column(String, nullable=True)
+    code = Column(Integer, unique=True)
     reason = Column(Enum(TransactionReasonEnum), nullable=True)
     status = Column(
         Enum(TransactionStatusEnum),
@@ -75,7 +75,7 @@ class TransactionRow(Base, BaseMixin):
     value = Column(Float, nullable=False)
     text = Column(String, nullable=False)
     value_type = Column(Enum(TransactionValueType), nullable=False)
-    code = Column(String, nullable=True)
+    code = Column(Integer, unique=True)
     reason = Column(Enum(TransactionReasonEnum), nullable=True)
     status = Column(
         Enum(TransactionStatusEnum),
@@ -94,4 +94,5 @@ class TransactionRow(Base, BaseMixin):
         "Transaction",
         foreign_keys=[transaction_id],
         back_populates="transactions_rows",
+        lazy="selectin",
     )

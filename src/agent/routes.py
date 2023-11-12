@@ -19,7 +19,7 @@ from src.agent.schema import (
     IncomeFromUser,
 )
 from src.schema import IDRequest
-from src.transaction.models import Transaction
+from src.transaction.models import Transaction, TransactionRow, TransactionReasonEnum
 from src.user.models import User
 from src.permission import permission_codes as permission
 
@@ -250,16 +250,24 @@ async def get_income_from(
     user = await user_crud.verify_existence(db=db, user_id=filter_data.id)
     response_data: list[IncomeFromUser] = []
     query = (
-        select(Transaction.value_type, func.sum(Transaction.value))
-        .select_from(Transaction)
+        select(TransactionRow.value_type, func.sum(TransactionRow.value))
+        .select_from(TransactionRow)
         .filter(
             and_(
-                Transaction.intermediary_id == user.wallet.id,
-                Transaction.receiver_id == current_user.wallet.id,
+                TransactionRow.transaction.intermediary_id == user.wallet.id,
+                TransactionRow.receiver_id == current_user.wallet.id,
             ),
         )
-        .group_by(Transaction.value_type)
+        .group_by(TransactionRow.value_type)
     )
+    if current_user.role.name == "پذیرنده":
+        query = query.filter(
+            TransactionRow.reason != TransactionReasonEnum.PROFIT,
+        )
+    else:
+        query = query.filter(
+            TransactionRow.reason != TransactionReasonEnum.CONTRACT,
+        )
     response = await db.execute(
         query,
     )
