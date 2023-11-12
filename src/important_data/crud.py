@@ -62,6 +62,25 @@ class ImportantDataCRUD(BaseCRUD[ImportantData, None, ImportantDataUpdate]):
 
         return count
 
+    async def get_blue_card_cost(self, *, db: AsyncSession) -> int:
+        """
+        ! Get blue card cost
+
+        Parameters
+        ----------
+        db
+            Target database connection
+
+        Returns
+        -------
+        count
+            All system important data count
+        """
+        response = await db.execute(select(self.model))
+        data = response.scalars().first()
+
+        return data.blue_card_cost
+
 
 # ---------------------------------------------------------------------------
 important_data = ImportantDataCRUD(ImportantData)

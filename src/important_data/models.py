@@ -8,3 +8,4 @@ class ImportantData(Base, BaseMixin):
     __tablename__ = "important_data"
 
     registration_fee = Column(Integer, nullable=False)
+    blue_card_cost = Column(Integer, nullable=True)

@@ -179,4 +179,9 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند درصد سود پذیرنده ها را ویرایش کند",
         code=permission.UPDATE_MERCHANT,
     ),
+    # ! TRANSACTION
+    PermissionCreate(
+        name="می تواند تراکنش ها را ببیند",
+        code=permission.VIEW_TRANSACTION,
+    ),
 ]

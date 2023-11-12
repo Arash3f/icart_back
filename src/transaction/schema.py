@@ -77,7 +77,7 @@ class TransactionRead(TransactionBase):
     updated_at: datetime | None
 
     # ! Relation
-    transaction_rows: list[TransactionRowRead]
+    transaction_rows: list[TransactionRowRead] = []
     receiver_id: UUID
     transferor_id: UUID
 

@@ -9,6 +9,7 @@ from src.schema import IDRequest
 # ---------------------------------------------------------------------------
 class ImportantDataBase(BaseModel):
     registration_fee: int
+    blue_card_cost: int | None = None
     model_config = ConfigDict(extra="forbid")
 
 

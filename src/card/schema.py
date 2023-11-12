@@ -93,4 +93,3 @@ class CardFilter(BaseModel):
 # ---------------------------------------------------------------------------
 class BuyCardResponse(BaseModel):
     card_number: str
-    password: conlist(str, min_length=4, max_length=4)
