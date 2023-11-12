@@ -167,22 +167,23 @@ async def get_merchant_list(
         else True
     )
 
-    # * Add filter fields
-    query = select(Merchant).filter(
-        and_(
-            filter_data.location_id,
-            filter_data.selling_type,
-        ),
-    )
-
     if filter_data.user_id:
         agent = await agent_crud.find_by_user_id(
             db=db,
             user_id=filter_data.user_id,
         )
-        query = query.filter(
-            Merchant.agent_id == agent.id,
-        )
+        filter_data.user_id = Merchant.agent_id == agent.id
+    else:
+        filter_data.user_id = True
+
+    # * Add filter fields
+    query = select(Merchant).filter(
+        and_(
+            filter_data.location_id,
+            filter_data.selling_type,
+            filter_data.user_id,
+        ),
+    )
 
     # * Prepare order fields
     if filter_data.order_by:
@@ -194,7 +195,7 @@ async def get_merchant_list(
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.asc())
-    obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit)
+    obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list
 
 
@@ -238,22 +239,23 @@ async def get_stores(
         else True
     )
 
-    # * Add filter fields
-    query = select(Merchant).filter(
-        and_(
-            filter_data.location_id,
-            filter_data.selling_type,
-        ),
-    )
-
     if filter_data.user_id:
         agent = await agent_crud.find_by_user_id(
             db=db,
             user_id=filter_data.user_id,
         )
-        query = query.filter(
-            Merchant.agent_id == agent.id,
-        )
+        filter_data.user_id = Merchant.agent_id == agent.id
+    else:
+        filter_data.user_id = True
+
+    # * Add filter fields
+    query = select(Merchant).filter(
+        and_(
+            filter_data.location_id,
+            filter_data.selling_type,
+            filter_data.user_id,
+        ),
+    )
 
     # * Prepare order fields
     if filter_data.order_by:
