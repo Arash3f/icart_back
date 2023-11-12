@@ -15,4 +15,16 @@ default_role_permission: list[DefaultRolePermission] = [
             permission.VIEW_ABILITY,
         ],
     ),
+    DefaultRolePermission(
+        name="نماینده",
+        permissions=[
+            permission.VIEW_MERCHANT,
+        ],
+    ),
+    DefaultRolePermission(
+        name="پذیرنده",
+        permissions=[
+            permission.VIEW_MERCHANT,
+        ],
+    ),
 ]
