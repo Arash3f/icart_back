@@ -25,7 +25,7 @@ class BuyCard(BaseModel):
 
 # ---------------------------------------------------------------------------
 class CardUpdatePasswordData(BaseModel):
-    password: constr(min_length=4, max_length=4)
+    forget_password: constr(min_length=4, max_length=4)
     re_password: constr(min_length=4, max_length=4)
     new_password: constr(min_length=4, max_length=4)
 
@@ -63,6 +63,11 @@ class CardDynamicPasswordOutput(BaseModel):
 
 # ---------------------------------------------------------------------------
 class CardDynamicPasswordInput(BaseModel):
+    number: str
+
+
+# ---------------------------------------------------------------------------
+class CardForgetPasswordInput(BaseModel):
     number: str
 
 

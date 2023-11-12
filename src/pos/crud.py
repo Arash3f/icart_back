@@ -16,7 +16,12 @@ from src.pos.schema import PosCreate, PosUpdate
 
 # ---------------------------------------------------------------------------
 class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
-    async def verify_existence(self, *, db: AsyncSession, pos_id: UUID) -> Type[Pos]:
+    async def verify_existence(
+        self,
+        *,
+        db: AsyncSession,
+        pos_id: UUID,
+    ) -> Type[Pos] | PosNotFoundException:
         """
         ! Verify Pos Existence
 
@@ -42,7 +47,12 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
 
         return obj
 
-    async def verify_duplicate_number(self, *, db: AsyncSession, number: str) -> Pos:
+    async def verify_duplicate_number(
+        self,
+        *,
+        db: AsyncSession,
+        number: str,
+    ) -> Pos | PosNumberIsDuplicatedException:
         """
         ! Verify pos code duplicated
 
@@ -72,7 +82,12 @@ class PosCRUD(BaseCRUD[Pos, PosCreate, PosUpdate]):
 
         return obj
 
-    async def find_by_number(self, *, db: AsyncSession, number: str) -> Pos:
+    async def find_by_number(
+        self,
+        *,
+        db: AsyncSession,
+        number: str,
+    ) -> Pos | PosNotFoundException:
         """
         ! Verify pos existence by number
 

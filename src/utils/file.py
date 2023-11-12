@@ -25,7 +25,6 @@ async def read_excel_file(db: AsyncSession, user_id: UUID):
     )
 
     error_message: list[str] = []
-    result_message: list[str] = []
 
     # ? Calculate all rows
     row_count = 0
@@ -39,8 +38,11 @@ async def read_excel_file(db: AsyncSession, user_id: UUID):
                 finish = True
         row += 1
 
+    final_generate_user_list = []
+    final_append_user_list = []
     for row in dataframe1.iter_rows(3, row_count + 2):
         username = str(row[4].value)
+        # ! Verify username len
         if len(username) != 11:
             text = "کاربر با شماره {} به دلیل نامعتبر بودن شماره همراه ({}) ثبت نشد! \n ".format(
                 row[0].value,
@@ -49,9 +51,9 @@ async def read_excel_file(db: AsyncSession, user_id: UUID):
             error_message.append(text)
 
         else:
-            # ! find location
+            # * find location
             location = await location_crud.find_by_name(db=db, name=str(row[8].value))
-
+            # ! Verify location
             if not location:
                 text = "کاربر با شماره {} به دلیل پیدا نشدن منطقه وارد شده ({}) ثبت نشد! \n ".format(
                     row[0].value,
@@ -66,6 +68,7 @@ async def read_excel_file(db: AsyncSession, user_id: UUID):
                     username=str(row[4].value),
                     national_code=str(row[3].value),
                 )
+                # ! Verify user existence
                 if exist_user:
                     if exist_user.credit.considered:
                         organization_user.total_considered_credit -= (
@@ -114,35 +117,38 @@ async def read_excel_file(db: AsyncSession, user_id: UUID):
                             password=hash_password(str(123456789)),
                         )
 
-                        # ? Create Credit
-                        credit = Credit(
-                            user=new_user,
-                            considered=int(row[15].value),
+                        final_generate_user_list.append(
+                            new_user,
                         )
 
-                        # ? Create Cash
-                        cash = Cash(
-                            user=new_user,
-                        )
-
-                        # ? Create Wallet
-                        wallet_number = randint(100000, 999999)
-                        wallet = Wallet(
-                            user=new_user,
-                            number=wallet_number,
-                        )
-
-                        db.add(new_user)
-                        db.add(credit)
-                        db.add(cash)
-                        db.add(wallet)
-
-                        await db.commit()
-                        result_message.append(
-                            "کاربر با کد ملی {} با موفقیت به سازمان شما پیوست".format(
-                                str(row[3].value),
-                            ),
-                        )
+                        # # ? Create Credit
+                        # credit = Credit(
+                        #     user=new_user,
+                        #     considered=int(row[15].value),
+                        # )
+                        #
+                        # # ? Create Cash
+                        # cash = Cash(
+                        #     user=new_user,
+                        # )
+                        #
+                        # # ? Create Wallet
+                        # wallet_number = randint(100000, 999999)
+                        # wallet = Wallet(
+                        #     user=new_user,
+                        #     number=wallet_number,
+                        # )
+                        #
+                        # db.add(new_user)
+                        # db.add(credit)
+                        # db.add(cash)
+                        # db.add(wallet)
+                        #
+                        # await db.commit()
+                        # result_message.append(
+                        #     "کاربر با کد ملی {} با موفقیت به سازمان شما پیوست".format(
+                        #         str(row[3].value),
+                        #     ),
+                        # )
 
     print(error_message)
-    print(result_message)

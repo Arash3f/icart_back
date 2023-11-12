@@ -15,6 +15,7 @@ from src.core.config import settings
 from src.core.security import verify_password
 from src.fee.models import Fee
 from src.installments.schema import InstallmentsCreate
+from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
 from src.merchant.exception import MerchantNotFoundException
@@ -27,6 +28,7 @@ from src.transaction.models import (
 )
 from src.transaction.schema import TransactionCreate
 from src.user.crud import user as user_crud
+from src.log.crud import log as log_crud
 from src.auth.crud import auth as auth_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.pos.exception import PosNotFoundException
@@ -42,14 +44,13 @@ from src.pos.schema import (
     BalanceInput,
     PurchaseInput,
     PurchaseOutput,
-    ConfigPosOutput,
     PosPurchaseType,
     ConfigurationPosInput,
     ConfigurationPosOutput,
     InstallmentsPurchaseOutput,
     InstallmentsPurchaseInput,
 )
-from src.schema import DeleteResponse, IDRequest, ResultResponse
+from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
 from src.wallet.exception import LackOfMoneyException
 
@@ -89,9 +90,20 @@ async def delete_pos(
     PosNotFoundException
     """
     # * Verify pos existence
-    await pos_crud.verify_existence(db=db, pos_id=delete_data.id)
+    pos = await pos_crud.verify_existence(db=db, pos_id=delete_data.id)
     # * Delete Pos
     await pos_crud.delete(db=db, item_id=delete_data.id)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.UPDATE_POS,
+        user_id=current_user.id,
+        detail="پوز با شماره {} با موفقیت توسط کاربر {} حذف شد".format(
+            pos.number,
+            current_user.username,
+        ),
+    )
 
     return DeleteResponse(result="Pos Deleted Successfully")
 
@@ -134,6 +146,17 @@ async def create_pos(
     await pos_crud.verify_duplicate_number(db=db, number=create_data.number)
     # * Create Pos
     pos = await pos_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.UPDATE_POS,
+        user_id=current_user.id,
+        detail="پوز با شماره {} با موفقیت توسط کاربر {} ایجاد شد".format(
+            pos.number,
+            current_user.username,
+        ),
+    )
 
     return pos
 
@@ -185,6 +208,17 @@ async def update_pos(
         db=db,
         obj_current=obj_current,
         obj_new=update_data.data,
+    )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.UPDATE_POS,
+        user_id=current_user.id,
+        detail="پوز با شماره {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            pos.number,
+            current_user.username,
+        ),
     )
 
     return pos

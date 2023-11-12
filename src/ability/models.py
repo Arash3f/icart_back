@@ -15,8 +15,3 @@ class Ability(Base, BaseMixin):
         secondary="agent_ability",
         back_populates="abilities",
     )
-    position_requests = relationship(
-        "PositionRequest",
-        secondary="position_request_ability",
-        back_populates="abilities",
-    )

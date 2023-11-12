@@ -8,8 +8,6 @@ from src.location.schema import LocationBase
 from src.position_request.models import (
     FieldOfWorkType,
     SellingType,
-    PositionRequestStatusType,
-    PositionRequestType,
 )
 
 
@@ -68,6 +66,17 @@ class PositionRequestRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class PositionRequestReadV2(BaseModel):
+    id: uuid.UUID
+    tel: str | None
+    address: str | None
+    model_config = ConfigDict(extra="forbid")
+
+    # ! Relations
+    location: LocationBase | None = None
+
+
+# ---------------------------------------------------------------------------
 class ContractRead(ContractBase):
     id: uuid.UUID
 
@@ -76,6 +85,14 @@ class ContractRead(ContractBase):
 
     # ! Relation
     position_request: PositionRequestRead
+
+
+# ---------------------------------------------------------------------------
+class ContractReadV2(ContractBase):
+    id: uuid.UUID
+
+    # ! Relation
+    position_request: PositionRequestReadV2
 
 
 # ---------------------------------------------------------------------------

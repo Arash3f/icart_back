@@ -11,10 +11,8 @@ ASSIGN_ROLE = 14
 VIEW_PERMISSION = 20
 # ---------------------------------------------------------------------------
 VIEW_USER = 30
-CREATE_USER = 31
 UPDATE_USER = 32
-DEACTIVATE_USER = 33
-CHANGE_ROLE = 34
+CHANGE_USER_ACTIVITY = 33
 LOGIN_AS_ADMIN = 35
 # ---------------------------------------------------------------------------
 VIEW_AGENT = 40

@@ -59,14 +59,13 @@ permissions_in: list[PermissionCreate] = [
     PermissionCreate(name="مشاهده ولت کاربران", code=permission.VIEW_WALLET),
     # ! USER
     PermissionCreate(name="می تواند کاربران را ببیند", code=permission.VIEW_USER),
-    PermissionCreate(name="می تواند کاربر اضافه کند", code=permission.CREATE_USER),
     PermissionCreate(
         name="می تواند کاربران را بروزرسانی کند",
         code=permission.UPDATE_USER,
     ),
     PermissionCreate(
-        name="می تواند کاربران را غیر فعال کند",
-        code=permission.DEACTIVATE_USER,
+        name="می تواند وضعیت کاربران را تغییر دهد",
+        code=permission.CHANGE_USER_ACTIVITY,
     ),
     PermissionCreate(
         name="می تواند وارد اکانت کاربران بشود",

@@ -11,14 +11,14 @@ from src.contract.models import Contract
 from src.location.models import Location
 from src.news.models import News
 from src.organization.models import Organization
-from src.position_request.models import PositionRequest, PositionRequestAbility
+from src.position_request.models import PositionRequest
 from src.user_message.models import UserMessage
 from src.wallet.models import Wallet
 from src.credit.models import Credit
 from src.merchant.models import Merchant
 from src.important_data.models import ImportantData
 from src.fee.models import Fee
-from src.transaction.models import Transaction
+from src.transaction.models import Transaction, TransactionRow
 from src.invoice.models import Invoice
 from src.ticket.models import Ticket
 from src.ticket_message.models import TicketMessage

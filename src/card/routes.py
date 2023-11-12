@@ -21,6 +21,7 @@ from src.card.schema import (
     CardFilterOrderFild,
     BuyCard,
     BuyCardResponse,
+    CardForgetPasswordInput,
 )
 from src.core.config import settings
 from src.core.security import hash_password, pwd_context
@@ -163,8 +164,11 @@ async def update_card(
         db=db,
         number=update_data.where.number,
     )
-    # * Verify old password
-    verify = pwd_context.verify(update_data.data.password, obj_current.password)
+    # * Verify forget password
+    verify = pwd_context.verify(
+        update_data.data.forget_password,
+        obj_current.forget_password,
+    )
     if not verify:
         raise InCorrectDataException()
     # * verify new password
@@ -344,6 +348,49 @@ async def get_dynamic_password(
     db.add(card)
     await db.commit()
     return ResultResponse(result="Dynamic Password Send Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/forget_password/request", response_model=ResultResponse)
+async def get_dynamic_password(
+    *,
+    db: object = Depends(deps.get_db),
+    input_data: CardForgetPasswordInput,
+) -> ResultResponse:
+    """
+    ! Request for dynamic password
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    input_data
+        Card's number
+
+    Returns
+    -------
+    response
+        Card's dynamic password
+
+    Raises
+    ------
+    CardNotFoundException
+    """
+    # * Find Card
+    card = await card_crud.verify_by_number(db=db, number=input_data.number)
+    # ? Generate forget password
+    forget_password = randint(100000, 999999)
+    # ? Update card forget password
+    card.forget_password = hash_password(str(forget_password))
+    card.forget_password_exp = datetime.now(timezone("Asia/Tehran")) + timedelta(
+        minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
+    )
+    # ? Send SMS message
+    # todo: complete sms server for send sms
+
+    db.add(card)
+    await db.commit()
+    return ResultResponse(result="Forget Password Send Successfully")
 
 
 # ---------------------------------------------------------------------------

@@ -121,7 +121,7 @@ async def get_my_wallet(
 
 # ---------------------------------------------------------------------------
 @router.get(path="/my/balance", response_model=WalletBalanceRead)
-async def get_my_wallet(
+async def get_my_wallet_balance(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),

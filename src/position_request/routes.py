@@ -15,10 +15,12 @@ from src.auth.exception import AccessDeniedException
 from src.contract.exception import ContractNumberIsDuplicatedException
 from src.contract.models import Contract
 from src.core.config import settings
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 
 from src import deps
 from src.agent.crud import agent as agent_crud
+from src.log.crud import log as log_crud
 from src.merchant.crud import merchant as merchant_crud
 from src.organization.crud import organization as organization_crud
 from src.agent.models import Agent
@@ -92,9 +94,6 @@ async def update_position_request(
         position_request_id=update_data.where.id,
     )
 
-    # if position_request.status == PositionRequestStatusType.CLOSE:
-    #     raise PositionRequestClosedException()
-
     # * Verify location existence
     location = await location_crud.verify_existence(
         db=db,
@@ -166,6 +165,18 @@ async def update_position_request(
     db.add(position_request)
     await db.commit()
     await db.refresh(position_request)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.UPDATE_POSITION_REQUEST,
+        user_id=current_user.id,
+        detail="درخواست سمت با شماره {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            position_request.tracking_code,
+            current_user.username,
+        ),
+    )
+
     return ResultResponse(result="Position request updated successfully")
 
 
@@ -319,6 +330,18 @@ async def create_position_request(
     db.add(create_contract)
     await db.commit()
     await db.refresh(position_request)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.CREATE_POSITION_REQUEST,
+        user_id=current_user.id,
+        detail="درخواست سمت با شماره {} با موفقیت توسط کاربر {} ایجاد شد".format(
+            position_request.tracking_code,
+            current_user.username,
+        ),
+    )
+
     return position_request
 
 
@@ -486,6 +509,18 @@ async def approve_position_request(
     db.add(obj_current)
     await db.commit()
     await db.refresh(obj_current)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.APPROVE_POSITION_REQUEST,
+        user_id=current_user.id,
+        detail="وضغیت درخواست سمت با شماره {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj_current.tracking_code,
+            current_user.username,
+        ),
+    )
+
     return obj_current
 
 

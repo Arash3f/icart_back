@@ -17,7 +17,7 @@ class PositionRequestCRUD(BaseCRUD[PositionRequest, PositionRequestCreate, None]
         *,
         db: AsyncSession,
         position_request_id: UUID,
-    ) -> Type[PositionRequest]:
+    ) -> Type[PositionRequest] | PositionRequestNotFoundException:
         """
         ! Verify PositionRequest Existence
 
@@ -43,7 +43,7 @@ class PositionRequestCRUD(BaseCRUD[PositionRequest, PositionRequestCreate, None]
         *,
         db: AsyncSession,
         position_request_id: UUID,
-    ) -> PositionRequest:
+    ) -> PositionRequest | PositionRequestNotFoundException:
         """
         ! Verify PositionRequest Not Existence
 

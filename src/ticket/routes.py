@@ -7,9 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.auth.exception import AccessDeniedException
+from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import VerifyUserDep, ResultResponse
 from src.ticket.crud import ticket as ticket_crud
+from src.log.crud import log as log_crud
 from src.ticket.models import Ticket, TicketPosition
 from src.ticket.schema import (
     TicketComplexRead,
@@ -39,7 +41,7 @@ async def read_tickets(
     db: AsyncSession = Depends(deps.get_db),
     filter_data: TicketFilter,
     verify_data: VerifyUserDep = Depends(
-        deps.is_user_have_permission([permission.VIEW_USER_MESSAGE]),
+        deps.is_user_have_permission([permission.VIEW_TICKET]),
     ),
     skip: int = 0,
     limit: int = 5,
@@ -65,7 +67,6 @@ async def read_tickets(
     my_tickets
         All my ticket list
     """
-    # todo: Clean this code
     query = (
         select(
             Ticket,
@@ -216,6 +217,18 @@ async def create_ticket(
 
     await db.commit()
     await db.refresh(ticket)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_TICKET,
+        detail="تیکت شماره {} با موفقیت توسط کاربر {} ایجاد شد".format(
+            ticket.number,
+            current_user.username,
+        ),
+    )
+
     return ticket
 
 
@@ -337,6 +350,17 @@ async def update_ticket_status(
         obj_current=ticket,
         obj_new=update_data.data,
     )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=verify_data.id,
+        log_type=LogType.UPDATE_TICKET,
+        detail="تیکت شماره {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            ticket.number,
+            verify_data.username,
+        ),
+    )
     return ResultResponse(result="Ticket Updated Successfully")
 
 
@@ -346,7 +370,7 @@ async def ticket_info(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.RESPONSE_TICKET]),
+        deps.get_current_user_with_permissions([permission.VIEW_TICKET]),
     ),
 ) -> TicketInfo:
     """

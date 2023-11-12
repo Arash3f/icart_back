@@ -1,10 +1,12 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, desc, and_
+from sqlalchemy import select, and_
 
 from src import deps
+from src.log.models import LogType
 from src.news.crud import news as news_crud
+from src.log.crud import log as log_crud
 from src.news.models import News
 from src.news.schema import (
     NewsCreate,
@@ -54,8 +56,20 @@ async def delete_news(
     NewsNotFoundException
     """
     # * Verify news existence
-    await news_crud.verify_existence(db=db, news_id=delete_data.id)
+    news = await news_crud.verify_existence(db=db, news_id=delete_data.id)
     await news_crud.delete(db=db, item_id=delete_data.id)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.DELETE_NEWS,
+        detail="اعلان با عنوان ( {} ) با موفقیت توسط کاربر {} حذف شد".format(
+            news.title,
+            current_user.username,
+        ),
+    )
+
     return DeleteResponse(result="News Deleted Successfully")
 
 
@@ -87,6 +101,18 @@ async def create_news(
         New news
     """
     obj = await news_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.CREATE_NEWS,
+        detail="اعلان با عنوان ( {} ) با موفقیت توسط کاربر {} ایحاد شد".format(
+            obj.title,
+            current_user.username,
+        ),
+    )
+
     return obj
 
 
@@ -129,6 +155,18 @@ async def update_news(
         obj_current=obj_current,
         obj_new=update_data.data,
     )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_NEWS,
+        detail="اعلان با عنوان ( {} ) با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj.title,
+            current_user.username,
+        ),
+    )
+
     return obj
 
 

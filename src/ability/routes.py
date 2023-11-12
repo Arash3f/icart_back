@@ -5,7 +5,6 @@ from sqlalchemy import select, and_
 
 from src import deps
 from src.ability.crud import ability as ability_crud
-from src.ability.exception import CanNotUpdateBaseAbilityException
 from src.ability.models import Ability
 from src.ability.schema import (
     AbilityCreate,
@@ -14,7 +13,6 @@ from src.ability.schema import (
     AbilityRead,
     AbilityUpdate,
 )
-from src.ability.utils.agent_permissions import linked_abilities
 from src.agent.crud import agent as agent_crud
 from src.log.crud import log as log_crud
 from src.log.models import LogType
@@ -60,11 +58,6 @@ async def delete_ability(
     """
     # * Verify ability existence
     ability = await ability_crud.verify_existence(db=db, ability_id=delete_data.id)
-
-    # ! Can not delete base ability
-    for linked_ability in linked_abilities:
-        if linked_ability.ability_name == ability.name:
-            raise CanNotUpdateBaseAbilityException()
 
     # * Delete Ability
     await ability_crud.delete(db=db, item_id=delete_data.id)
@@ -175,11 +168,6 @@ async def update_ability(
         db=db,
         user_crypto_id=update_data.where.id,
     )
-
-    # ! Can not delete base ability
-    for linked_ability in linked_abilities:
-        if linked_ability.ability_name == obj_current.name:
-            raise CanNotUpdateBaseAbilityException()
 
     # * Verify ability name duplicate
     await ability_crud.verify_duplicate_name(

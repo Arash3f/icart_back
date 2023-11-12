@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.core.config import settings
+from src.log.models import LogType
 from src.schema import ResultResponse, ChartResponse, ChartFilterInput, Duration
 from src.user.models import User
 from src.user.schema import (
@@ -21,6 +22,7 @@ from typing import Annotated, List
 from src.user.crud import user as user_crud
 from src.organization.crud import organization as organization_crud
 from src.location.crud import location as location_crud
+from src.log.crud import log as log_crud
 from src.permission import permission_codes as permission
 
 # ---------------------------------------------------------------------------
@@ -29,7 +31,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 # ---------------------------------------------------------------------------
 @router.get("/me", response_model=UserMeResponse)
-async def current_user(
+async def me(
     current_user: User = Depends(deps.get_current_user()),
 ) -> UserMeResponse:
     """
@@ -233,7 +235,7 @@ async def user_list(
     db=Depends(deps.get_db),
     filter_data: UserFilter,
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_with_permissions([permission.VIEW_USER]),
     ),
     skip: int = 0,
     limit: int = 20,
@@ -358,6 +360,18 @@ async def update_user(
         obj_current=obj_current,
         obj_new=update_data.data,
     )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_USER,
+        detail="کاربر {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj.username,
+            current_user.username,
+        ),
+    )
+
     return obj
 
 
@@ -367,7 +381,7 @@ async def update_user_activity(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.UPDATE_USER]),
+        deps.get_current_user_with_permissions([permission.CHANGE_USER_ACTIVITY]),
     ),
     update_data: UpdateUserActivityRequest,
 ) -> UserRead:
@@ -401,6 +415,18 @@ async def update_user_activity(
     obj.is_active = update_data.data.is_active
     db.add(obj)
     await db.commit()
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_USER_ACTIVITY,
+        detail="وضعیت کاربر {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj.username,
+            current_user.username,
+        ),
+    )
+
     return obj
 
 
@@ -573,7 +599,9 @@ async def user_list(
 async def user_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.VIEW_USER]),
+    ),
     filter_data: ChartFilterInput,
 ) -> list[ChartResponse]:
     """

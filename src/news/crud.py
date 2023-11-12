@@ -11,7 +11,12 @@ from src.news.schema import NewsCreate, NewsUpdate
 
 # ---------------------------------------------------------------------------
 class NewsCRUD(BaseCRUD[News, NewsCreate, NewsUpdate]):
-    async def verify_existence(self, *, db: AsyncSession, news_id: UUID) -> Type[News]:
+    async def verify_existence(
+        self,
+        *,
+        db: AsyncSession,
+        news_id: UUID,
+    ) -> Type[News] | NewsNotFoundException:
         """
         ! Verify News Existence
 

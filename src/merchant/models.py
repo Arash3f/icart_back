@@ -33,6 +33,11 @@ class Merchant(Base, BaseMixin):
         CheckConstraint("gold_profit >= 0 AND gold_profit <= 100"),
         default=0,
     )
+    corporate_profit = Column(
+        Integer,
+        CheckConstraint("corporate_profit >= 0 AND corporate_profit <= 100"),
+        default=0,
+    )
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))

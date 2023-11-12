@@ -18,6 +18,38 @@ class TransactionChartType(enum.Enum):
 
 
 # ---------------------------------------------------------------------------
+class TransactionRowBase(BaseModel):
+    value: float
+    text: str
+    value_type: TransactionValueType
+    status: TransactionStatusEnum
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
+class TransactionRowCreate(TransactionRowBase):
+    # ! Relation
+    receiver_id: UUID
+    transferor_id: UUID
+    reason: TransactionReasonEnum
+    code: str | None = None
+
+
+# ---------------------------------------------------------------------------
+class TransactionRowRead(TransactionRowBase):
+    id: UUID
+    code: str | None = None
+    reason: TransactionReasonEnum | None
+
+    created_at: datetime
+    updated_at: datetime | None
+
+    # # ! Relation
+    receiver_id: UUID
+    transferor_id: UUID
+
+
+# ---------------------------------------------------------------------------
 class TransactionBase(BaseModel):
     value: float
     text: str
@@ -45,6 +77,7 @@ class TransactionRead(TransactionBase):
     updated_at: datetime | None
 
     # ! Relation
+    transaction_rows: list[TransactionRowRead]
     receiver_id: UUID
     transferor_id: UUID
 

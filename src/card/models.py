@@ -32,6 +32,8 @@ class Card(Base, BaseMixin):
     password = Column(String, nullable=False)
     dynamic_password = Column(String, nullable=True)
     dynamic_password_exp = Column(DateTime(timezone=True), nullable=True)
+    forget_password = Column(String, nullable=True)
+    forget_password_exp = Column(DateTime(timezone=True), nullable=True)
     type = Column(Enum(CardEnum), nullable=False)
 
     # ! Relations

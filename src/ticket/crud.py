@@ -22,7 +22,7 @@ class TicketCRUD(BaseCRUD[Ticket, schema.TicketCreate, schema.TicketUpdate]):
         *,
         db: AsyncSession,
         ticket_id: UUID,
-    ) -> Type[Ticket]:
+    ) -> Type[Ticket] | TicketNotFoundException:
         """
         ! Verify Ticket Existence
 
@@ -54,7 +54,7 @@ class TicketCRUD(BaseCRUD[Ticket, schema.TicketCreate, schema.TicketUpdate]):
         db: AsyncSession,
         user_id: UUID,
         ticket_id: UUID,
-    ) -> Type[Ticket]:
+    ) -> Type[Ticket] | AccessDeniedException:
         """
         ! Verify Ticket's creator
 
@@ -89,7 +89,7 @@ class TicketCRUD(BaseCRUD[Ticket, schema.TicketCreate, schema.TicketUpdate]):
         *,
         db: AsyncSession,
         ticket_id: UUID,
-    ) -> Type[Ticket]:
+    ) -> Type[Ticket] | TicketNotFoundException | TicketClosePositionException:
         """
         ! Verify Ticket position is not close
 
@@ -132,7 +132,6 @@ class TicketCRUD(BaseCRUD[Ticket, schema.TicketCreate, schema.TicketUpdate]):
         -------
         found_item
             Found Item
-
         """
         response = await db.execute(
             select(self.model).where(self.model.number == number),

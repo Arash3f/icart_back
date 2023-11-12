@@ -148,17 +148,3 @@ class PositionRequest(Base, BaseMixin):
         back_populates="requests",
         lazy="selectin",
     )
-
-    abilities = relationship(
-        Ability,
-        secondary="position_request_ability",
-        back_populates="position_requests",
-        lazy="selectin",
-    )
-
-
-# ---------------------------------------------------------------------------
-class PositionRequestAbility(Base, BaseMixin):
-    __tablename__ = "position_request_ability"
-    position_request_id = Column(UUID(as_uuid=True), ForeignKey("position_request.id"))
-    ability_id = Column(UUID(as_uuid=True), ForeignKey("ability.id"))

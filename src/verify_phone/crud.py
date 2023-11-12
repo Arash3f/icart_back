@@ -19,7 +19,7 @@ class VerifyPhoneCRUD(BaseCRUD[VerifyPhone, None, None]):
         *,
         db: AsyncSession,
         verify_phone_id: UUID,
-    ) -> Type[VerifyPhone]:
+    ) -> Type[VerifyPhone] | VerifyPhoneNotFoundException:
         """
         ! Verify Existence
 
@@ -110,7 +110,7 @@ class VerifyPhoneCRUD(BaseCRUD[VerifyPhone, None, None]):
         db: AsyncSession,
         phone_number: str,
         verify_code: int,
-    ) -> Type[VerifyPhone]:
+    ) -> Type[VerifyPhone] | IncorrectCodeException:
         """
         ! Verify Phone code with code
 

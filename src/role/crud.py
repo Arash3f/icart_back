@@ -43,7 +43,7 @@ class RoleCRUD(BaseCRUD[Role, RoleCreate, RoleUpdate]):
         *,
         db: AsyncSession,
         name: str,
-    ) -> Type[Role]:
+    ) -> Type[Role] | RoleNotFoundException:
         """
          ! Verify Role Existence by name
 
@@ -70,7 +70,12 @@ class RoleCRUD(BaseCRUD[Role, RoleCreate, RoleUpdate]):
 
         return obj
 
-    async def verify_existence(self, *, db: AsyncSession, role_id: UUID) -> Role:
+    async def verify_existence(
+        self,
+        *,
+        db: AsyncSession,
+        role_id: UUID,
+    ) -> Role | RoleNotFoundException:
         """
         ! Verify Role Existence
 
@@ -104,7 +109,7 @@ class RoleCRUD(BaseCRUD[Role, RoleCreate, RoleUpdate]):
         db: AsyncSession,
         name: str,
         exception_name: str = None,
-    ) -> Role:
+    ) -> Role | RoleNameIsDuplicatedException:
         """
         ! Verify role duplicate name
 
@@ -138,7 +143,12 @@ class RoleCRUD(BaseCRUD[Role, RoleCreate, RoleUpdate]):
 
         return obj
 
-    async def verify_connections(self, *, db: AsyncSession, role_id: UUID) -> bool:
+    async def verify_connections(
+        self,
+        *,
+        db: AsyncSession,
+        role_id: UUID,
+    ) -> bool | RoleHaveUserException:
         """
         ! Verify Role do not have any connections
 

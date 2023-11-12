@@ -8,7 +8,6 @@ from src.database.base_crud import BaseCRUD
 from src.merchant.exception import MerchantNotFoundException
 from src.merchant.models import Merchant
 from src.merchant.schema import MerchantUpdate
-from src.user.models import User
 
 
 # ---------------------------------------------------------------------------
@@ -18,7 +17,7 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
         *,
         db: AsyncSession,
         merchant_id: UUID,
-    ) -> Type[Merchant]:
+    ) -> Type[Merchant] | MerchantNotFoundException:
         """
         ! Verify Merchant Existence
 
@@ -44,7 +43,12 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
 
         return obj
 
-    async def find_by_user_id(self, *, db: AsyncSession, user_id: UUID) -> Merchant:
+    async def find_by_user_id(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> Merchant | MerchantNotFoundException:
         """
         ! Find Merchant By user id
 
@@ -79,7 +83,7 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
         *,
         db: AsyncSession,
         merchant_number: str,
-    ) -> Merchant:
+    ) -> Merchant | MerchantNotFoundException:
         """
         ! Verify Merchant Existence By number
 
@@ -115,6 +119,21 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
         db: AsyncSession,
         agent_id: UUID,
     ) -> bool:
+        """
+        ! Get Merchant Users counter by agent
+
+        Parameters
+        ----------
+        db
+            database connection
+        agent_id
+            target agent id
+
+        Returns
+        -------
+        res
+            merchent users count
+        """
         response = await db.execute(
             select(func.count())
             .select_from(Merchant)

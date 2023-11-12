@@ -1,7 +1,7 @@
 from typing import List, Sequence, Type
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
@@ -35,7 +35,7 @@ class PermissionCRUD(BaseCRUD[Permission, None, None]):
         *,
         db: AsyncSession,
         permission_id: UUID,
-    ) -> Type[Permission]:
+    ) -> Type[Permission] | PermissionNotFoundException:
         """
         ! Verify Permission Existence
 
@@ -66,7 +66,7 @@ class PermissionCRUD(BaseCRUD[Permission, None, None]):
         *,
         db: AsyncSession,
         list_ids: List[UUID],
-    ) -> Sequence[Permission]:
+    ) -> Sequence[Permission] | PermissionNotFoundException:
         """
         ! Verify Permission List Existence
 
@@ -87,10 +87,14 @@ class PermissionCRUD(BaseCRUD[Permission, None, None]):
         PermissionNotFoundException
         """
         response = await db.execute(
-            select(self.model).where(self.model.id.in_(list_ids)),
+            select(func.count())
+            .select_from(self.model)
+            .where(
+                self.model.id.in_(list_ids),
+            ),
         )
-        response = response.scalars().all()
-        if len(response) != len(list_ids):
+        response = response.scalar()
+        if response != len(list_ids):
             raise PermissionNotFoundException()
         return response
 

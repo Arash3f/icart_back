@@ -9,6 +9,7 @@ from src.auth.exception import AccessDeniedException
 from src.cash.models import Cash
 from src.core.config import settings
 from src.credit.models import Credit
+from src.log.models import LogType
 from src.organization.crud import organization as organization_crud
 from src.location.crud import location as location_crud
 from src.transaction.crud import transaction as transaction_crud
@@ -29,6 +30,7 @@ from src.user.models import User
 from src.permission import permission_codes as permission
 from src.user.schema import UserRead, UserFilter
 from src.user.crud import user as user_crud
+from src.log.crud import log as log_crud
 from src.user_message.models import UserMessage
 from src.utils.file import read_excel_file
 from src.utils.sms import send_welcome_sms
@@ -78,7 +80,7 @@ async def find_organization(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[OrganizationRead])
-async def get_organization(
+async def get_organization_list(
     *,
     db=Depends(deps.get_db),
     filter_data: OrganizationFilter,
@@ -159,6 +161,25 @@ async def me(
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
 ) -> OrganizationRead:
+    """
+    ! Get My organization info
+
+    Parameters
+    ----------
+    db
+        database connection
+    current_user
+        requester user
+
+    Returns
+    -------
+    response
+        My organization data
+
+    Raises
+    ------
+    OrganizationNotFoundException
+    """
     organization = await organization_crud.find_by_user_id(
         db=db,
         user_id=current_user.id,
@@ -167,7 +188,7 @@ async def me(
 
 
 # ---------------------------------------------------------------------------
-@router.post(path="/list", response_model=List[UserRead])
+@router.post(path="/user/list", response_model=List[UserRead])
 async def user_list(
     *,
     db=Depends(deps.get_db),
@@ -270,6 +291,7 @@ async def generate_user(
     # * Check requester role
     if not current_user.role.name == "سازمان":
         raise AccessDeniedException()
+
     organization_user = await organization_crud.find_by_user_id(
         db=db,
         user_id=current_user.id,
@@ -348,6 +370,18 @@ async def generate_user(
         phone_number=generate_data.phone_number,
         full_name="{} {}".format(new_user.first_name, new_user.last_name),
     )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.GENERATE_ORGANIZATION_USER,
+        user_id=current_user.id,
+        detail="کاربر {} با موفقیت توسط کاربر {} به عنوان کاربر سازمانی ایجاد شد".format(
+            new_user.username,
+            current_user.username,
+        ),
+    )
+
     return ResultResponse(result="User Created Successfully")
 
 
@@ -385,6 +419,7 @@ async def append_user(
     # * Check requester role
     if not current_user.role.name == "سازمان":
         raise AccessDeniedException()
+
     organization_user = await organization_crud.find_by_user_id(
         db=db,
         user_id=current_user.id,
@@ -407,6 +442,18 @@ async def append_user(
 
     db.add(user)
     await db.commit()
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.GENERATE_ORGANIZATION_USER,
+        user_id=current_user.id,
+        detail="کاربر {} با موفقیت توسط کاربر {} به سازمانی پیوست".format(
+            user.username,
+            current_user.username,
+        ),
+    )
+
     return ResultResponse(result="User Append Successfully")
 
 
@@ -449,6 +496,7 @@ async def user_activation(
     agent_user = await agent_crud.find_by_user_id(db=db, user_id=current_user.id)
 
     # * Check Agent cash
+    # todo: update this
     if agent_user.user.cash.balance < 4900000:
         raise LackOfMoneyException()
 
@@ -481,6 +529,18 @@ async def user_activation(
     db.add(agent_user)
     db.add(user)
     await db.commit()
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.ACTIVE_ORGANIZATION_USER,
+        user_id=current_user.id,
+        detail="کاربر سازمانی {} با موفقیت توسط کاربر {}  فعال شد".format(
+            user.username,
+            current_user.username,
+        ),
+    )
+
     return ResultResponse(result="User Append Successfully")
 
 

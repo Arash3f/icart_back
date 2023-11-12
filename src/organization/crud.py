@@ -17,7 +17,7 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
         *,
         db: AsyncSession,
         organization_id: UUID,
-    ) -> Type[Organization]:
+    ) -> Type[Organization] | OrganizationNotFoundException:
         """
         ! Verify Organization Existence
 
@@ -43,7 +43,12 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
 
         return obj
 
-    async def find_by_user_id(self, *, db: AsyncSession, user_id: UUID) -> Organization:
+    async def find_by_user_id(
+        self,
+        *,
+        db: AsyncSession,
+        user_id: UUID,
+    ) -> Organization | OrganizationNotFoundException:
         """
         ! Find Organization by user id
 
@@ -79,6 +84,21 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
         db: AsyncSession,
         user_id: UUID,
     ) -> bool:
+        """
+        ! Get organization users count
+
+        Parameters
+        ----------
+        db
+            database connection
+        user_id
+            Target organization's user_is
+
+        Returns
+        -------
+        response
+            count of organization suers
+        """
         organization = await self.find_by_user_id(db=db, user_id=user_id)
         organization_users = await db.execute(
             select(func.count())

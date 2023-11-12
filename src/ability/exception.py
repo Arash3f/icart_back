@@ -33,18 +33,3 @@ class AbilityNameIsDuplicatedException(HTTPException):
             "english_message": "Ability Name Is Duplicated!",
         }
         self.headers = None
-
-
-class CanNotUpdateBaseAbilityException(HTTPException):
-    """
-    ? Exception When user want to update base ability
-    """
-
-    def __init__(self):
-        self.status_code = 400
-        self.detail = {
-            "code": 301,
-            "persian_message": "نمی توان توانایی از پیش تعریف شده را ویرایش کرد!",
-            "english_message": "Can Not Update Base Ability!",
-        }
-        self.headers = None

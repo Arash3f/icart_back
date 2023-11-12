@@ -2,8 +2,6 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from src.schema import IDRequest
-
 
 # ---------------------------------------------------------------------------
 class MediaFindIn(BaseModel):

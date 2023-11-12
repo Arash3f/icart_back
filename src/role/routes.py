@@ -125,6 +125,18 @@ async def create_role(
     await role_crud.verify_duplicate_name(db=db, name=create_data.name)
     # * Create Role
     role = await role_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.CREATE_ABILITY,
+        detail="نقش {} با موفقیت توسط کاربر {} ایجاد شد".format(
+            role.name,
+            current_user.national_code,
+        ),
+    )
+
     return role
 
 
@@ -182,6 +194,18 @@ async def update_role(
         obj_current=obj_current,
         obj_new=update_data.data,
     )
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_ROLE,
+        detail="نقش {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            role.name,
+            current_user.national_code,
+        ),
+    )
+
     return role
 
 
@@ -330,6 +354,18 @@ async def add_permissions_to_role(
         if not role_perm:
             create_data = RolePermissionCreate(role_id=role.id, permission_id=perm.id)
             await role_permission_crud.create(db=db, obj_in=create_data)
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.ASSIGN_PERMISSION_TO_ROLE,
+        detail="دسترسی های نقش {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            role.name,
+            current_user.national_code,
+        ),
+    )
+
     return ResultResponse(result="Permissions Added Successfully")
 
 

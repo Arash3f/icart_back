@@ -43,7 +43,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         *,
         db: AsyncSession,
         user_id: UUID,
-    ) -> Type[User]:
+    ) -> Type[User] | UserNotFoundException:
         """
         ! Verify user existence with id
 
@@ -76,7 +76,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         db: AsyncSession,
         username=str,
         national_code=str,
-    ) -> Type[User]:
+    ) -> Type[User] | UsernameIsDuplicatedException:
         """
         ! Verify user existence with username & national code
 
@@ -116,7 +116,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         db: AsyncSession,
         username: str,
         exception_username: str = None,
-    ) -> User:
+    ) -> User | UsernameIsDuplicatedException:
         """
         ! Verify username duplicate
 
@@ -157,7 +157,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         db: AsyncSession,
         national_code: str,
         exception_national_code: str = None,
-    ) -> User:
+    ) -> User | NationalCodeIsDuplicatedException:
         """
         ! Verify national_code duplicate
 
@@ -199,7 +199,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         *,
         db: AsyncSession,
         username: str,
-    ) -> User:
+    ) -> User | UserNotFoundException:
         """
         ! Verify User Existence with username
 
@@ -233,7 +233,25 @@ class UserCRUD(BaseCRUD[User, None, None]):
         *,
         db: AsyncSession,
         national_code: str,
-    ) -> User:
+    ) -> User | UserNotFoundException:
+        """
+        ! Verify user existence by national number
+        Parameters
+        ----------
+        db
+            database connection
+        national_code
+            Target user national code
+
+        Returns
+        -------
+        res
+            found user
+
+        Raises
+        ------
+        UserNotFoundException
+        """
         res = await db.execute(
             select(self.model).where(self.model.national_code == national_code),
         )
@@ -249,7 +267,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         db: AsyncSession,
         username=str,
         national_code=str,
-    ) -> Type[User]:
+    ) -> Type[User] | UsernameIsDuplicatedException:
         """
         ! Find with username & national code
 

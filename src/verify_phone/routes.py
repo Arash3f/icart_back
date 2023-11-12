@@ -49,8 +49,6 @@ async def verify_user(
         Result of operation
     """
     phone_number = request_data.phone_number
-    # * Generate dynamic code
-    code = randint(100000, 999999)
     # * Find phone number
     verify = await verify_phone_crud.find_by_phone_number(
         db=db,
@@ -64,12 +62,12 @@ async def verify_user(
         verify = VerifyPhone()
         verify.phone_number = phone_number
 
-    verify.verify_code = code
+    verify.verify_code = randint(100000, 999999)
     verify.expiration_code_at = expiration_code_at
     # ! Send SMS to phone number
     send_verify_phone_sms(
         phone_number=phone_number,
-        code=code,
+        code=verify.verify_code,
         exp_time=expiration_code_at,
     )
     db.add(verify)
