@@ -48,7 +48,6 @@ class PositionRequestCreate(BaseModel):
     requester_username: str | None = None
     target_position: PositionRequestType
     location_id: uuid.UUID
-    abilities: list[AbilityBase] = []
     code: int
 
 
@@ -61,7 +60,6 @@ class PositionRequestRead(PositionRequestBase):
     requester_user: UserBase
     next_approve_user: UserBase | None
     contract: ContractRead
-    abilities: list[AbilityBase]
     # location: LocationComplex
     creator: UserBase
 
