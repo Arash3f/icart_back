@@ -165,12 +165,17 @@ async def get_merchant_list(
         if filter_data.selling_type
         else True
     )
-
+    filter_data.user_id = (
+        (Merchant.agent.mapper.class_.user_id == filter_data.user_id)
+        if filter_data.user_id
+        else True
+    )
     # * Add filter fields
     query = select(Merchant).filter(
         and_(
             filter_data.location_id,
             filter_data.selling_type,
+            filter_data.user_id,
         ),
     )
     # * Prepare order fields
@@ -221,8 +226,10 @@ async def get_stores(
         if filter_data.location_id
         else True
     )
-    filter_data.agent_id = (
-        (Merchant.agent_id == filter_data.agent_id) if filter_data.agent_id else True
+    filter_data.user_id = (
+        (Merchant.agent.mapper.class_.user_id == filter_data.user_id)
+        if filter_data.user_id
+        else True
     )
     filter_data.selling_type = (
         (Merchant.selling_type == filter_data.selling_type)
@@ -235,6 +242,7 @@ async def get_stores(
         and_(
             filter_data.location_id,
             filter_data.selling_type,
+            filter_data.user_id,
         ),
     )
     # * Prepare order fields

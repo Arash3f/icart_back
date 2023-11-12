@@ -98,6 +98,6 @@ class MerchantFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class MerchantFilter(BaseModel):
     location_id: None | UUID = None
-    agent_id: None | UUID = None
+    user_id: None | UUID = None
     selling_type: None | SellingType = None
     order_by: MerchantFilterOrderBy | None = None
