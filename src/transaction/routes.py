@@ -15,7 +15,12 @@ from src.schema import (
     ChartFilterInput,
 )
 from src.transaction.crud import transaction as transaction_crud
-from src.transaction.models import Transaction, TransactionValueType
+from src.transaction.models import (
+    Transaction,
+    TransactionValueType,
+    TransactionRow,
+    TransactionReasonEnum,
+)
 from src.transaction.schema import (
     TransactionFilter,
     TransactionRead,
@@ -229,18 +234,28 @@ async def get_transaction_count(
 
         query = (
             select(func.count())
-            .select_from(Transaction)
+            .select_from(TransactionRow)
             .filter(
                 and_(
                     or_(
-                        Transaction.transferor_id == current_user.wallet.id,
-                        Transaction.receiver_id == current_user.wallet.id,
+                        TransactionRow.transferor_id == current_user.wallet.id,
+                        TransactionRow.receiver_id == current_user.wallet.id,
                     ),
-                    Transaction.created_at >= obj.duration.start_date,
-                    Transaction.created_at < obj.duration.end_date,
+                    TransactionRow.created_at >= obj.duration.start_date,
+                    TransactionRow.created_at < obj.duration.end_date,
                 ),
             )
         )
+
+        if current_user.role.name == "پذیرنده":
+            query = query.filter(
+                TransactionRow.reason != TransactionReasonEnum.PROFIT,
+            )
+        else:
+            query = query.filter(
+                TransactionRow.reason != TransactionReasonEnum.CONTRACT,
+            )
+
         response = await db.execute(
             query,
         )
@@ -250,3 +265,138 @@ async def get_transaction_count(
         buf_time = buf_end
 
     return chart_data
+
+
+# ---------------------------------------------------------------------------
+@router.post("/transaction/income_and_expense", response_model=list[ChartResponse])
+async def get_transaction_income_and_expense(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    filter_data: TransactionChartFilter,
+) -> list[ChartResponse]:
+    """
+    ! Get wallet income or expense
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester user
+    filter_data
+        filter data
+
+    Returns
+    -------
+    chart_data
+        chart final data
+    """
+    start = filter_data.duration.start_date
+    end = filter_data.duration.end_date
+    unit = filter_data.unit
+
+    if filter_data.type == TransactionChartType.INCOME:
+        query_filter = Transaction.receiver_id == current_user.wallet.id
+    else:
+        query_filter = Transaction.transferor_id == current_user.wallet.id
+
+    chart_data: list[ChartResponse] = []
+
+    # ? calculate durations
+    buf_time = start
+    while buf_time < end:
+        buf_end = buf_time + timedelta(
+            days=unit,
+        )
+        duration = Duration(
+            start_date=buf_time,
+            end_date=buf_end,
+        )
+        obj = ChartResponse(
+            duration=duration,
+            value=0,
+        )
+
+        query = (
+            select(func.sum(TransactionRow.value))
+            .select_from(TransactionRow)
+            .filter(
+                and_(
+                    query_filter,
+                    TransactionRow.created_at >= obj.duration.start_date,
+                    TransactionRow.created_at < obj.duration.end_date,
+                ),
+            )
+        )
+        if current_user.role.name == "پذیرنده":
+            query = query.filter(
+                TransactionRow.reason != TransactionReasonEnum.PROFIT,
+            )
+        else:
+            query = query.filter(
+                TransactionRow.reason != TransactionReasonEnum.CONTRACT,
+            )
+        response = await db.execute(
+            query,
+        )
+        obj.value = response.scalar()
+
+        chart_data.append(obj)
+        buf_time = buf_end
+
+    return chart_data
+
+
+# ---------------------------------------------------------------------------
+@router.post("/transaction/aggregate", response_model=TransactionAggregateResponse)
+async def get_transaction_aggregate(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+) -> TransactionAggregateResponse:
+    """
+    ! Get wallet aggregate of transaction type
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester user
+
+    Returns
+    -------
+
+    """
+    result = TransactionAggregateResponse(
+        cache=0,
+        credit=0,
+    )
+
+    query = (
+        select(TransactionRow.value_type, func.sum(TransactionRow.value))
+        .select_from(TransactionRow)
+        .filter(
+            TransactionRow.receiver_id == current_user.wallet.id,
+        )
+        .group_by(TransactionRow.value_type)
+    )
+    if current_user.role.name == "پذیرنده":
+        query = query.filter(
+            TransactionRow.reason != TransactionReasonEnum.PROFIT,
+        )
+    else:
+        query = query.filter(
+            TransactionRow.reason != TransactionReasonEnum.CONTRACT,
+        )
+    response = await db.execute(query)
+    response = response.all()
+
+    for data in response:
+        if data[0] == TransactionValueType.CASH:
+            result.cache = int(data[1])
+        elif data[0] == TransactionValueType.CREDIT:
+            result.credit = int(data[1])
+
+    return result

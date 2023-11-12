@@ -9,6 +9,7 @@ from src import deps
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.log.crud import log as log_crud
+from src.agent.crud import agent as agent_crud
 from src.merchant.models import Merchant
 from src.merchant.schema import (
     MerchantRead,
@@ -165,19 +166,24 @@ async def get_merchant_list(
         if filter_data.selling_type
         else True
     )
-    filter_data.user_id = (
-        (Merchant.agent.mapper.class_.user_id == filter_data.user_id)
-        if filter_data.user_id
-        else True
-    )
+
     # * Add filter fields
     query = select(Merchant).filter(
         and_(
             filter_data.location_id,
             filter_data.selling_type,
-            filter_data.user_id,
         ),
     )
+
+    if filter_data.user_id:
+        agent = await agent_crud.find_by_user_id(
+            db=db,
+            user_id=filter_data.user_id,
+        )
+        query = query.filter(
+            Merchant.agent_id == agent.id,
+        )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:
@@ -231,20 +237,24 @@ async def get_stores(
         if filter_data.user_id
         else True
     )
-    filter_data.selling_type = (
-        (Merchant.selling_type == filter_data.selling_type)
-        if filter_data.selling_type
-        else True
-    )
 
     # * Add filter fields
     query = select(Merchant).filter(
         and_(
             filter_data.location_id,
             filter_data.selling_type,
-            filter_data.user_id,
         ),
     )
+
+    if filter_data.user_id:
+        agent = await agent_crud.find_by_user_id(
+            db=db,
+            user_id=filter_data.user_id,
+        )
+        query = query.filter(
+            Merchant.agent_id == agent.id,
+        )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:
