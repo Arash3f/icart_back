@@ -165,8 +165,8 @@ async def get_agent_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Agent.user.mapper.class_.first_name.contains(filter_data.first_name),
-            Agent.user.mapper.class_.last_name.contains(filter_data.last_name),
+            Agent.user.mapper.class_.first_name.contains(filter_data.name),
+            Agent.user.mapper.class_.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True

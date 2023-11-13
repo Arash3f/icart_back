@@ -114,8 +114,8 @@ async def get_organization_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Organization.user.mapper.class_.first_name.contains(filter_data.first_name),
-            Organization.user.mapper.class_.last_name.contains(filter_data.last_name),
+            Organization.user.mapper.class_.first_name.contains(filter_data.name),
+            Organization.user.mapper.class_.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True

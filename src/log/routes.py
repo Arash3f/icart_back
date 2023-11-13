@@ -89,8 +89,8 @@ async def get_log(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Log.user.mapper.class_.first_name.contains(filter_data.first_name),
-            Log.user.mapper.class_.last_name.contains(filter_data.last_name),
+            Log.user.mapper.class_.first_name.contains(filter_data.name),
+            Log.user.mapper.class_.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True

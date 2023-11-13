@@ -158,8 +158,8 @@ async def get_merchant_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Merchant.user.mapper.class_.first_name.contains(filter_data.first_name),
-            Merchant.user.mapper.class_.last_name.contains(filter_data.last_name),
+            Merchant.user.mapper.class_.first_name.contains(filter_data.name),
+            Merchant.user.mapper.class_.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
