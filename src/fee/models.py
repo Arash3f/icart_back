@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import CheckConstraint, Column, Enum, Integer
+from sqlalchemy import CheckConstraint, Column, Enum, Integer, Float
 
 from src.database.base_class import Base, BaseMixin
 
@@ -25,7 +25,7 @@ class Fee(Base, BaseMixin):
     user_type = Column(Enum(FeeUserType), nullable=False, default=FeeUserType.USER)
 
     percentage = Column(
-        Integer,
+        Float,
         CheckConstraint("percentage >= 0 AND percentage <= 100"),
         nullable=True,
     )
