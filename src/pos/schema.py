@@ -82,7 +82,7 @@ class BalanceInput(ConfigPosInput):
 
 
 # ---------------------------------------------------------------------------
-class BalanceOutput(ConfigPosInput):
+class BalanceOutput(BaseModel):
     amount: int
     traction_code: int
     date_time: str

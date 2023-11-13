@@ -63,6 +63,7 @@ from src.wallet.exception import (
     LackOfMoneyException,
     LackOfCreditException,
     LockWalletException,
+    MerchantLackOfMoneyException,
 )
 
 # ---------------------------------------------------------------------------
@@ -451,8 +452,6 @@ async def config(
 
     response = BalanceOutput(
         amount=balance,
-        terminal_number=pos.number,
-        merchant_number=pos.merchant.number,
         traction_code=randint(100000, 999999),
         date_time=str(jdatetime.datetime.now()),
     )
@@ -554,10 +553,10 @@ async def purchase(
             merchant_user.cash.balance < merchant_fee
             and input_data.amount < merchant_fee
         ):
-            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+            raise MerchantLackOfMoneyException(time=str(jdatetime.datetime.now()))
     elif input_data.type == PosPurchaseType.CREDIT:
         if merchant_user.cash.balance < merchant_fee:
-            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+            raise MerchantLackOfMoneyException(time=str(jdatetime.datetime.now()))
     else:
         raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
 
