@@ -36,5 +36,7 @@ class LogRead(LogBase):
 
 # ---------------------------------------------------------------------------
 class LogFilter(BaseModel):
+    name: None | str = None
+    national_code: None | str = None
     user_id: None | UUID = None
     type: LogType | None = None

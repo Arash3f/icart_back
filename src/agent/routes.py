@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, or_
 
 from src import deps
 from src.ability.crud import ability as ability_crud
@@ -163,14 +163,12 @@ async def get_agent_list(
         List of ability
     """
     # * Prepare filter fields
-    filter_data.first_name = (
-        (Agent.user.mapper.class_.first_name.contains(filter_data.first_name))
-        if filter_data.first_name is not None
-        else True
-    )
-    filter_data.last_name = (
-        (Agent.user.mapper.class_.last_name.contains(filter_data.last_name))
-        if filter_data.last_name is not None
+    filter_data.name = (
+        or_(
+            Agent.user.mapper.class_.first_name.contains(filter_data.first_name),
+            Agent.user.mapper.class_.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.name is not None
         else True
     )
     filter_data.national_code = (
@@ -191,8 +189,7 @@ async def get_agent_list(
     # * Add filter fields
     query = select(Agent).filter(
         and_(
-            filter_data.first_name,
-            filter_data.last_name,
+            filter_data.name,
             filter_data.national_code,
             filter_data.location_id,
             filter_data.phone_number,

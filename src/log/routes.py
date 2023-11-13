@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 
 from src import deps
 from src.log.crud import log as log_crud
@@ -87,6 +87,19 @@ async def get_log(
         List of logs
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            Log.user.mapper.class_.first_name.contains(filter_data.first_name),
+            Log.user.mapper.class_.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (Log.user.mapper.class_.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.user_id = (
         (Log.user_id == filter_data.user_id) if filter_data.user_id else True
     )
@@ -95,6 +108,8 @@ async def get_log(
     # * Add filter fields
     query = select(Log).filter(
         and_(
+            filter_data.name,
+            filter_data.national_code,
             filter_data.user_id,
             filter_data.type,
         ),

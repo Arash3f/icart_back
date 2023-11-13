@@ -60,6 +60,8 @@ class OrganizationFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class OrganizationFilter(BaseModel):
+    name: None | str = None
+    national_code: None | str = None
     location_id: None | UUID = None
     user_id: None | UUID = None
     agent_id: None | UUID = None

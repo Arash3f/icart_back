@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import CheckConstraint, Column, Enum, Integer, Float
+from sqlalchemy import CheckConstraint, Column, Enum, Integer, Float, BigInteger
 
 from src.database.base_class import Base, BaseMixin
 
@@ -19,7 +19,7 @@ class FeeUserType(enum.Enum):
 class Fee(Base, BaseMixin):
     __tablename__ = "fee"
 
-    limit = Column(Integer, nullable=False)
+    limit = Column(BigInteger, nullable=False)
 
     type = Column(Enum(FeeTypeEnum), nullable=False, default=FeeTypeEnum.CASH)
     user_type = Column(Enum(FeeUserType), nullable=False, default=FeeUserType.USER)

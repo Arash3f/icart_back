@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -156,6 +156,19 @@ async def get_merchant_list(
         List of merchants
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            Merchant.user.mapper.class_.first_name.contains(filter_data.first_name),
+            Merchant.user.mapper.class_.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (Merchant.user.mapper.class_.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.location_id = (
         (Merchant.location_id == filter_data.location_id)
         if filter_data.location_id
@@ -180,6 +193,8 @@ async def get_merchant_list(
     query = select(Merchant).filter(
         and_(
             filter_data.location_id,
+            filter_data.name,
+            filter_data.national_code,
             filter_data.selling_type,
             filter_data.user_id,
         ),

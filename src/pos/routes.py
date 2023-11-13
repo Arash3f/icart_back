@@ -446,12 +446,13 @@ async def config(
     if not verify_pass:
         raise CardPasswordInValidException(time=c_time)
 
-    balance = card.wallet.user.cash.balance
-    if card_data.type == CardBalanceType.CREDIT:
-        balance = card.wallet.user.credit.balance
+    cash_balance = card.wallet.user.cash.balance
+    cash_balance += card.wallet.user.cash.cash_back
+    credit_balance = card.wallet.user.credit.balance
 
     response = BalanceOutput(
-        amount=balance,
+        cash_balance=cash_balance,
+        credit_balance=credit_balance,
         traction_code=randint(100000, 999999),
         date_time=str(jdatetime.datetime.now()),
     )

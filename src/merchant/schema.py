@@ -97,6 +97,8 @@ class MerchantFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class MerchantFilter(BaseModel):
+    name: None | str = None
+    national_code: None | str = None
     location_id: None | UUID = None
     user_id: None | UUID = None
     selling_type: None | SellingType = None

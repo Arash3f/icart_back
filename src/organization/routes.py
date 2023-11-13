@@ -2,7 +2,7 @@ from random import randint
 from typing import List, Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, File
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, or_
 
 from src import deps
 from src.auth.exception import AccessDeniedException
@@ -112,6 +112,23 @@ async def get_organization_list(
         List of organization
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            Organization.user.mapper.class_.first_name.contains(filter_data.first_name),
+            Organization.user.mapper.class_.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (
+            Organization.user.mapper.class_.national_code.contains(
+                filter_data.national_code,
+            )
+        )
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.location_id = (
         (Organization.location_id == filter_data.location_id)
         if filter_data.location_id
@@ -131,6 +148,8 @@ async def get_organization_list(
         and_(
             filter_data.location_id,
             filter_data.user_id,
+            filter_data.name,
+            filter_data.location_id,
             filter_data.agent_id,
         ),
     )

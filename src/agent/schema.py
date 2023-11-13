@@ -58,8 +58,7 @@ class AgentFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class AgentFilter(BaseModel):
     is_main: None | bool = None
-    first_name: None | str = None
-    last_name: None | str = None
+    name: None | str = None
     national_code: None | str = None
     phone_number: None | str = None
     location_id: None | UUID = None
