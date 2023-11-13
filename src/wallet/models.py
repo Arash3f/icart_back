@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, Integer
+from sqlalchemy import UUID, Column, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import relationship
 
 from src.capital_transfer.models import CapitalTransfer
@@ -11,6 +11,7 @@ class Wallet(Base, BaseMixin):
     __tablename__ = "wallet"
 
     number = Column(Integer, unique=True, index=True)
+    is_lock = Column(Boolean, default=False)
 
     # ! Relations
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))

@@ -107,6 +107,7 @@ class PositionRequest(Base, BaseMixin):
     tracking_code = Column(String, nullable=True)
     reason = Column(String, nullable=True)
     geo = Column(String, nullable=True)
+    profit_rate = Column(Integer, default=0)
     status = Column(
         Enum(PositionRequestStatusType),
         default=PositionRequestStatusType.OPEN,

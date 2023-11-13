@@ -5,6 +5,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.base_crud import BaseCRUD
+from src.exception import InCorrectDataException
 from src.fee.exception import (
     FeeIsDuplicatedException,
     FeeNotFoundException,
@@ -154,10 +155,18 @@ class FeeCRUD(BaseCRUD[Fee, FeeCreate, FeeUpdate]):
         )
 
         target_fee = fee_response.scalars().first()
-        if fee.percentage:
-            fee_value = int((amount * target_fee.percentage) / 100)
-        elif fee.value:
-            fee_value = fee.value
+        if target_fee:
+            if target_fee.percentage:
+                fee_value = int((amount * target_fee.percentage) / 100)
+            elif target_fee.value:
+                fee_value = target_fee.value
+        else:
+            if value_type == FeeTypeEnum.CREDIT:
+                fee_value = int((amount * 0.3) / 100)
+            elif value_type == FeeTypeEnum.CASH:
+                fee_value = int((amount * 0.3) / 100)
+            else:
+                raise InCorrectDataException()
 
         return fee_value
 

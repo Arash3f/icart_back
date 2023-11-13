@@ -13,11 +13,13 @@ from src.auth.exception import (
 from src.card.exception import CardNotFoundException, CardPasswordInValidException
 from src.core.config import settings
 from src.core.security import verify_password
-from src.fee.models import Fee
+from src.exception import InCorrectDataException
+from src.fee.models import Fee, FeeTypeEnum, FeeUserType
 from src.installments.schema import InstallmentsCreate
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
+from src.wallet.crud import wallet as wallet_crud
 from src.merchant.exception import MerchantNotFoundException
 from src.permission import permission_codes as permission
 from src.pos.crud import pos as pos_crud
@@ -26,10 +28,14 @@ from src.transaction.models import (
     TransactionReasonEnum,
     TransactionStatusEnum,
 )
-from src.transaction.schema import TransactionCreate
+from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.user.crud import user as user_crud
 from src.log.crud import log as log_crud
+from src.fee.crud import fee as fee_crud
 from src.auth.crud import auth as auth_crud
+from src.cash.crud import cash as cash_crud, CashField, TypeOperation
+from src.credit.crud import credit as credit_crud
+from src.transaction.crud import transaction_row as transaction_row_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.pos.exception import PosNotFoundException
 from src.pos.models import Pos
@@ -49,10 +55,15 @@ from src.pos.schema import (
     ConfigurationPosOutput,
     InstallmentsPurchaseOutput,
     InstallmentsPurchaseInput,
+    CardBalanceType,
 )
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
-from src.wallet.exception import LackOfMoneyException
+from src.wallet.exception import (
+    LackOfMoneyException,
+    LackOfCreditException,
+    LockWalletException,
+)
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/pos", tags=["pos"])
@@ -434,8 +445,12 @@ async def config(
     if not verify_pass:
         raise CardPasswordInValidException(time=c_time)
 
+    balance = card.wallet.user.cash.balance
+    if card_data.type == CardBalanceType.CREDIT:
+        balance = card.wallet.user.credit.balance
+
     response = BalanceOutput(
-        amount=card.wallet.user.cash.balance,
+        amount=balance,
         terminal_number=pos.number,
         merchant_number=pos.merchant.number,
         traction_code=randint(100000, 999999),
@@ -479,124 +494,370 @@ async def purchase(
         raise MerchantNotFoundException(time=c_time)
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=input_data.card_track)
+    # * Verify Card exp
+    await card_crud.check_card_exp(db=db, card_id=card.id)
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
         raise CardPasswordInValidException(time=c_time)
 
+    if card.wallet.is_lock:
+        raise LockWalletException()
+
+    # * Find All users
     agent = pos.merchant.agent
     merchant = pos.merchant
-    merchant_profit = (input_data.amount * (100 - 40)) / 100
-    new_amount = input_data.amount - merchant_profit
-    agent_profit = (new_amount * 40) / 100
-    icart_profit = new_amount - agent_profit
-
     icart_user = await user_crud.find_by_username(
         db=db,
         username=settings.ADMIN_USERNAME,
     )
+    # * Calculate cashback for requester card with merchant
+    find_cash_back = merchant_crud.calculate_user_cash_back(
+        db=db,
+        merchant=merchant,
+        card=card,
+    )
+    cash_back = (input_data.amount * find_cash_back) / 100
+    # * Calculate all users profit and cost
+    merchant_profit = (input_data.amount * (100 - merchant.profit_rate)) / 100
+    contract_amount = input_data.amount - merchant_profit
+    new_amount = contract_amount - cash_back
+    agent_profit = (new_amount * 40) / 100
+    icart_profit = new_amount - agent_profit
 
     # * Calculate Fee
-    fee_response = await db.execute(
-        select(Fee).order_by(Fee.limit.asc()).where(Fee.limit >= input_data.amount),
+    if input_data.type == PosPurchaseType.DIRECT:
+        fee_type = FeeTypeEnum.CASH
+    elif input_data.type == PosPurchaseType.CREDIT:
+        fee_type = FeeTypeEnum.CREDIT
+    else:
+        raise InCorrectDataException()
+
+    user_fee = await fee_crud.calculate_fee(
+        db=db,
+        amount=input_data.amount,
+        value_type=fee_type,
+        user_type=FeeUserType.USER,
     )
-    obj_list = fee_response.scalars().all()
+    merchant_fee = await fee_crud.calculate_fee(
+        db=db,
+        amount=input_data.amount,
+        value_type=fee_type,
+        user_type=FeeUserType.MERCHANT,
+    )
 
-    fee: Fee = obj_list[0]
-    fee_value = (input_data.amount * fee.percentage) / 100
-    if fee_value > fee.value_limit:
-        fee_value = fee.value_limit
-
-    # * Verify wallet balance
     requester_user = card.wallet.user
     merchant_user = pos.merchant.user
+
     if input_data.type == PosPurchaseType.DIRECT:
-        # ! + Verify Fee
-        if requester_user.cash.balance < input_data.amount + fee_value:
+        if (
+            merchant_user.cash.balance < merchant_fee
+            and input_data.amount < merchant_fee
+        ):
             raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
-        # * Increase & Decrease wallet
-        requester_user.cash.balance = (
-            requester_user.cash.balance - input_data.amount - fee_value
-        )
-        merchant_user.cash.balance = merchant_user.cash.balance + merchant_profit
-        agent.user.cash.balance = agent.user.cash.balance + agent_profit
-        icart_user.cash.balance = icart_user.cash.balance + icart_profit
-
+    elif input_data.type == PosPurchaseType.CREDIT:
+        if merchant_user.cash.balance < merchant_fee:
+            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
     else:
-        if requester_user.credit.balance < input_data.amount:
-            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
-        # ! Verify Fee
-        if requester_user.cash.balance < fee_value:
-            raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
-        # * Increase & Decrease wallet
-        requester_user.cash.balance = requester_user.cash.balance - fee_value
-        requester_user.credit.balance = (
-            requester_user.credit.balance - input_data.amount
-        )
-        merchant_user.credit.balance = merchant_user.credit.balance + merchant_profit
-        agent.user.credit.balance = agent.user.credit.balance + agent_profit
-        icart_user.credit.balance = icart_user.credit.balance + icart_profit
+        raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
 
-    code = randint(100000000000, 999999999999)
-    user_merchant_tr = TransactionCreate(
+    if requester_user.cash.balance < user_fee:
+        raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+    if (
+        input_data.type == PosPurchaseType.DIRECT
+        and requester_user.cash.balance < input_data.amount + user_fee
+    ):
+        raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+    if (
+        input_data.type == PosPurchaseType.CREDIT
+        and requester_user.credit.balance < input_data.amount
+    ):
+        raise LackOfCreditException(time=str(jdatetime.datetime.now()))
+
+    # ! Transactions
+    # ? lock user wallet
+    user_wallet = await wallet_crud.verify_by_user_id(db=db, user_id=requester_user.id)
+    user_wallet.is_lock = True
+    db.add(user_wallet)
+    # ? lock merchant wallet
+    merchant_wallet = await wallet_crud.verify_by_user_id(
+        db=db,
+        user_id=merchant_user.id,
+    )
+    merchant_wallet.is_lock = True
+    db.add(merchant_wallet)
+    await db.commit()
+
+    # ! Main
+    main_code = await transaction_crud.generate_code(db=db)
+    main_tr = TransactionCreate(
         status=TransactionStatusEnum.ACCEPTED,
         value=float(input_data.amount),
         text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
         receiver_id=merchant.user.wallet.id,
         transferor_id=card.wallet.id,
-        code=str(code),
+        code=main_code,
         reason=TransactionReasonEnum.PURCHASE,
     )
-    admin = await user_crud.find_by_username(db=db, username=settings.ADMIN_USERNAME)
-    user_fee_tr = TransactionCreate(
+    main_tr = await transaction_crud.create(db=db, obj_in=main_tr)
+
+    # ! Merchant Fee
+    merchant_user.cash.balance = merchant.user.cash.balance - merchant_fee
+    await cash_crud.update_cash_by_user(
+        db=db,
+        user=icart_user,
+        amount=merchant_fee,
+        cash_field=CashField.BALANCE,
+        type_operation=TypeOperation.INCREASE,
+    )
+    merchant_fee_tr = TransactionRowCreate(
+        transaction_id=main_tr.id,
         status=TransactionStatusEnum.ACCEPTED,
-        value=float(fee_value),
+        value=float(merchant_fee),
         text="کارمزد تراکنش",
         value_type=TransactionValueType.CASH,
-        receiver_id=admin.wallet.id,
-        transferor_id=card.wallet.id,
-        code=str(randint(100000000000, 999999999999)),
+        receiver_id=icart_user.wallet.id,
+        transferor_id=merchant_user.wallet.id,
+        code=await transaction_crud.generate_code(db=db),
         reason=TransactionReasonEnum.FEE,
     )
-    admin.cash.balance += fee_value
-    icart_tr = TransactionCreate(
+    await transaction_row_crud.create(db=db, obj_in=merchant_fee_tr)
+
+    # ! User Fee
+    requester_user.cash.balance = requester_user.cash.balance - user_fee
+    await cash_crud.update_cash_by_user(
+        db=db,
+        user=icart_user,
+        amount=user_fee,
+        cash_field=CashField.BALANCE,
+        type_operation=TypeOperation.INCREASE,
+    )
+    user_fee_tr = TransactionRowCreate(
+        transaction_id=main_tr.id,
         status=TransactionStatusEnum.ACCEPTED,
-        value=float(icart_profit),
-        text="سود از فروشنده {}".format(merchant.contract.name),
+        value=float(user_fee),
+        text="کارمزد تراکنش",
         value_type=TransactionValueType.CASH,
         receiver_id=icart_user.wallet.id,
-        transferor_id=merchant.user.wallet.id,
-        code=str(randint(100000000000, 999999999999)),
-        reason=TransactionReasonEnum.PROFIT,
+        transferor_id=card.wallet.id,
+        code=await transaction_crud.generate_code(db=db),
+        reason=TransactionReasonEnum.FEE,
     )
-    agent_tr = TransactionCreate(
-        status=TransactionStatusEnum.ACCEPTED,
-        value=float(agent_profit),
-        text="سود از فروشنده {}".format(merchant.contract.name),
-        value_type=TransactionValueType.CASH,
-        receiver_id=agent.user.wallet.id,
-        transferor_id=merchant.user.wallet.id,
-        code=str(randint(100000000000, 999999999999)),
-        reason=TransactionReasonEnum.PROFIT,
-    )
+    await transaction_row_crud.create(db=db, obj_in=user_fee_tr)
 
-    await transaction_crud.create(db=db, obj_in=user_merchant_tr)
-    await transaction_crud.create(db=db, obj_in=icart_tr)
-    await transaction_crud.create(db=db, obj_in=agent_tr)
-    await transaction_crud.create(db=db, obj_in=user_fee_tr)
-    db.add(card)
-    db.add(pos)
-    db.add(icart_user)
-    db.add(agent)
-    db.add(merchant)
-    db.add(admin)
+    # ! Profit and cost
+    if input_data.type == PosPurchaseType.DIRECT:
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=requester_user,
+            amount=input_data.amount,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.DECREASE,
+        )
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=merchant_user,
+            amount=merchant_profit,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.INCREASE,
+        )
+        sub_main_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(input_data.amount),
+            text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CASH,
+            receiver_id=merchant.user.wallet.id,
+            transferor_id=card.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.PURCHASE,
+        )
+        await transaction_row_crud.create(db=db, obj_in=sub_main_tr)
+
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=agent.user,
+            amount=agent_profit,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.INCREASE,
+        )
+        agent_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(agent_profit),
+            text="سود از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CASH,
+            receiver_id=agent.user.wallet.id,
+            transferor_id=merchant.user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=agent_tr)
+
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=icart_user,
+            amount=icart_profit,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.INCREASE,
+        )
+        icart_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(icart_profit),
+            text="سود از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CASH,
+            receiver_id=icart_user.wallet.id,
+            transferor_id=merchant.user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=icart_tr)
+        contract_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(contract_amount),
+            text="برداشت سود خدمات",
+            value_type=TransactionValueType.CASH,
+            receiver_id=icart_user.wallet.id,
+            transferor_id=merchant.user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.CONTRACT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=contract_tr)
+        # ! Cash Back
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=requester_user,
+            amount=cash_back,
+            cash_field=CashField.CASH_BACK,
+            type_operation=TypeOperation.INCREASE,
+        )
+        cash_back_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(cash_back),
+            text="کش بک شما بابت خرید از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CASH,
+            receiver_id=card.wallet.id,
+            transferor_id=icart_user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.CASH_BACK,
+        )
+        await transaction_row_crud.create(db=db, obj_in=cash_back_tr)
+    else:
+        await credit_crud.update_credit_by_user(
+            db=db,
+            user=requester_user,
+            amount=input_data.amount,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.DECREASE,
+        )
+        await credit_crud.update_credit_by_user(
+            db=db,
+            user=merchant_user,
+            amount=merchant_profit,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.INCREASE,
+        )
+        sub_main_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(input_data.amount),
+            text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CREDIT,
+            receiver_id=merchant.user.wallet.id,
+            transferor_id=card.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.PURCHASE,
+        )
+        await transaction_row_crud.create(db=db, obj_in=sub_main_tr)
+
+        await credit_crud.update_credit_by_user(
+            db=db,
+            user=agent.user,
+            amount=agent_profit,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.INCREASE,
+        )
+        agent_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(agent_profit),
+            text="سود از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CREDIT,
+            receiver_id=agent.user.wallet.id,
+            transferor_id=merchant.user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=agent_tr)
+
+        await credit_crud.update_credit_by_user(
+            db=db,
+            user=icart_user,
+            amount=icart_profit,
+            cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.INCREASE,
+        )
+        icart_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(icart_profit),
+            text="سود از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CREDIT,
+            receiver_id=icart_user.wallet.id,
+            transferor_id=merchant.user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=icart_tr)
+        contract_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(contract_amount),
+            text="برداشت سود خدمات",
+            value_type=TransactionValueType.CREDIT,
+            receiver_id=icart_user.wallet.id,
+            transferor_id=merchant.user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.CONTRACT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=contract_tr)
+        # # ! Cash Back
+        # await credit_crud.update_credit_by_user(
+        #     db=db,
+        #     user=requester_user,
+        #     amount=cash_back,
+        #     cash_field=CashField.BALANCE,
+        #     type_operation=TypeOperation.INCREASE
+        # )
+        # cash_back_tr = TransactionRowCreate(
+        #     transaction_id=main_tr.id,
+        #     status=TransactionStatusEnum.ACCEPTED,
+        #     value=float(cash_back),
+        #     text="کش بک شما بابت خرید از فروشنده {}".format(merchant.contract.name),
+        #     value_type=TransactionValueType.CREDIT,
+        #     receiver_id=card.wallet.id,
+        #     transferor_id=icart_user.wallet.id,
+        #     code=await transaction_crud.generate_code(db=db),
+        #     reason=TransactionReasonEnum.CASH_BACK,
+        # )
+        # await transaction_row_crud.create(db=db, obj_in=cash_back_tr)
+
     response = PurchaseOutput(
         amount=input_data.amount,
-        traction_code=str(code),
-        fee=fee_value,
+        traction_code=str(main_code),
+        fee=user_fee,
         date_time=str(jdatetime.datetime.now()),
     )
+
+    # ? Unlock user wallet
+    requester_user.wallet.is_lock = False
+    merchant_user.wallet.is_lock = False
+    db.add(requester_user)
+    db.add(merchant_user)
 
     await db.commit()
     return response

@@ -18,6 +18,7 @@ class TransactionReasonEnum(enum.Enum):
     FEE = "FEE"
     REGISTER = "REGISTER"
     CONTRACT = "CONTRACT"
+    CASH_BACK = "CASH_BACK"
 
 
 class TransactionStatusEnum(enum.Enum):

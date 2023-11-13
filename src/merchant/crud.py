@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.card.models import Card, CardEnum
 from src.database.base_crud import BaseCRUD
 from src.merchant.exception import MerchantNotFoundException
 from src.merchant.models import Merchant
@@ -144,6 +145,42 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
         merchent_users_count = response.scalar()
 
         return merchent_users_count
+
+    def calculate_user_cash_back(
+        self,
+        *,
+        db: AsyncSession,
+        merchant: Merchant,
+        card: Card,
+    ) -> int:
+        """
+        Calculate user cash back from merchant
+
+        Parameters
+        ----------
+        db
+            database connection
+        merchant
+            merchant object
+        card
+            requester user card
+
+        Returns
+        -------
+        cash_back
+            user cash back
+        """
+        cash_back = 0
+        if card.type == CardEnum.BLUE:
+            cash_back = merchant.blue_profit
+        elif card.type == CardEnum.CREDIT:
+            cash_back = merchant.corporate_profit
+        elif card.type == CardEnum.SILVER:
+            cash_back = merchant.silver_profit
+        elif card.type == CardEnum.GOLD:
+            cash_back = merchant.gold_profit
+
+        return cash_back
 
 
 # ---------------------------------------------------------------------------

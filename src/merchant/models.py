@@ -16,6 +16,7 @@ class Merchant(Base, BaseMixin):
     field_of_work = Column(Enum(FieldOfWorkType), nullable=True)
     selling_type = Column(Enum(SellingType), default=SellingType.ALL_THREE)
     geo = Column(String, nullable=True)
+    profit_rate = Column(Integer, default=0)
 
     # ? PROFIT
     blue_profit = Column(

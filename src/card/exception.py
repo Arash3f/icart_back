@@ -52,3 +52,19 @@ class UserCardDuplicateException(HTTPException):
             "time": time,
         }
         self.headers = None
+
+
+class UserCardIsDeActiveException(HTTPException):
+    """
+    ? Exception when user card is deactivate
+    """
+
+    def __init__(self, time: str = None):
+        self.status_code = 400
+        self.detail = {
+            "code": 3201,
+            "persian_message": "کارت غیر فعال است!",
+            "english_message": "User Card Is Deactivate!",
+            "time": time,
+        }
+        self.headers = None

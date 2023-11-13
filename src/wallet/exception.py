@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 
+
 # !!!!!!!!!!!!!
 # ! Code 22XX !
 # !!!!!!!!!!!!!
@@ -46,6 +47,22 @@ class LackOfMoneyException(HTTPException):
             "code": 2205,
             "persian_message": "موجودی نقدی شما کم است!",
             "english_message": "Lack Of Money Exception!",
+            "time": time,
+        }
+        self.headers = None
+
+
+class LockWalletException(HTTPException):
+    """
+    ? Exception when wallet is lock
+    """
+
+    def __init__(self, time: str = None):
+        self.status_code = 400
+        self.detail = {
+            "code": 2206,
+            "persian_message": "ولت شما غیر فعال است!",
+            "english_message": "Wallet is locked!",
             "time": time,
         }
         self.headers = None

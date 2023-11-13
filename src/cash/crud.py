@@ -22,6 +22,7 @@ class CashField(enum.Enum):
     CONSUMED = "CONSUMED"
     TRANSFERRED = "TRANSFERRED"
     DEPT = "DEPT"
+    CASH_BACK = "CASH_BACK"
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +165,11 @@ class CashCRUD(BaseCRUD[Cash, None, None]):
                     obj.consumed -= amount
                 else:
                     obj.consumed += amount
+            case CashField.CASH_BACK:
+                if type_operation == TypeOperation.DECREASE:
+                    obj.cash_back -= amount
+                else:
+                    obj.cash_back += amount
 
         db.add(obj)
         await db.commit()

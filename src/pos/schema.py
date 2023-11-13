@@ -12,6 +12,11 @@ class PosPurchaseType(enum.Enum):
     CREDIT = "CREDIT"
 
 
+class CardBalanceType(enum.Enum):
+    CASH = "CASH"
+    CREDIT = "CREDIT"
+
+
 # ---------------------------------------------------------------------------
 class PosBase(BaseModel):
     number: str
@@ -71,6 +76,7 @@ class ConfigPosOutput(BaseModel):
 
 # ---------------------------------------------------------------------------
 class BalanceInput(ConfigPosInput):
+    type: CardBalanceType | None = None
     card_track: str
     password: str
 

@@ -197,6 +197,7 @@ async def create_position_request(
     tel: Annotated[str, Form()],
     address: Annotated[str, Form()],
     employee_count: Annotated[int | None, Form()] = None,
+    profit_rate: Annotated[int | None, Form()] = None,
     received_money: Annotated[str | None, Form()] = None,
     tracking_code: Annotated[str | None, Form()] = None,
     geo: Annotated[str | None, Form()] = None,
@@ -319,6 +320,7 @@ async def create_position_request(
     position_request.field_of_work = field_of_work
     position_request.postal_code = postal_code
     position_request.tel = tel
+    position_request.profit_rate = profit_rate
     position_request.received_money = received_money
     position_request.tracking_code = tracking_code
     position_request.address = address
@@ -477,6 +479,7 @@ async def approve_position_request(
                     new_merchant.selling_type = obj_current.selling_type
                     new_merchant.agent_id = parent_agent.id
                     new_merchant.location = location
+                    new_merchant.profit_rate = obj_current.profit_rate
                     new_merchant.geo = obj_current.geo
                     new_merchant.number = str(randint(100000, 999999))
                     new_merchant.contract = obj_current.contract

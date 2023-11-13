@@ -29,6 +29,7 @@ class TransactionRowBase(BaseModel):
 # ---------------------------------------------------------------------------
 class TransactionRowCreate(TransactionRowBase):
     # ! Relation
+    transaction_id: UUID
     receiver_id: UUID
     transferor_id: UUID
     reason: TransactionReasonEnum

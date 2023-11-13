@@ -31,6 +31,7 @@ class PositionRequestBase(BaseModel):
     tel: str | None
     address: str | None
     employee_count: int | None
+    profit_rate: int = 0
     selling_type: SellingType | None
     received_money: str | None = None
     tracking_code: str | None = None
@@ -107,6 +108,7 @@ class PositionRequestUpdateData(BaseModel):
     tel: str
     address: str
     employee_count: int | None = None
+    profit_rate: int = 0
     received_money: str | None = None
     tracking_code: str | None = None
     geo: str | None = None

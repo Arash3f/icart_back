@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Type
 from uuid import UUID
 
@@ -5,7 +6,11 @@ import jdatetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.card.exception import CardNotFoundException, UserCardDuplicateException
+from src.card.exception import (
+    CardNotFoundException,
+    UserCardDuplicateException,
+    UserCardIsDeActiveException,
+)
 from src.card.models import Card
 from src.card.schema import CardUpdatePassword, CreateCard
 from src.database.base_crud import BaseCRUD
@@ -119,6 +124,45 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         card_obj = response.scalar_one_or_none()
         if card_obj:
             raise UserCardDuplicateException()
+
+        return True
+
+    async def check_card_exp(
+        self,
+        *,
+        db: AsyncSession,
+        card_id: UUID,
+    ) -> bool | UserCardIsDeActiveException:
+        """
+        ! Verify user card activation
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        card_id
+            Target User Card
+
+        Returns
+        -------
+        res
+            Result of operation
+
+        Raises
+        ------
+        UserCardIsDeActiveException
+        """
+        now = datetime.now()
+        response = await db.execute(
+            select(self.model).where(
+                Card.id == card_id,
+                Card.expiration_at >= now,
+            ),
+        )
+
+        card_obj = response.scalar_one_or_none()
+        if not card_obj:
+            raise UserCardIsDeActiveException()
 
         return True
 
