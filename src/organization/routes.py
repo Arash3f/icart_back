@@ -505,8 +505,7 @@ async def upload_file(
     success_insert = list()
     
     # Get organization user
-    organization_user = await organization_crud.find_by_user_id(db=db,user_id=current_user.id)
-    if not organization_user:
+    # organization_user = await organization_crud.find_by_user_id(db=db,user_id=current_user.id)
 
     # Check file format
     file_format = os.path.splitext(excel_file.filename)[1]
@@ -520,8 +519,8 @@ async def upload_file(
                 'organization': ['شماره پرسنلی', 'بخش سازمان', 'طبقه شغلی'],
                 'credit': ['میزان ریالی']}
 
-    flatten_col = list(chain.from_iterable(col_dict))
-    if flatten_col != excel_data.columns:
+    flatten_col = list(chain.from_iterable(col_dict.values()))
+    if flatten_col.sort() != list(excel_data.columns).sort():
         raise HTTPException("فایل نامعتبر است")
 
     required_data = excel_data[chain.from_iterable([col_dict['identity'],col_dict['address'],col_dict['credit']])]
@@ -532,7 +531,7 @@ async def upload_file(
 
     for index,row in valid_data.iterrows():
         # Apply inser user
-        if len(row['شماره همراه']) != 11:
+        if len(str(row['شماره همراه'])) != 11:
             invalid_username.append(f'کاربر ردیف {index} به دلیل نامعتبر بودن شماره تلفن ثبت نشد')
 
         else:
@@ -545,47 +544,49 @@ async def upload_file(
                 # * Check user not exist
                 exist_user = await user_crud.check_by_username_and_national_code(
                     db=db,
-                    username=row['شماره همراه'],
-                    national_code=row['کد ملی'],
+                    username=str(row['شماره همراه']),
+                    national_code=str(row['کد ملی']),
                 )
                 if exist_user:
                     if exist_user.credit.considered:
-                        organization_user.total_considered_credit -= (
-                            exist_user.credit.considered
-                        )
-                    organization_user.total_considered_credit += int(row[15].value)
-                    db.add(organization_user)
+                        pass
+                        # current_user.total_considered_credit -= (
+                        #     exist_user.credit.considered
+                        # )
+                    # current_user.total_considered_credit += int(row[15].value)
+                    # db.add(current_user)
 
                     # ? Append new User
-                    exist_user.organization_id = organization_user.id
-                    exist_user.credit.considered = int(row[15].value)
+                    # exist_user.organization_id = current_user.id
+                    # exist_user.credit.considered = int(row[15].value)
                 else:
                     # * Update Organization considered credit
-                    organization_user.total_considered_credit += int(row[15].value)
-                    db.add(organization_user)
+                    # current_user.total_considered_credit += int(row[15].value)
+                    # db.add(current_user)
+                    pass
 
                     find_user = await user_crud.check_by_username_or_national_code(
                         db=db,
-                        username=row['شماره همراه'],
-                        national_code=row['کد ملی'],
+                        username=str(row['شماره همراه']),
+                        national_code=str(row['کد ملی']),
                     )
                     if find_user:
                         duplicate_user.append(f'کاربر ردیف {index} به دلیل تکراری بودن شماره همراه یا کد ملی ثبت نشد')
                     else:
                         # ? Generate new User -> validation = False
                         new_user = User(
-                            organization_id=organization_user.id,
+                            organization_id=current_user.id,
                             first_name=row['نام'],
                             last_name=row['نام خانوادگی'],
-                            national_code=row['کد ملی'],
-                            phone_number=row['شماره همراه'],
+                            national_code=str(row['کد ملی']),
+                            phone_number=str(row['شماره همراه']),
                             father_name=row['نام پدر'],
                             birth_place=row['محل تولد'],
                             location_id=location.id,
-                            postal_code=row['کد پستی'],
-                            tel=row['شماره ثابت'],
+                            postal_code=str(row['کد پستی']),
+                            tel=str(row['شماره ثابت']),
                             address=row['آدرس'],
-                            personnel_number=row['شماره پرسنلی'],
+                            personnel_number=str(row['شماره پرسنلی']),
                             organizational_section=row['بخش سازمان'],
                             job_class=row['طبقه شغلی'],
                             password=hash_password(str(123456789)),
@@ -594,7 +595,7 @@ async def upload_file(
                         # ? Create Credit
                         credit = Credit(
                             user=new_user,
-                            considered=int(row[15].value),
+                            considered=int(row['میزان ریالی']),
                         )
 
                         # ? Create Cash
