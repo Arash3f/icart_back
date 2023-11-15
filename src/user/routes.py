@@ -514,7 +514,7 @@ async def user_list(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/agent/list", response_model=List[UserRead2])
-async def user_list(
+async def agent_list(
     *,
     db=Depends(deps.get_db),
     filter_data: UserFilter,
@@ -596,7 +596,7 @@ async def user_list(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/acquisition/statistics", response_model=List[ChartResponse])
-async def user_list(
+async def acquisition_statistics(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(

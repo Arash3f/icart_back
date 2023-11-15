@@ -103,3 +103,9 @@ class MerchantFilter(BaseModel):
     user_id: None | UUID = None
     selling_type: None | SellingType = None
     order_by: MerchantFilterOrderBy | None = None
+
+
+# ---------------------------------------------------------------------------
+class MerchantAggregateRead(BaseModel):
+    count: int
+    field_of_work: FieldOfWorkType

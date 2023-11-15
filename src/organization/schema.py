@@ -43,6 +43,19 @@ class OrganizationRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class OrganizationPublicRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
+class OrganizationPublicResponse(BaseModel):
+    count: int
+    list: list[OrganizationPublicRead]
+
+
+# ---------------------------------------------------------------------------
 class OrganizationReadWithUser(OrganizationRead):
     user: UserRead
 

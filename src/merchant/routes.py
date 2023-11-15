@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, orm, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -18,6 +18,7 @@ from src.merchant.schema import (
     StoresRead,
     MerchantUpdate,
     MerchantReadV2,
+    MerchantAggregateRead,
 )
 from src.user.models import User
 from src.permission import permission_codes as permission
@@ -158,14 +159,14 @@ async def get_merchant_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Merchant.user.mapper.class_.first_name.contains(filter_data.name),
-            Merchant.user.mapper.class_.last_name.contains(filter_data.name),
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
     )
     filter_data.national_code = (
-        (Merchant.user.mapper.class_.national_code.contains(filter_data.national_code))
+        (User.national_code.contains(filter_data.national_code),)
         if filter_data.national_code is not None
         else True
     )
@@ -190,14 +191,18 @@ async def get_merchant_list(
         filter_data.user_id = True
 
     # * Add filter fields
-    query = select(Merchant).filter(
-        and_(
-            filter_data.location_id,
-            filter_data.name,
-            filter_data.national_code,
-            filter_data.selling_type,
-            filter_data.user_id,
-        ),
+    query = (
+        select(Merchant)
+        .filter(
+            and_(
+                filter_data.location_id,
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.selling_type,
+                filter_data.user_id,
+            ),
+        )
+        .options(orm.contains_eager(Merchant.user))
     )
 
     # * Prepare order fields
@@ -243,6 +248,19 @@ async def get_stores(
         List of merchants
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code),)
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.location_id = (
         (Merchant.location_id == filter_data.location_id)
         if filter_data.location_id
@@ -264,12 +282,18 @@ async def get_stores(
         filter_data.user_id = True
 
     # * Add filter fields
-    query = select(Merchant).filter(
-        and_(
-            filter_data.location_id,
-            filter_data.selling_type,
-            filter_data.user_id,
-        ),
+    query = (
+        select(Merchant)
+        .filter(
+            and_(
+                filter_data.location_id,
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.selling_type,
+                filter_data.user_id,
+            ),
+        )
+        .options(orm.contains_eager(Merchant.user))
     )
 
     # * Prepare order fields
@@ -346,3 +370,35 @@ async def me(
     """
     obj = await merchant_crud.find_by_user_id(db=db, user_id=current_user.id)
     return obj
+
+
+# ---------------------------------------------------------------------------
+@router.get(path="/aggregate/information", response_model=list[MerchantAggregateRead])
+async def aggregate_information(
+    *,
+    db=Depends(deps.get_db),
+) -> list[MerchantAggregateRead]:
+    """
+    ! Get Merchant Aggregate information
+
+    Parameters
+    ----------
+    db
+        Target database connection
+
+    Returns
+    -------
+    obj
+        Calculate items by field of work
+    """
+    result = await db.execute(
+        select(
+            func.count(Merchant.id).label("count"),
+            Merchant.field_of_work.label("field_of_work"),
+        )
+        .select_from(Merchant)
+        .group_by(Merchant.field_of_work),
+    )
+
+    res = result.all()
+    return res

@@ -14,7 +14,10 @@ class Merchant(Base, BaseMixin):
 
     number = Column(String, index=True, unique=True, nullable=False)
     field_of_work = Column(Enum(FieldOfWorkType), nullable=True)
-    selling_type = Column(Enum(SellingType), default=SellingType.ALL_THREE)
+    selling_type = Column(
+        Enum(SellingType),
+        default=SellingType.CASH_CREDIT_INSTALLMENT,
+    )
     geo = Column(String, nullable=True)
     profit_rate = Column(Integer, default=0)
 

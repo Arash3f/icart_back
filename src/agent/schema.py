@@ -44,6 +44,19 @@ class AgentRead(AgentBase):
 
 
 # ---------------------------------------------------------------------------
+class AgentPublicRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
+class AgentPublicResponse(BaseModel):
+    count: int
+    list: list[AgentPublicRead]
+
+
+# ---------------------------------------------------------------------------
 class AgentFilterOrderFild(Enum):
     profit_rate = "profit_rate"
     is_main = "is_main"

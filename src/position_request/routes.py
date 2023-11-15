@@ -105,6 +105,7 @@ async def update_position_request(
         number_duplicated = await contract_crud.find_by_number(
             db=db,
             number=update_data.data.number,
+            exception_number=position_request.contract.number,
         )
         if number_duplicated:
             raise ContractNumberIsDuplicatedException()
@@ -249,7 +250,7 @@ async def create_position_request(
     AbilityNotFoundException
     """
     # * Verify creator existence and verify role
-    if current_user.role.name != "نماینده":
+    if current_user.role.name != "نماینده" and current_user.role.name != "نماینده":
         raise AccessDeniedException()
 
     # * Verify requester existence and verify role

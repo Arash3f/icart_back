@@ -29,7 +29,8 @@ class SellingType(enum.Enum):
     INSTALLMENT = "INSTALLMENT"
     CASH_INSTALLMENT = "CASH_INSTALLMENT"
     CREDIT_INSTALLMENT = "CREDIT_INSTALLMENT"
-    ALL_THREE = "ALL_THREE"
+    CASH_CREDIT = "CASH_CREDIT"
+    CASH_CREDIT_INSTALLMENT = "CASH_CREDIT_INSTALLMENT"
 
 
 # ---------------------------------------------------------------------------

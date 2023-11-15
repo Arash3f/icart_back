@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, and_, func, or_
+from sqlalchemy import select, and_, func, or_, orm
 
 from src import deps
 from src.ability.crud import ability as ability_crud
@@ -17,6 +17,8 @@ from src.agent.schema import (
     AgentRead,
     AgentUpdate,
     IncomeFromUser,
+    AgentPublicResponse,
+    AgentPublicRead,
 )
 from src.schema import IDRequest
 from src.transaction.models import Transaction, TransactionRow, TransactionReasonEnum
@@ -165,8 +167,8 @@ async def get_agent_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Agent.user.mapper.class_.first_name.contains(filter_data.name),
-            Agent.user.mapper.class_.last_name.contains(filter_data.name),
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -187,13 +189,17 @@ async def get_agent_list(
         else True
     )
     # * Add filter fields
-    query = select(Agent).filter(
-        and_(
-            filter_data.name,
-            filter_data.national_code,
-            filter_data.location_id,
-            filter_data.phone_number,
-        ),
+    query = (
+        select(Agent)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.location_id,
+                filter_data.phone_number,
+            ),
+        )
+        .options(orm.contains_eager(Agent.user))
     )
 
     if filter_data.is_main is not None:
@@ -217,6 +223,107 @@ async def get_agent_list(
     agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 
     return agent_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/list/public", response_model=AgentPublicResponse)
+async def get_agent_list_public(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: AgentFilter,
+    skip: int = 0,
+    limit: int = 20,
+) -> AgentPublicResponse:
+    """
+    ! Get All Agent
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester user object
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+    filter_data
+        Filter data
+
+    Returns
+    -------
+    agent_list
+        List of ability
+    """
+    # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (Agent.user.mapper.class_.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
+    filter_data.location_id = (
+        (Agent.locations.any(Location.id == filter_data.location_id))
+        if filter_data.location_id is not None
+        else True
+    )
+    filter_data.phone_number = (
+        (Agent.user.mapper.class_.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number is not None
+        else True
+    )
+    # * Add filter fields
+    query = (
+        select(Agent)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.location_id,
+                filter_data.phone_number,
+            ),
+        )
+        .join(Agent.user)
+    )
+
+    if filter_data.is_main is not None:
+        query = query.filter(Agent.is_main == filter_data.is_main)
+
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == AgentFilterOrderFild.is_main:
+                query = query.order_by(Agent.is_main.desc())
+            elif field == AgentFilterOrderFild.profit_rate:
+                query = query.order_by(Agent.profit_rate.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == AgentFilterOrderFild.is_main:
+                query = query.order_by(Agent.is_main.asc())
+            elif field == AgentFilterOrderFild.profit_rate:
+                query = query.order_by(Agent.profit_rate.asc())
+    # * Find All agent with filters
+    agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
+
+    count = skip + len(agent_list)
+    # ? Mapping
+    res: list[AgentPublicRead] = []
+    for agn in agent_list:
+        buf = AgentPublicRead(
+            id=agn.id,
+            name=agn.contract.position_request.name,
+        )
+        res.append(buf)
+
+    return AgentPublicResponse(count=count, list=res)
 
 
 # ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@ from random import randint
 from typing import List, Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, File
-from sqlalchemy import and_, select, or_
+from sqlalchemy import and_, select, or_, orm
 
 from src import deps
 from src.auth.exception import AccessDeniedException
@@ -21,6 +21,8 @@ from src.organization.schema import (
     OrganizationFilterOrderFild,
     OrganizationGenerateUser,
     OrganizationAppendUser,
+    OrganizationPublicRead,
+    OrganizationPublicResponse,
 )
 from src.schema import IDRequest, ResultResponse
 from src.transaction.models import TransactionValueType, TransactionReasonEnum
@@ -114,18 +116,14 @@ async def get_organization_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Organization.user.mapper.class_.first_name.contains(filter_data.name),
-            Organization.user.mapper.class_.last_name.contains(filter_data.name),
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
     )
     filter_data.national_code = (
-        (
-            Organization.user.mapper.class_.national_code.contains(
-                filter_data.national_code,
-            )
-        )
+        (User.national_code.contains(filter_data.national_code),)
         if filter_data.national_code is not None
         else True
     )
@@ -144,14 +142,18 @@ async def get_organization_list(
     )
 
     # * Add filter fields
-    query = select(Organization).filter(
-        and_(
-            filter_data.location_id,
-            filter_data.user_id,
-            filter_data.name,
-            filter_data.location_id,
-            filter_data.agent_id,
-        ),
+    query = (
+        select(Organization)
+        .filter(
+            and_(
+                filter_data.location_id,
+                filter_data.user_id,
+                filter_data.name,
+                filter_data.location_id,
+                filter_data.agent_id,
+            ),
+        )
+        .options(orm.contains_eager(Organization.user))
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -171,6 +173,108 @@ async def get_organization_list(
         query=query,
     )
     return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/list/public", response_model=OrganizationPublicResponse)
+async def get_organization_list(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: OrganizationFilter,
+    skip: int = 0,
+    limit: int = 20,
+) -> OrganizationPublicResponse:
+    """
+    ! Get All Organization
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    filter_data
+        Filter data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+
+    Returns
+    -------
+    obj_list
+        List of organization
+    """
+    # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code),)
+        if filter_data.national_code is not None
+        else True
+    )
+    filter_data.location_id = (
+        (Organization.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True
+    )
+    filter_data.user_id = (
+        (Organization.user_id == filter_data.user_id) if filter_data.user_id else True
+    )
+    filter_data.agent_id = (
+        (Organization.agent_id == filter_data.agent_id)
+        if filter_data.agent_id
+        else True
+    )
+
+    # * Add filter fields
+    query = (
+        select(Organization)
+        .filter(
+            and_(
+                filter_data.location_id,
+                filter_data.user_id,
+                filter_data.name,
+                filter_data.location_id,
+                filter_data.agent_id,
+            ),
+        )
+        .join(Organization.user)
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == OrganizationFilterOrderFild.agent_id:
+                query = query.order_by(Organization.agent_id.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == OrganizationFilterOrderFild.agent_id:
+                query = query.order_by(Organization.agent_id.asc())
+    # * Find All agent with filters
+    obj_list = await organization_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
+
+    count = skip + len(obj_list)
+
+    # ? Mapping
+    res: list[OrganizationPublicRead] = []
+    for org in obj_list:
+        buf = OrganizationPublicRead(
+            id=org.id,
+            name=org.contract.position_request.name,
+        )
+        res.append(buf)
+
+    return OrganizationPublicResponse(count=count, list=res)
 
 
 # ---------------------------------------------------------------------------
