@@ -233,6 +233,20 @@ async def read_transaction_list(
             limit=limit,
             query=query,
         )
+        for i in transaction_list:
+            ll = []
+            for ii in i.transactions_rows:
+                if (
+                    ii.receiver_id == verify_data.user.wallet.id
+                    or ii.transferor_id == verify_data.user.wallet.id
+                ):
+                    if verify_data.user.role.name == "پذیرنده":
+                        if ii.reason != TransactionReasonEnum.PROFIT:
+                            ll.append(ii)
+                    else:
+                        if ii.reason != TransactionReasonEnum.CONTRACT:
+                            ll.append(ii)
+            i.transactions_rows = ll
 
     return transaction_list
 
