@@ -7,6 +7,7 @@ from src.cooperation_request.models import (
     CooperationType,
     CooperationRequestFieldOfWorkType,
 )
+from src.location.schema import LocationComplex
 from src.schema import IDRequest
 
 
@@ -21,6 +22,9 @@ class CooperationRequestBase(BaseModel):
     employee_count: int | None = None
 
     model_config = ConfigDict(extra="forbid")
+
+    # ! relations
+    location_id: UUID
 
 
 # ---------------------------------------------------------------------------
@@ -46,3 +50,6 @@ class CooperationRequestRead(CooperationRequestBase):
 
     created_at: datetime
     updated_at: datetime | None
+
+    # ! relations
+    location_id: LocationComplex

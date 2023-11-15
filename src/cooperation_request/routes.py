@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.cooperation_request.crud import cooperation_request as cooperation_request_crud
 from src.log.crud import log as log_crud
+from src.location.crud import location as location_crud
 from src.cooperation_request.schema import (
-    CooperationRequestBase,
     CooperationRequestCreate,
     CooperationRequestRead,
     CooperationRequestUpdateStatus,
@@ -93,7 +93,15 @@ async def create_cooperation_request(
     -------
     cooperation_request
         New cooperation_request
+
+    Raises
+    ------
+    LocationNotFoundException
     """
+    await location_crud.verify_existence(
+        db=db,
+        location_id=create_data.location_id,
+    )
     # * Create CooperationRequest
     cooperation_request = await cooperation_request_crud.create(
         db=db,
