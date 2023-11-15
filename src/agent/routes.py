@@ -220,7 +220,12 @@ async def get_agent_list(
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.asc())
     # * Find All agent with filters
-    agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
+    agent_list = await agent_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query.distinct(),
+    )
 
     return agent_list
 

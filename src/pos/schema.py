@@ -76,7 +76,6 @@ class ConfigPosOutput(BaseModel):
 
 # ---------------------------------------------------------------------------
 class BalanceInput(ConfigPosInput):
-    type: CardBalanceType | None = None
     card_track: str
     password: str
 

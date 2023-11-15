@@ -9,7 +9,6 @@ services:
       - .:/app
     ports:
       - "8010:8001"
-      - "9091:9090"
     depends_on:
       - api-prod
 
@@ -36,12 +35,18 @@ services:
     ports:
       - "5435:5432"
 
-  minio-prod:
+  minioprod:
     image: minio/minio:latest
     restart: always
+    expose:
+      - "9090"
+      - "9000"
+    ports:
+      - "9091:9090"
+      - "9001:9000"
     env_file:
       - ".env.prod"
-    container_name: icart-back-minio-prod
+    container_name: icartbackminioprod
     command: "server /data --address ':9000' --console-address ':9090'"
 
 volumes:
