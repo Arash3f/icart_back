@@ -50,7 +50,7 @@ class LogCRUD(BaseCRUD[Log, LogCreate, None]):
         self,
         *,
         db: AsyncSession,
-        user_id: UUID,
+        user_id: UUID | None = None,
         log_type: LogType,
         detail: str | None = None,
     ) -> Type[Log] | UserNotFoundException:
@@ -77,13 +77,13 @@ class LogCRUD(BaseCRUD[Log, LogCreate, None]):
         ------
         UserNotFoundException
         """
-        user = await user_crud.verify_existence(db=db, user_id=user_id)
-
         new_obj = self.model(
-            user_id=user.id,
             detail=detail,
             type=log_type,
         )
+        if user_id:
+            user = await user_crud.verify_existence(db=db, user_id=user_id)
+            new_obj.user = user
         db.add(new_obj)
         await db.commit()
         await db.refresh(new_obj)

@@ -68,7 +68,7 @@ class Log(Base, BaseMixin):
     type = Column(Enum(LogType), nullable=True)
 
     # ! Relations
-    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
     user = relationship(
         "User",
         back_populates="logs",

@@ -184,4 +184,17 @@ permissions_in: list[PermissionCreate] = [
         name="می تواند تراکنش ها را ببیند",
         code=permission.VIEW_TRANSACTION,
     ),
+    # ! COOPERATION REQUEST
+    PermissionCreate(
+        name="مشاهده درخواست های همکاری",
+        code=permission.VIEW_COOPERATION_REQUEST,
+    ),
+    PermissionCreate(
+        name="ویرایش درخواست همکاری",
+        code=permission.UPDATE_COOPERATION_REQUEST,
+    ),
+    PermissionCreate(
+        name="حذف درخواست همکاری",
+        code=permission.DELETE_COOPERATION_REQUEST,
+    ),
 ]

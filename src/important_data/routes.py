@@ -104,12 +104,9 @@ router = APIRouter(prefix="/important_data", tags=["important_data"])
 
 # ---------------------------------------------------------------------------
 @router.get("/additional_info", response_model=SystemAdditionalInfo)
-async def get_organization_additional_info(
+async def get_additional_info(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.VIEW_USER]),
-    ),
 ) -> SystemAdditionalInfo:
     """
     * Get General information about system users
@@ -118,8 +115,6 @@ async def get_organization_additional_info(
     ----------
     db
         database connection
-    current_user
-        Requester User
 
     Returns
     -------
@@ -178,7 +173,7 @@ async def get_organization_additional_info(
 
 # ---------------------------------------------------------------------------
 @router.get("/request/info", response_model=SystemRequestInfo)
-async def get_organization_additional_info(
+async def get_request_info(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(

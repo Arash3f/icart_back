@@ -23,6 +23,7 @@ from src.permission.routes import router as permission_router
 from src.pos.routes import router as pos_router
 from src.role.routes import router as role_router
 from src.ticket.routes import router as ticket_router
+from src.cooperation_request.routes import router as cooperation_request_router
 from src.installments.routes import router as installments_router
 from src.ticket_message.routes import router as ticket_message_router
 from src.transaction.routes import router as transaction_router
@@ -76,6 +77,7 @@ def create_fastapi_app():
     app.include_router(user_request_router)
     app.include_router(installments_router)
     app.include_router(log_router)
+    app.include_router(cooperation_request_router)
     app.add_middleware(
         middleware_class=CORSMiddleware,
         allow_origins=["*"],

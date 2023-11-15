@@ -117,3 +117,7 @@ VIEW_LOG = 320
 # ---------------------------------------------------------------------------
 VIEW_MERCHANT = 330
 UPDATE_MERCHANT = 331
+# ---------------------------------------------------------------------------
+VIEW_COOPERATION_REQUEST = 340
+UPDATE_COOPERATION_REQUEST = 341
+DELETE_COOPERATION_REQUEST = 342

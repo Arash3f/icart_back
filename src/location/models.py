@@ -1,6 +1,7 @@
 from sqlalchemy import UUID, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
+from src.cooperation_request.models import CooperationRequest
 from src.database.base_class import Base, BaseMixin
 from src.position_request.models import PositionRequest
 
@@ -31,6 +32,8 @@ class Location(Base, BaseMixin):
     merchants = relationship("Merchant", back_populates="location")
 
     requests = relationship(PositionRequest, back_populates="location")
+
+    cooperation_requests = relationship(CooperationRequest, back_populates="location")
 
     children = relationship("Location", back_populates="parent")
 
