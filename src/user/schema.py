@@ -25,6 +25,13 @@ class UserBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class UserReadV2(BaseModel):
+    username: str
+    first_name: str | None
+    last_name: str | None
+
+
+# ---------------------------------------------------------------------------
 class UserRead(UserBase):
     id: UUID
     username: str
@@ -33,6 +40,7 @@ class UserRead(UserBase):
     phone_number: str | None
     national_code: str
     is_active: bool
+    is_valid: bool
 
     # ! Relation
     role: RoleBase

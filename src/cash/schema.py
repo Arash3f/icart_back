@@ -18,6 +18,7 @@ class CashBase(BaseModel):
 # ---------------------------------------------------------------------------
 class CashBalanceResponse(BaseModel):
     balance: int
+    cash_back: int
     model_config = ConfigDict(extra="forbid")
 
 

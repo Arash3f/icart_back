@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.user.schema import UserCreditCashRead
+from src.user.schema import UserCreditCashRead, UserReadV2
 
 
 # ---------------------------------------------------------------------------
@@ -22,6 +22,10 @@ class WalletRead(WalletBase):
 
     # ! relations
     user: UserCreditCashRead
+
+
+class WalletReadV2(BaseModel):
+    user: UserReadV2 | None = None
 
 
 # ---------------------------------------------------------------------------

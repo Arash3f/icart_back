@@ -10,6 +10,7 @@ from src.transaction.models import (
     TransactionReasonEnum,
     TransactionStatusEnum,
 )
+from src.wallet.schema import WalletRead, WalletReadV2
 
 
 class TransactionChartType(enum.Enum):
@@ -46,8 +47,8 @@ class TransactionRowRead(TransactionRowBase):
     updated_at: datetime | None
 
     # # ! Relation
-    receiver_id: UUID
-    transferor_id: UUID
+    receiver: WalletReadV2
+    transferor: WalletReadV2
 
 
 # ---------------------------------------------------------------------------
@@ -79,8 +80,8 @@ class TransactionRead(TransactionBase):
 
     # ! Relation
     transaction_rows: list[TransactionRowRead] = []
-    receiver_id: UUID
-    transferor_id: UUID
+    receiver: WalletReadV2
+    transferor: WalletReadV2
 
 
 # ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@ from src.transaction.schema import (
     TransactionAggregateResponse,
     TransactionChartFilter,
     TransactionChartType,
+    TransactionRowRead,
 )
 from src.user.models import User
 
@@ -125,6 +126,216 @@ async def read_transaction_list(
         q1 = Transaction.receiver_id == verify_data.user.wallet.id
         q2 = Transaction.transferor_id == verify_data.user.wallet.id
         query = query.where(or_(q1, q2)).order_by(desc(Transaction.created_at))
+        transaction_list = await transaction_crud.get_multi(
+            db=db,
+            skip=skip,
+            limit=limit,
+            query=query,
+        )
+
+    return transaction_list
+
+
+# ---------------------------------------------------------------------------
+@router.post("/list", response_model=list[TransactionRead])
+async def read_transaction_list(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_TRANSACTION]),
+    ),
+    filter_data: TransactionFilter,
+    skip: int = 0,
+    limit: int = 10,
+) -> list[TransactionRead]:
+    """
+    ! Read transactions list
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    verify_data
+        user's verified data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+    filter_data
+        Filter data
+
+    Returns
+    -------
+    transaction_list
+        List of transaction
+
+    """
+    # * Prepare filter fields
+    filter_data.gt_value = (
+        (Transaction.value >= filter_data.gt_value) if filter_data.gt_value else True
+    )
+    filter_data.lt_value = (
+        (Transaction.value <= filter_data.lt_value) if filter_data.lt_value else True
+    )
+    filter_data.value_type = (
+        (Transaction.value_type == filter_data.value_type)
+        if filter_data.value_type
+        else True
+    )
+    filter_data.reason = (
+        (Transaction.reason == filter_data.reason) if filter_data.reason else True
+    )
+    filter_data.gt_created_date = (
+        (Transaction.created_at >= filter_data.gt_created_date)
+        if filter_data.gt_created_date
+        else True
+    )
+    filter_data.lt_created_date = (
+        (Transaction.created_at <= filter_data.lt_created_date)
+        if filter_data.lt_created_date
+        else True
+    )
+
+    # * Add filter fields
+    query = select(Transaction).filter(
+        and_(
+            or_(
+                filter_data.value_type,
+            ),
+            and_(
+                filter_data.gt_value,
+                filter_data.lt_value,
+            ),
+            and_(
+                filter_data.gt_created_date,
+                filter_data.lt_created_date,
+            ),
+            filter_data.reason,
+        ),
+    )
+
+    # * Have permissions
+    if verify_data.is_valid:
+        transaction_list = await transaction_crud.get_multi(
+            db=db,
+            skip=skip,
+            limit=limit,
+            query=query,
+        )
+    # * Verify transaction receiver & transferor
+    else:
+        q1 = Transaction.receiver_id == verify_data.user.wallet.id
+        q2 = Transaction.transferor_id == verify_data.user.wallet.id
+        query = query.where(or_(q1, q2)).order_by(desc(Transaction.created_at))
+        transaction_list = await transaction_crud.get_multi(
+            db=db,
+            skip=skip,
+            limit=limit,
+            query=query,
+        )
+
+    return transaction_list
+
+
+# ---------------------------------------------------------------------------
+@router.post("/list/v2", response_model=list[TransactionRowRead])
+async def read_transaction_list(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.VIEW_TRANSACTION]),
+    ),
+    filter_data: TransactionFilter,
+    skip: int = 0,
+    limit: int = 10,
+) -> list[TransactionRowRead]:
+    """
+    ! Read transactions list
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    verify_data
+        user's verified data
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+    filter_data
+        Filter data
+
+    Returns
+    -------
+    transaction_list
+        List of transaction
+
+    """
+    # * Prepare filter fields
+    filter_data.gt_value = (
+        (TransactionRow.value >= filter_data.gt_value) if filter_data.gt_value else True
+    )
+    filter_data.lt_value = (
+        (TransactionRow.value <= filter_data.lt_value) if filter_data.lt_value else True
+    )
+    filter_data.value_type = (
+        (TransactionRow.value_type == filter_data.value_type)
+        if filter_data.value_type
+        else True
+    )
+    filter_data.reason = (
+        (TransactionRow.reason == filter_data.reason) if filter_data.reason else True
+    )
+    filter_data.gt_created_date = (
+        (TransactionRow.created_at >= filter_data.gt_created_date)
+        if filter_data.gt_created_date
+        else True
+    )
+    filter_data.lt_created_date = (
+        (TransactionRow.created_at <= filter_data.lt_created_date)
+        if filter_data.lt_created_date
+        else True
+    )
+
+    # * Add filter fields
+    query = select(TransactionRow).filter(
+        and_(
+            or_(
+                filter_data.value_type,
+            ),
+            and_(
+                filter_data.gt_value,
+                filter_data.lt_value,
+            ),
+            and_(
+                filter_data.gt_created_date,
+                filter_data.lt_created_date,
+            ),
+            filter_data.reason,
+        ),
+    )
+
+    # * Have permissions
+    if verify_data.is_valid:
+        transaction_list = await transaction_crud.get_multi(
+            db=db,
+            skip=skip,
+            limit=limit,
+            query=query,
+        )
+    # * Verify transaction receiver & transferor
+    else:
+        q1 = TransactionRow.receiver_id == verify_data.user.wallet.id
+        q2 = TransactionRow.transferor_id == verify_data.user.wallet.id
+        query = query.where(or_(q1, q2)).order_by(desc(TransactionRow.created_at))
+        if verify_data.user.role.name == "پذیرنده":
+            query = query.filter(
+                TransactionRow.reason != TransactionReasonEnum.PROFIT,
+            )
+        else:
+            query = query.filter(
+                TransactionRow.reason != TransactionReasonEnum.CONTRACT,
+            )
         transaction_list = await transaction_crud.get_multi(
             db=db,
             skip=skip,
