@@ -79,7 +79,7 @@ class TransactionRead(TransactionBase):
     updated_at: datetime | None
 
     # ! Relation
-    transaction_rows: list[TransactionRowRead] = []
+    transactions_rows: list[TransactionRowRead] = []
     receiver: WalletReadV2
     transferor: WalletReadV2
 
