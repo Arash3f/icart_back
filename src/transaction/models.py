@@ -66,7 +66,11 @@ class Transaction(Base, BaseMixin):
         back_populates="transaction",
     )
 
-    transactions_rows = relationship("TransactionRow", back_populates="transaction")
+    transactions_rows = relationship(
+        "TransactionRow",
+        back_populates="transaction",
+        lazy="selectin",
+    )
 
 
 # ---------------------------------------------------------------------------
