@@ -202,7 +202,7 @@ async def get_merchant_list(
                 filter_data.user_id,
             ),
         )
-        .options(orm.contains_eager(Merchant.user))
+        .join(Merchant.user)
     )
 
     # * Prepare order fields
@@ -293,7 +293,7 @@ async def get_stores(
                 filter_data.user_id,
             ),
         )
-        .options(orm.contains_eager(Merchant.user))
+        .join(Merchant.user)
     )
 
     # * Prepare order fields
