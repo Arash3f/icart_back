@@ -180,6 +180,11 @@ async def get_merchant_list(
         if filter_data.selling_type
         else True
     )
+    filter_data.field_of_work = (
+        (Merchant.field_of_work == filter_data.field_of_work)
+        if filter_data.selling_type
+        else True
+    )
 
     if filter_data.user_id:
         agent = await agent_crud.find_by_user_id(
@@ -200,6 +205,7 @@ async def get_merchant_list(
                 filter_data.national_code,
                 filter_data.selling_type,
                 filter_data.user_id,
+                filter_data.field_of_work,
             ),
         )
         .join(Merchant.user)
@@ -271,6 +277,11 @@ async def get_stores(
         if filter_data.selling_type
         else True
     )
+    filter_data.field_of_work = (
+        (Merchant.field_of_work == filter_data.field_of_work)
+        if filter_data.selling_type
+        else True
+    )
 
     if filter_data.user_id:
         agent = await agent_crud.find_by_user_id(
@@ -291,6 +302,7 @@ async def get_stores(
                 filter_data.national_code,
                 filter_data.selling_type,
                 filter_data.user_id,
+                filter_data.field_of_work,
             ),
         )
         .join(Merchant.user)

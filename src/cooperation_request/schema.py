@@ -52,4 +52,4 @@ class CooperationRequestRead(CooperationRequestBase):
     updated_at: datetime | None
 
     # ! relations
-    location_id: LocationComplex
+    location: LocationComplex

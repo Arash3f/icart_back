@@ -153,7 +153,7 @@ async def get_organization_list(
                 filter_data.agent_id,
             ),
         )
-        .options(orm.contains_eager(Organization.user))
+        .join(Organization.user)
     )
     # * Prepare order fields
     if filter_data.order_by:

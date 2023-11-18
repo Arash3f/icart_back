@@ -31,7 +31,7 @@ class LogRead(LogBase):
     updated_at: datetime | None
 
     # ! Relation
-    user: UserBase
+    user: UserBase | None = None
 
 
 # ---------------------------------------------------------------------------

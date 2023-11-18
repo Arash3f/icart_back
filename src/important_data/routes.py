@@ -133,7 +133,7 @@ async def get_additional_info(
             Agent.is_main == True,
         ),
     )
-    agent_count = response.scalar()
+    main_agent_count = response.scalar()
 
     response = await db.execute(
         select(func.count())
@@ -156,14 +156,15 @@ async def get_additional_info(
 
     user_count = (
         all_users
-        - agent_count
+        - main_agent_count
         - organization_count
         - merchant_count
         - sales_agent_count
     )
 
     return SystemAdditionalInfo(
-        agent_count=agent_count,
+        agent_count=sales_agent_count + main_agent_count,
+        main_agent_count=main_agent_count,
         organization_count=organization_count,
         merchant_count=merchant_count,
         user_count=user_count,
