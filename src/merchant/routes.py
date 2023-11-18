@@ -469,7 +469,7 @@ async def update_user_activity(
         user_id=current_user.id,
         log_type=LogType.UPDATE_USER_ACTIVITY,
         detail="وضعیت پذینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
-            obj.username,
+            obj.contract.position_request.name,
             current_user.username,
         ),
     )

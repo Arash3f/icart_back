@@ -205,7 +205,7 @@ async def get_agent_list(
                 filter_data.phone_number,
             ),
         )
-        .options(orm.contains_eager(Agent.user))
+        .join(Agent.user)
     )
 
     if filter_data.is_main is not None:
@@ -475,7 +475,7 @@ async def update_user_activity(
         user_id=current_user.id,
         log_type=LogType.UPDATE_USER_ACTIVITY,
         detail="وضعیت نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
-            obj.username,
+            obj.contract.position_request.name,
             current_user.username,
         ),
     )
