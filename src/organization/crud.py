@@ -82,8 +82,8 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
         self,
         *,
         db: AsyncSession,
-        user_id: UUID,
-    ) -> bool:
+        user_id: UUID | None = None,
+    ) -> int:
         """
         ! Get organization users count
 
@@ -99,14 +99,15 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
         response
             count of organization suers
         """
-        organization = await self.find_by_user_id(db=db, user_id=user_id)
-        organization_users = await db.execute(
-            select(func.count())
-            .select_from(User)
-            .where(
+        organization_users = select(func.count()).select_from(User)
+
+        if user_id:
+            organization = await self.find_by_user_id(db=db, user_id=user_id)
+            organization_users = organization_users.where(
                 User.organization == organization,
-            ),
-        )
+            )
+
+        organization_users = await db.execute(organization_users)
         organization_users_count = organization_users.scalar()
 
         return organization_users_count

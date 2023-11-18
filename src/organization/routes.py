@@ -270,7 +270,9 @@ async def get_organization_list(
         query=query,
     )
 
-    count = skip + len(obj_list)
+    count = await organization_crud.get_organization_users_count(
+        db=db,
+    )
 
     # ? Mapping
     res: list[OrganizationPublicRead] = []

@@ -12,7 +12,7 @@ from src.cooperation_request.schema import (
 )
 from src.log.models import LogType
 from src.permission import permission_codes as permission
-from src.schema import DeleteResponse, IDRequest
+from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
 
 # ---------------------------------------------------------------------------
@@ -73,12 +73,12 @@ async def delete_cooperation_request(
 
 
 # ---------------------------------------------------------------------------
-@router.post("/create", response_model=CooperationRequestRead)
+@router.post("/create", response_model=ResultResponse)
 async def create_cooperation_request(
     *,
     db: AsyncSession = Depends(deps.get_db),
     create_data: CooperationRequestCreate,
-) -> CooperationRequestRead:
+) -> ResultResponse:
     """
     ! Create CooperationRequest
 
@@ -117,7 +117,7 @@ async def create_cooperation_request(
         ),
     )
 
-    return cooperation_request
+    return ResultResponse(result="Cooperation Request Created Successfully")
 
 
 # ---------------------------------------------------------------------------
