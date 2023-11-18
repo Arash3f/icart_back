@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, BigInteger
+from sqlalchemy import UUID, Column, ForeignKey, BigInteger, Boolean
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
@@ -10,6 +10,7 @@ class Organization(Base, BaseMixin):
     __tablename__ = "organization"
 
     total_considered_credit = Column(BigInteger, default=0)
+    is_active = Column(Boolean, default=True)
 
     # ! Relations
     user_id = Column(

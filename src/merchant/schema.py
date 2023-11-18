@@ -28,6 +28,7 @@ class MerchantBase(BaseModel):
 # ---------------------------------------------------------------------------
 class MerchantRead(MerchantBase):
     id: UUID
+    is_active: bool
 
     created_at: datetime
     updated_at: datetime | None
@@ -102,6 +103,7 @@ class MerchantFilter(BaseModel):
     location_id: None | UUID = None
     user_id: None | UUID = None
     selling_type: None | SellingType = None
+    is_active: None | bool = None
     field_of_work: None | FieldOfWorkType = None
     order_by: MerchantFilterOrderBy | None = None
 

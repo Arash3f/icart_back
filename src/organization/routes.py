@@ -140,12 +140,18 @@ async def get_organization_list(
         if filter_data.agent_id
         else True
     )
+    filter_data.is_active = (
+        (Organization.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
+    )
 
     # * Add filter fields
     query = (
         select(Organization)
         .filter(
             and_(
+                filter_data.is_active,
                 filter_data.location_id,
                 filter_data.user_id,
                 filter_data.name,
@@ -241,6 +247,7 @@ async def get_organization_list(
                 filter_data.name,
                 filter_data.location_id,
                 filter_data.agent_id,
+                Organization.is_active == True,
             ),
         )
         .join(Organization.user)

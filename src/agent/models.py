@@ -14,6 +14,7 @@ class Agent(Base, BaseMixin):
     __tablename__ = "agent"
 
     is_main = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
     profit_rate = Column(Float, default=0)
 
     # # ! Relations

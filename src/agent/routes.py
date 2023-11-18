@@ -188,11 +188,17 @@ async def get_agent_list(
         if filter_data.phone_number is not None
         else True
     )
+    filter_data.is_active = (
+        (Agent.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
+    )
     # * Add filter fields
     query = (
         select(Agent)
         .filter(
             and_(
+                filter_data.is_active,
                 filter_data.name,
                 filter_data.national_code,
                 filter_data.location_id,
@@ -293,6 +299,7 @@ async def get_agent_list_public(
                 filter_data.national_code,
                 filter_data.location_id,
                 filter_data.phone_number,
+                Agent.is_active == True,
             ),
         )
         .join(Agent.user)

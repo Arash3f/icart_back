@@ -1,4 +1,13 @@
-from sqlalchemy import UUID, Column, ForeignKey, String, Enum, Integer, CheckConstraint
+from sqlalchemy import (
+    UUID,
+    Column,
+    ForeignKey,
+    String,
+    Enum,
+    Integer,
+    CheckConstraint,
+    Boolean,
+)
 from sqlalchemy.orm import relationship
 
 from src.contract.models import Contract
@@ -20,6 +29,7 @@ class Merchant(Base, BaseMixin):
     )
     geo = Column(String, nullable=True)
     profit_rate = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
 
     # ? PROFIT
     blue_profit = Column(

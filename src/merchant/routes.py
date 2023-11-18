@@ -185,6 +185,9 @@ async def get_merchant_list(
         if filter_data.selling_type
         else True
     )
+    filter_data.is_active = (
+        (Merchant.is_active == filter_data.is_active) if filter_data.is_active else True
+    )
 
     if filter_data.user_id:
         agent = await agent_crud.find_by_user_id(
@@ -200,6 +203,7 @@ async def get_merchant_list(
         select(Merchant)
         .filter(
             and_(
+                filter_data.is_active,
                 filter_data.location_id,
                 filter_data.name,
                 filter_data.national_code,
@@ -297,6 +301,7 @@ async def get_stores(
         select(Merchant)
         .filter(
             and_(
+                filter_data.is_active == True,
                 filter_data.location_id,
                 filter_data.name,
                 filter_data.national_code,

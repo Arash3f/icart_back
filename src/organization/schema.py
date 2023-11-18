@@ -34,6 +34,7 @@ class UserRead(BaseModel):
 # ---------------------------------------------------------------------------
 class OrganizationRead(BaseModel):
     id: uuid.UUID
+    is_active: bool
     model_config = ConfigDict(extra="forbid")
 
     # # ! Relation
@@ -78,6 +79,7 @@ class OrganizationFilter(BaseModel):
     location_id: None | UUID = None
     user_id: None | UUID = None
     agent_id: None | UUID = None
+    is_active: None | bool = None
     order_by: OrganizationFilterOrderBy | None = None
 
 

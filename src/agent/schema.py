@@ -33,6 +33,7 @@ class AgentUpdate(BaseModel):
 class AgentRead(AgentBase):
     id: uuid.UUID
     is_main: bool
+    is_active: bool
     profit_rate: float
 
     created_at: datetime
@@ -75,6 +76,7 @@ class AgentFilter(BaseModel):
     national_code: None | str = None
     phone_number: None | str = None
     location_id: None | UUID = None
+    is_active: None | bool = None
     order_by: AgentFilterOrderBy | None = None
 
 
