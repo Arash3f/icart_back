@@ -20,7 +20,7 @@ from src.agent.schema import (
     AgentPublicResponse,
     AgentPublicRead,
 )
-from src.schema import IDRequest
+from src.schema import IDRequest, ResultResponse, UpdateActivityRequest
 from src.transaction.models import Transaction, TransactionRow, TransactionReasonEnum
 from src.user.models import User
 from src.permission import permission_codes as permission
@@ -426,3 +426,58 @@ async def me(
     """
     obj = await agent_crud.find_by_user_id(db=db, user_id=current_user.id)
     return obj
+
+
+# ---------------------------------------------------------------------------
+@router.put(path="/update/activity", response_model=ResultResponse)
+async def update_user_activity(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_AGENT]),
+    ),
+    update_data: UpdateActivityRequest,
+) -> ResultResponse:
+    """
+    ! Update Agent Activity
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update agent
+
+    Returns
+    -------
+    obj
+        Updated agent
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    # * Verify user existence
+    obj = await agent_crud.verify_existence(
+        db=db,
+        agent_id=update_data.where.id,
+    )
+
+    obj.is_active = update_data.data.is_active
+    db.add(obj)
+    await db.commit()
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_USER_ACTIVITY,
+        detail="وضعیت نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj.username,
+            current_user.username,
+        ),
+    )
+
+    return ResultResponse(result="Agent Activity Updated Successfully")

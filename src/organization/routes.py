@@ -24,7 +24,7 @@ from src.organization.schema import (
     OrganizationPublicRead,
     OrganizationPublicResponse,
 )
-from src.schema import IDRequest, ResultResponse
+from src.schema import IDRequest, ResultResponse, UpdateActivityRequest
 from src.transaction.models import TransactionValueType, TransactionReasonEnum
 from src.transaction.schema import TransactionCreate
 from src.user.exception import UsernameIsDuplicatedException
@@ -687,3 +687,58 @@ async def upload_file(
     print(dir(image_file.file))
     await read_excel_file(db=db, user_id=current_user.id)
     return ResultResponse(result="User Append Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.put(path="/update/activity", response_model=ResultResponse)
+async def update_user_activity(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_ORGANIZATION]),
+    ),
+    update_data: UpdateActivityRequest,
+) -> ResultResponse:
+    """
+    ! Update Organization Activity
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update organization
+
+    Returns
+    -------
+    obj
+        Updated organization
+
+    Raises
+    ------
+    UserNotFoundException
+    """
+    # * Verify user existence
+    obj = await organization_crud.verify_existence(
+        db=db,
+        organization_id=update_data.where.id,
+    )
+
+    obj.is_active = update_data.data.is_active
+    db.add(obj)
+    await db.commit()
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_USER_ACTIVITY,
+        detail="وضعیت سازمان {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            obj.username,
+            current_user.username,
+        ),
+    )
+
+    return ResultResponse(result="Organization Activity Updated Successfully")

@@ -52,3 +52,14 @@ class ChartTypeResponse(BaseModel):
     duration: Duration
     value: int
     type: str
+
+
+# ---------------------------------------------------------------------------
+class UpdateActivityData(BaseModel):
+    is_active: bool
+
+
+# ---------------------------------------------------------------------------
+class UpdateActivityRequest(BaseModel):
+    where: IDRequest
+    data: UpdateActivityData
