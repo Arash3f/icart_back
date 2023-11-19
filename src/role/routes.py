@@ -141,7 +141,7 @@ async def create_role(
 
 
 # ---------------------------------------------------------------------------
-@router.put("/update/", response_model=RoleRead)
+@router.put("/update", response_model=RoleRead)
 async def update_role(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -248,8 +248,12 @@ async def get_roles_list(
         Role.name.contains(filter_data.name) if filter_data.name is not None else True
     )
     # * Add filter fields
-    query = select(Role).filter(
-        or_(filter_data.name),
+    query = (
+        select(Role)
+        .filter(
+            or_(filter_data.name),
+        )
+        .order_by(Role.created_at.desc)
     )
     # * Prepare order fields
     if filter_data.order_by:
