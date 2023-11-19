@@ -63,7 +63,9 @@ class OrganizationReadWithUser(OrganizationRead):
 
 # ---------------------------------------------------------------------------
 class OrganizationFilterOrderFild(Enum):
-    agent_id = "agent_id"
+    is_active = "is_active"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------

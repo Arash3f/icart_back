@@ -219,12 +219,20 @@ async def agent_list(
                 query = query.order_by(Agent.is_main.desc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.desc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == AgentFilterOrderFild.is_main:
                 query = query.order_by(Agent.is_main.asc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.asc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     agent_list = await agent_crud.get_multi(
         db=db,
@@ -314,12 +322,20 @@ async def agent_list_public(
                 query = query.order_by(Agent.is_main.desc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.desc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == AgentFilterOrderFild.is_main:
                 query = query.order_by(Agent.is_main.asc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.asc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 

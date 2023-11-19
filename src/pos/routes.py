@@ -492,7 +492,7 @@ async def purchase(
     pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
     # * Verify merchant number
     if pos.merchant.number != input_data.merchant_number:
-        raise MerchantNotFoundException(time=c_time)
+        raise MerchantNotFoundException()
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=input_data.card_track)
     # * Verify Card exp
@@ -500,7 +500,7 @@ async def purchase(
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
-        raise CardPasswordInValidException(time=c_time)
+        raise CardPasswordInValidException()
 
     if card.wallet.is_lock:
         raise LockWalletException()
@@ -970,13 +970,13 @@ async def installments_purchase(
     pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
     # * Verify merchant number
     if pos.merchant.number != input_data.merchant_number:
-        raise MerchantNotFoundException(time=c_time)
+        raise MerchantNotFoundException()
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=input_data.card_track)
     # * Verify Card password
     verify_pass = verify_password(input_data.password, card.password)
     if not verify_pass:
-        raise CardNotFoundException(time=c_time)
+        raise CardNotFoundException()
 
     # ! Create Installments
     amount = int(input_data.amount / input_data.number_of_installments)

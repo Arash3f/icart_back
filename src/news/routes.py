@@ -242,13 +242,19 @@ async def get_news_list(
     """
     # * Prepare filter fields
     filter_data.title = (
-        (News.title.contains(filter_data.title)) if filter_data.title else True
+        (News.title.contains(filter_data.title))
+        if filter_data.title is not None
+        else True
     )
     # * Add filter fields
-    query = select(News).filter(
-        and_(
-            filter_data.title,
-        ),
+    query = (
+        select(News)
+        .filter(
+            and_(
+                filter_data.title,
+            ),
+        )
+        .order_by(News.created_at)
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -256,9 +262,17 @@ async def get_news_list(
             # * Add filter fields
             if field == NewsFilterOrderFild.title:
                 query = query.order_by(News.title.desc())
+            elif field == NewsFilterOrderFild.created_at:
+                query = query.order_by(News.created_at.desc())
+            elif field == NewsFilterOrderFild.updated_at:
+                query = query.order_by(News.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == NewsFilterOrderFild.title:
                 query = query.order_by(News.title.asc())
+            elif field == NewsFilterOrderFild.created_at:
+                query = query.order_by(News.created_at.asc())
+            elif field == NewsFilterOrderFild.updated_at:
+                query = query.order_by(News.updated_at.asc())
     obj_list = await news_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, select, desc
+from sqlalchemy import and_, select, desc, or_
 
 from src import deps
 from src.log.models import LogType
@@ -224,11 +224,30 @@ async def read_user_message_list(
         if filter_data.title is not None
         else True
     )
-    query = query.filter(
-        and_(
-            filter_data.status,
-            filter_data.title,
-        ),
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
+    query = (
+        query.filter(
+            and_(
+                filter_data.status,
+                filter_data.title,
+                filter_data.name,
+                filter_data.national_code,
+            ),
+        )
+        .join(UserMessage.user)
+        .order_by(UserMessage.created_at)
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -238,6 +257,10 @@ async def read_user_message_list(
                 query = query.order_by(UserMessage.type.desc())
             elif field == UserMessageFilterOrderFild.number:
                 query = query.order_by(UserMessage.number.desc())
+            elif field == UserMessageFilterOrderFild.created_at:
+                query = query.order_by(UserMessage.created_at.desc())
+            elif field == UserMessageFilterOrderFild.updated_at:
+                query = query.order_by(UserMessage.updated_at.desc())
         for field in filter_data.order_by.asc:
             query = query.order_by(desc(UserMessage.created_at))
             # * Add filter fields
@@ -245,6 +268,10 @@ async def read_user_message_list(
                 query = query.order_by(UserMessage.type.asc())
             elif field == UserMessageFilterOrderFild.number:
                 query = query.order_by(UserMessage.number.asc())
+            elif field == UserMessageFilterOrderFild.created_at:
+                query = query.order_by(UserMessage.created_at.asc())
+            elif field == UserMessageFilterOrderFild.updated_at:
+                query = query.order_by(UserMessage.updated_at.asc())
 
     # * Find All user message with filters
     message_list = await user_message_crud.get_multi(

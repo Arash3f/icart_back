@@ -287,10 +287,18 @@ async def ability_list(
             # * Add filter fields
             if field == AbilityFilterOrderFild.name:
                 query = query.order_by(Ability.name.desc())
+            elif field == AbilityFilterOrderFild.created_at:
+                query = query.order_by(Ability.created_at.desc())
+            elif field == AbilityFilterOrderFild.updated_at:
+                query = query.order_by(Ability.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == AbilityFilterOrderFild.name:
                 query = query.order_by(Ability.name.asc())
+            elif field == AbilityFilterOrderFild.created_at:
+                query = query.order_by(Ability.created_at.asc())
+            elif field == AbilityFilterOrderFild.updated_at:
+                query = query.order_by(Ability.updated_at.asc())
     # * Find All ability with filters
     obj_list = await ability_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 

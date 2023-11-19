@@ -40,6 +40,8 @@ class NewsShortRead(BaseModel):
 # ---------------------------------------------------------------------------
 class NewsFilterOrderFild(Enum):
     title = "title"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
