@@ -51,6 +51,8 @@ class PermissionsToRole(BaseModel):
 # ---------------------------------------------------------------------------
 class RoleFilterOrderFild(enum.Enum):
     name = "name"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------

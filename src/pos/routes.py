@@ -566,25 +566,25 @@ async def purchase(
             merchant_user.cash.balance < merchant_fee
             and input_data.amount < merchant_fee
         ):
-            raise MerchantLackOfMoneyException(time=str(jdatetime.datetime.now()))
+            raise MerchantLackOfMoneyException()
     elif input_data.type == PosPurchaseType.CREDIT:
         if merchant_user.cash.balance < merchant_fee:
-            raise MerchantLackOfMoneyException(time=str(jdatetime.datetime.now()))
+            raise MerchantLackOfMoneyException()
     else:
-        raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+        raise LackOfMoneyException()
 
     if requester_user.cash.balance < user_fee:
-        raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+        raise LackOfMoneyException()
     if (
         input_data.type == PosPurchaseType.DIRECT
         and requester_user.cash.balance < input_data.amount + user_fee
     ):
-        raise LackOfMoneyException(time=str(jdatetime.datetime.now()))
+        raise LackOfMoneyException()
     if (
         input_data.type == PosPurchaseType.CREDIT
         and requester_user.credit.balance < input_data.amount
     ):
-        raise LackOfCreditException(time=str(jdatetime.datetime.now()))
+        raise LackOfCreditException()
 
     # ! Transactions
     # ? lock user wallet

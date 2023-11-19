@@ -174,7 +174,7 @@ async def agent_list(
         else True
     )
     filter_data.national_code = (
-        (Agent.user.mapper.class_.national_code.contains(filter_data.national_code))
+        (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code is not None
         else True
     )

@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, and_, or_
 
 from src import deps
 from src.cash.crud import cash as cash_crud
@@ -115,8 +115,39 @@ async def get_list_cash(
     obj_list
         List of ability
     """
+    # * Prepare filter fields
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
+    filter_data.phone_number = (
+        (User.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number is not None
+        else True
+    )
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+
     # * Add filter fields
-    query = select(Cash).filter().order_by(Cash.created_at.desc())
+    query = (
+        select(Cash)
+        .filter(
+            and_(
+                filter_data.phone_number,
+                filter_data.national_code,
+                filter_data.name,
+            ),
+        )
+        .join(Cash.user)
+        .order_by(Cash.created_at.desc())
+    )
 
     # * Prepare order fields
     if filter_data.order_by:
@@ -132,6 +163,10 @@ async def get_list_cash(
                 query = query.order_by(Cash.transferred.desc())
             elif field == CashFilterOrderFild.debt:
                 query = query.order_by(Cash.debt.desc())
+            elif field == CashFilterOrderFild.created_at:
+                query = query.order_by(Cash.created_at.desc())
+            elif field == CashFilterOrderFild.updated_at:
+                query = query.order_by(Cash.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == CashFilterOrderFild.received:
@@ -144,6 +179,10 @@ async def get_list_cash(
                 query = query.order_by(Cash.transferred.asc())
             elif field == CashFilterOrderFild.debt:
                 query = query.order_by(Cash.debt.asc())
+            elif field == CashFilterOrderFild.created_at:
+                query = query.order_by(Cash.created_at.asc())
+            elif field == CashFilterOrderFild.updated_at:
+                query = query.order_by(Cash.updated_at.asc())
     # * Find All ability with filters
-    obj_list = await cash_crud.get_multi(db=db, skip=skip, limit=limit)
+    obj_list = await cash_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

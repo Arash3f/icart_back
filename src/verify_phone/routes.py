@@ -77,7 +77,7 @@ async def verify_user(
 
 # ---------------------------------------------------------------------------
 @router.post("/list", response_model=list[VerifyPhoneRead])
-async def read_verify_phone(
+async def verify_phone_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
@@ -111,11 +111,11 @@ async def read_verify_phone(
     # * Prepare filter fields
     filter_data.phone_number = (
         (VerifyPhone.phone_number.contains(filter_data.phone_number))
-        if filter_data.phone_number
+        if filter_data.phone_number is not None
         else True
     )
     filter_data.type = (
-        (VerifyPhone.type == filter_data.type) if filter_data.type else True
+        (VerifyPhone.type == filter_data.type) if filter_data.type is not None else True
     )
     # * Add filter fields
     query = (
@@ -137,12 +137,20 @@ async def read_verify_phone(
                 query = query.order_by(VerifyPhone.type.desc())
             elif field == VerifyPhoneFilterOrderFild.phone_number:
                 query = query.order_by(VerifyPhone.phone_number.desc())
+            elif field == VerifyPhoneFilterOrderFild.created_at:
+                query = query.order_by(VerifyPhone.created_at.desc())
+            elif field == VerifyPhoneFilterOrderFild.updated_at:
+                query = query.order_by(VerifyPhone.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == VerifyPhoneFilterOrderFild.type:
                 query = query.order_by(VerifyPhone.type.asc())
             elif field == VerifyPhoneFilterOrderFild.phone_number:
                 query = query.order_by(VerifyPhone.phone_number.asc())
+            elif field == VerifyPhoneFilterOrderFild.created_at:
+                query = query.order_by(VerifyPhone.created_at.asc())
+            elif field == VerifyPhoneFilterOrderFild.updated_at:
+                query = query.order_by(VerifyPhone.updated_at.asc())
 
     obj_list = await verify_phone_crud.get_multi(
         db=db,

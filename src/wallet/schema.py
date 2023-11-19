@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -55,3 +56,26 @@ class WalletAdditionalInfo(BaseModel):
     received_credit: int | None = 0
     paid_credit: int | None = 0
     used_credit: int | None = 0
+
+
+# ---------------------------------------------------------------------------
+class WalletFilterOrderFild(Enum):
+    number = "number"
+    is_lock = "is_lock"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+# ---------------------------------------------------------------------------
+class WalletFilterOrderBy(BaseModel):
+    desc: list[WalletFilterOrderFild] = []
+    asc: list[WalletFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class WalletFilter(BaseModel):
+    name: str | bool | None = None
+    national_code: str | bool | None = None
+    number: str | bool | None = None
+    is_lock: bool | None = None
+    order_by: WalletFilterOrderBy | None = None

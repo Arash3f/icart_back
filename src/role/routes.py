@@ -261,10 +261,18 @@ async def get_roles_list(
             # * Add filter fields
             if field == RoleFilterOrderFild.name:
                 query = query.order_by(Role.name.desc())
+            elif field == RoleFilterOrderFild.created_at:
+                query = query.order_by(Role.created_at.desc())
+            elif field == RoleFilterOrderFild.updated_at:
+                query = query.order_by(Role.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == RoleFilterOrderFild.name:
                 query = query.order_by(Role.name.asc())
+            elif field == RoleFilterOrderFild.created_at:
+                query = query.order_by(Role.created_at.asc())
+            elif field == RoleFilterOrderFild.updated_at:
+                query = query.order_by(Role.updated_at.asc())
     # * Find All agent with filters
     role_list = await role_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return role_list
