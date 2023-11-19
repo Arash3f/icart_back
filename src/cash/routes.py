@@ -116,7 +116,8 @@ async def get_list_cash(
         List of ability
     """
     # * Add filter fields
-    query = select(Cash).filter()
+    query = select(Cash).filter().order_by(Cash.created_at.desc())
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:

@@ -284,7 +284,7 @@ async def get_stores(
     )
     filter_data.field_of_work = (
         (Merchant.field_of_work == filter_data.field_of_work)
-        if filter_data.selling_type
+        if filter_data.field_of_work
         else True
     )
 

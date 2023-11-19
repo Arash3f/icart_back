@@ -19,6 +19,7 @@ from src.installments.schema import InstallmentsCreate
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
+from src.transaction.exception import TransactionLimitException
 from src.wallet.crud import wallet as wallet_crud
 from src.merchant.exception import MerchantNotFoundException
 from src.permission import permission_codes as permission
@@ -34,7 +35,7 @@ from src.log.crud import log as log_crud
 from src.fee.crud import fee as fee_crud
 from src.auth.crud import auth as auth_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
-from src.credit.crud import credit as credit_crud
+from src.credit.crud import credit as credit_crud, CreditField
 from src.transaction.crud import transaction_row as transaction_row_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.pos.exception import PosNotFoundException
@@ -504,6 +505,15 @@ async def purchase(
     if card.wallet.is_lock:
         raise LockWalletException()
 
+    # ! Transaction ceiling
+    user_transactions_amount = await transaction_crud.calculate_user_amount_transaction(
+        db=db,
+        user=card.wallet.user,
+        min=44640,
+    )
+    if user_transactions_amount >= 400000000:
+        raise TransactionLimitException(time=str(jdatetime.datetime.now()))
+
     # * Find All users
     agent = pos.merchant.agent
     merchant = pos.merchant
@@ -522,7 +532,9 @@ async def purchase(
     merchant_profit = (input_data.amount * (100 - merchant.profit_rate)) / 100
     contract_amount = input_data.amount - merchant_profit
     new_amount = contract_amount - cash_back
-    agent_profit = (new_amount * 40) / 100
+
+    # ! Agent
+    agent_profit = (new_amount * agent.profit_rate) / 100
     icart_profit = new_amount - agent_profit
 
     # * Calculate Fee
@@ -648,11 +660,20 @@ async def purchase(
 
     # ! Profit and cost
     if input_data.type == PosPurchaseType.DIRECT:
+        cost = input_data.amount - requester_user.cash.cash_back
+        cost_cash_back = input_data.amount - cost
         await cash_crud.update_cash_by_user(
             db=db,
             user=requester_user,
-            amount=input_data.amount,
+            amount=cost,
             cash_field=CashField.BALANCE,
+            type_operation=TypeOperation.DECREASE,
+        )
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=requester_user,
+            amount=cost_cash_back,
+            cash_field=CashField.CASH_BACK,
             type_operation=TypeOperation.DECREASE,
         )
         await cash_crud.update_cash_by_user(
@@ -675,6 +696,28 @@ async def purchase(
         )
         await transaction_row_crud.create(db=db, obj_in=sub_main_tr)
 
+        if agent.parent:
+            agent_parent_profit = (agent_profit * agent.parent.profit_rate) / 100
+            await cash_crud.update_cash_by_user(
+                db=db,
+                user=agent.parent.user,
+                amount=agent_parent_profit,
+                cash_field=CashField.BALANCE,
+                type_operation=TypeOperation.INCREASE,
+            )
+            agent_tr = TransactionRowCreate(
+                transaction_id=main_tr.id,
+                status=TransactionStatusEnum.ACCEPTED,
+                value=float(agent_parent_profit),
+                text="سود از فروشنده {}".format(merchant.contract.name),
+                value_type=TransactionValueType.CASH,
+                receiver_id=agent.parent.user.wallet.id,
+                transferor_id=merchant.user.wallet.id,
+                code=await transaction_crud.generate_code(db=db),
+                reason=TransactionReasonEnum.PROFIT,
+            )
+            await transaction_row_crud.create(db=db, obj_in=agent_tr)
+            agent_profit -= agent_parent_profit
         await cash_crud.update_cash_by_user(
             db=db,
             user=agent.user,
@@ -747,11 +790,20 @@ async def purchase(
         )
         await transaction_row_crud.create(db=db, obj_in=cash_back_tr)
     else:
+        cost = input_data.amount - requester_user.credit.credit_back
+        cost_credit_back = input_data.amount - cost
         await credit_crud.update_credit_by_user(
             db=db,
             user=requester_user,
-            amount=input_data.amount,
-            cash_field=CashField.BALANCE,
+            amount=cost,
+            cash_field=CreditField.BALANCE,
+            type_operation=TypeOperation.DECREASE,
+        )
+        await credit_crud.update_credit_by_user(
+            db=db,
+            user=requester_user,
+            amount=cost_credit_back,
+            cash_field=CreditField.CREDIT_BACK,
             type_operation=TypeOperation.DECREASE,
         )
         await credit_crud.update_credit_by_user(
@@ -774,6 +826,28 @@ async def purchase(
         )
         await transaction_row_crud.create(db=db, obj_in=sub_main_tr)
 
+        if agent.parent:
+            agent_parent_profit = (agent_profit * agent.parent.profit_rate) / 100
+            await credit_crud.update_credit_by_user(
+                db=db,
+                user=agent.parent.user,
+                amount=agent_parent_profit,
+                cash_field=CashField.BALANCE,
+                type_operation=TypeOperation.INCREASE,
+            )
+            agent_parent_tr = TransactionRowCreate(
+                transaction_id=main_tr.id,
+                status=TransactionStatusEnum.ACCEPTED,
+                value=float(agent_parent_profit),
+                text="سود از فروشنده {}".format(merchant.contract.name),
+                value_type=TransactionValueType.CREDIT,
+                receiver_id=agent.parent.user.wallet.id,
+                transferor_id=merchant.user.wallet.id,
+                code=await transaction_crud.generate_code(db=db),
+                reason=TransactionReasonEnum.PROFIT,
+            )
+            await transaction_row_crud.create(db=db, obj_in=agent_parent_tr)
+            agent_profit -= agent_parent_profit
         await credit_crud.update_credit_by_user(
             db=db,
             user=agent.user,
@@ -825,26 +899,27 @@ async def purchase(
             reason=TransactionReasonEnum.CONTRACT,
         )
         await transaction_row_crud.create(db=db, obj_in=contract_tr)
-        # # ! Cash Back
-        # await credit_crud.update_credit_by_user(
-        #     db=db,
-        #     user=requester_user,
-        #     amount=cash_back,
-        #     cash_field=CashField.BALANCE,
-        #     type_operation=TypeOperation.INCREASE
-        # )
-        # cash_back_tr = TransactionRowCreate(
-        #     transaction_id=main_tr.id,
-        #     status=TransactionStatusEnum.ACCEPTED,
-        #     value=float(cash_back),
-        #     text="کش بک شما بابت خرید از فروشنده {}".format(merchant.contract.name),
-        #     value_type=TransactionValueType.CREDIT,
-        #     receiver_id=card.wallet.id,
-        #     transferor_id=icart_user.wallet.id,
-        #     code=await transaction_crud.generate_code(db=db),
-        #     reason=TransactionReasonEnum.CASH_BACK,
-        # )
-        # await transaction_row_crud.create(db=db, obj_in=cash_back_tr)
+
+        # ! Credit Back
+        await credit_crud.update_credit_by_user(
+            db=db,
+            user=requester_user,
+            amount=cash_back,
+            cash_field=CreditField.CREDIT_BACK,
+            type_operation=TypeOperation.INCREASE,
+        )
+        credit_back_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(cash_back),
+            text="کش بک شما بابت خرید از فروشنده {}".format(merchant.contract.name),
+            value_type=TransactionValueType.CREDIT,
+            receiver_id=card.wallet.id,
+            transferor_id=icart_user.wallet.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.CASH_BACK,
+        )
+        await transaction_row_crud.create(db=db, obj_in=credit_back_tr)
 
     response = PurchaseOutput(
         amount=input_data.amount,

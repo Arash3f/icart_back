@@ -22,6 +22,7 @@ class CreditField(enum.Enum):
     CONSUMED = "CONSUMED"
     TRANSFERRED = "TRANSFERRED"
     DEPT = "DEPT"
+    CREDIT_BACK = "CREDIT_BACK"
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +165,12 @@ class CreditCRUD(BaseCRUD[Credit, None, None]):
                     obj.consumed -= amount
                 else:
                     obj.consumed += amount
+
+            case CreditField.CREDIT_BACK:
+                if type_operation == TypeOperation.DECREASE:
+                    obj.credit_back -= amount
+                else:
+                    obj.credit_back += amount
 
         db.add(obj)
         await db.commit()

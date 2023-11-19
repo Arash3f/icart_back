@@ -116,7 +116,7 @@ async def get_list_credit(
         List of ability
     """
     # * Add filter fields
-    query = select(Credit).filter()
+    query = select(Credit).filter().order_by(Credit.created_at.desc())
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:

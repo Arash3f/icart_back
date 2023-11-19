@@ -10,7 +10,7 @@ from src.transaction.models import (
     TransactionReasonEnum,
     TransactionStatusEnum,
 )
-from src.wallet.schema import WalletRead, WalletReadV2
+from src.wallet.schema import WalletReadV2
 
 
 class TransactionChartType(enum.Enum):

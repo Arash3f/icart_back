@@ -19,11 +19,6 @@ class CardBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-class BuyCard(BaseModel):
-    type: CardEnum
-
-
-# ---------------------------------------------------------------------------
 class CardUpdatePasswordData(BaseModel):
     forget_password: constr(min_length=4, max_length=4)
     re_password: constr(min_length=4, max_length=4)

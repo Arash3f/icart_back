@@ -7,14 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.auth.exception import AccessDeniedException
-from src.card.crud import card as card_crud
+from src.card.crud import card as card_crud, CardValueType
 from src.log.models import LogType
-from src.transaction.schema import TransactionCreate
+from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.user.crud import user as user_crud
 from src.log.crud import log as log_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.important_data.crud import important_data as important_data_crud
 from src.transaction.crud import transaction as transaction_crud
+from src.transaction.crud import transaction_row as transaction_row_crud
 from src.card.models import Card, CardEnum
 from src.card.schema import (
     CardDynamicPasswordInput,
@@ -22,7 +23,6 @@ from src.card.schema import (
     CardUpdatePassword,
     CardFilter,
     CardFilterOrderFild,
-    BuyCard,
     BuyCardResponse,
     CardForgetPasswordInput,
 )
@@ -58,23 +58,29 @@ router = APIRouter(prefix="/card", tags=["card"])
 
 
 # ---------------------------------------------------------------------------
-@router.post("/buy", response_model=BuyCardResponse)
+@router.post("/buy/blue", response_model=BuyCardResponse)
 async def buy_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
-    data_in: BuyCard,
 ) -> BuyCardResponse:
     # todo: set validation for type card
     # * Verify card existence with this type
     await card_crud.verify_existence_with_type(
         db=db,
         user=current_user,
-        card_type=data_in.type,
+        card_type=CardEnum.BLUE,
+        is_active=True,
     )
-    icart_user = await user_crud.find_by_username(
+
+    admin_user = await user_crud.verify_existence_by_username(
         db=db,
         username=settings.ADMIN_USERNAME,
+    )
+    receiver_card = await card_crud.get_active_card(
+        db=db,
+        card_value_type=CardValueType.CASH,
+        wallet=admin_user.wallet,
     )
 
     # * Check user cash credit
@@ -83,32 +89,11 @@ async def buy_card(
         raise LackOfMoneyException()
 
     # * Generate card number
-    if data_in.type == CardEnum.CREDIT:
-        card_number = await generate_card_number(
-            db=db,
-            card_type=CardType.Credit,
-            credit_type=CreditType.Rial,
-            company_type=CompanyType.Icart,
-        )
-    else:
-        card_number = await generate_card_number(
-            db=db,
-            card_type=CardType.Swipe,
-            credit_type=CreditType.Rial,
-            company_type=CompanyType.Icart,
-        )
-
-    # ? Generate transaction
-    code = await transaction_crud.generate_code(db=db)
-    transaction = TransactionCreate(
-        value=buy_cost,
-        text="خرید کارت {}".format(card_number),
-        value_type=TransactionValueType.CASH,
-        receiver_id=icart_user.wallet.id,
-        transferor_id=current_user.wallet.id,
-        code=code,
-        status=TransactionStatusEnum.ACCEPTED,
-        reason=TransactionReasonEnum.PURCHASE,
+    card_number = await generate_card_number(
+        db=db,
+        card_type=CardType.Swipe,
+        credit_type=CreditType.Rial,
+        company_type=CompanyType.Icart,
     )
 
     # ? Generate Card
@@ -119,13 +104,40 @@ async def buy_card(
     card = Card(
         number=card_number,
         cvv2=randint(100, 999),
-        type=data_in.type,
+        type=CardEnum.BLUE,
         password=hash_password(str(card_password)),
         wallet_id=current_user.wallet.id,
     )
     card.expiration_at = expiration_at
-
     db.add(card)
+    await db.commit()
+    await db.refresh(card)
+
+    # ? Generate transaction
+    transaction = TransactionCreate(
+        value=buy_cost,
+        text="خرید کارت {}".format(card_number),
+        value_type=TransactionValueType.CASH,
+        receiver_id=receiver_card.id,
+        transferor_id=card.id,
+        code=await transaction_crud.generate_code(db=db),
+        status=TransactionStatusEnum.ACCEPTED,
+        reason=TransactionReasonEnum.PURCHASE,
+    )
+    main_tr = await transaction_crud.create(db=db, obj_in=transaction)
+    transaction_row = TransactionRowCreate(
+        transaction_id=main_tr.id,
+        value=buy_cost,
+        text="خرید کارت {}".format(card_number),
+        value_type=TransactionValueType.CASH,
+        receiver_id=receiver_card.id,
+        transferor_id=card.id,
+        code=await transaction_crud.generate_code(db=db),
+        status=TransactionStatusEnum.ACCEPTED,
+        reason=TransactionReasonEnum.PURCHASE,
+    )
+    await transaction_row_crud.create(db=db, obj_in=transaction_row)
+
     await cash_crud.update_cash_by_user(
         db=db,
         user=current_user,
@@ -135,12 +147,11 @@ async def buy_card(
     )
     await cash_crud.update_cash_by_user(
         db=db,
-        user=icart_user,
+        user=admin_user,
         amount=buy_cost,
         cash_field=CashField.BALANCE,
         type_operation=TypeOperation.INCREASE,
     )
-    await transaction_crud.create(db=db, obj_in=transaction)
 
     # ? Generate Log
     await log_crud.auto_generate(
@@ -266,13 +277,18 @@ async def read_card_list(
         filter_data.user_id = True
 
     # * Add filter fields
-    query = select(Card).filter(
-        and_(
-            filter_data.number,
-            filter_data.type,
-            filter_data.user_id,
-        ),
+    query = (
+        select(Card)
+        .filter(
+            and_(
+                filter_data.number,
+                filter_data.type,
+                filter_data.user_id,
+            ),
+        )
+        .order_by(Card.created_at.desc())
     )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:
@@ -463,7 +479,8 @@ async def get_manage_chart(
         .select_from(TransactionRow)
         .filter(
             and_(
-                TransactionRow.transferor_id == current_user.wallet.id,
+                TransactionRow.transferor.mapper.class_.wallet_id
+                == current_user.wallet.id,
                 TransactionRow.created_at >= start,
             ),
         )
@@ -493,7 +510,8 @@ async def get_manage_chart(
             .select_from(TransactionRow)
             .filter(
                 and_(
-                    TransactionRow.transferor_id == current_user.wallet.id,
+                    TransactionRow.transferor.mapper.class_.wallet_id
+                    == current_user.wallet.id,
                     TransactionRow.created_at >= duration.start_date,
                     TransactionRow.created_at < duration.end_date,
                 ),

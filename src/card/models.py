@@ -8,6 +8,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Boolean,
 )
 from sqlalchemy.orm import relationship
 
@@ -34,6 +35,7 @@ class Card(Base, BaseMixin):
     dynamic_password_exp = Column(DateTime(timezone=True), nullable=True)
     forget_password = Column(String, nullable=True)
     forget_password_exp = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, default=True)
     type = Column(Enum(CardEnum), nullable=False)
 
     # ! Relations

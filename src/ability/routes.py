@@ -234,7 +234,7 @@ async def find_ability(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[AbilityRead])
-async def read_ability_list(
+async def ability_list(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
@@ -271,11 +271,16 @@ async def read_ability_list(
         Ability.name.contains(filter_data.name) if filter_data.name else True
     )
     # * Add filter fields
-    query = select(Ability).filter(
-        and_(
-            filter_data.name,
-        ),
+    query = (
+        select(Ability)
+        .filter(
+            and_(
+                filter_data.name,
+            ),
+        )
+        .order_by(Ability.created_at.desc())
     )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:

@@ -105,7 +105,7 @@ async def find_contract(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[ContractRead])
-async def get_contract(
+async def contract_list(
     *,
     db=Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
@@ -142,10 +142,14 @@ async def get_contract(
     )
 
     # * Add filter fields
-    query = select(Contract).filter(
-        and_(
-            filter_data.number,
-        ),
+    query = (
+        select(Contract)
+        .filter(
+            and_(
+                filter_data.number,
+            ),
+        )
+        .order_by(Contract.created_at.desc())
     )
     # * Prepare order fields
     if filter_data.order_by:
