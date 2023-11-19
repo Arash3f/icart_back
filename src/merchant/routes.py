@@ -204,7 +204,7 @@ async def get_merchant_list(
         select(Merchant)
         .filter(
             and_(
-                filter_data.is_active,
+                Merchant.is_active,
                 filter_data.location_id,
                 filter_data.name,
                 filter_data.national_code,
@@ -302,7 +302,7 @@ async def get_stores(
         select(Merchant)
         .filter(
             and_(
-                filter_data.is_active == True,
+                Merchant.is_active == True,
                 filter_data.location_id,
                 filter_data.name,
                 filter_data.national_code,
