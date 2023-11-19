@@ -33,6 +33,7 @@ class VerifyPhoneNumberRequestIn(BaseModel):
 class VerifyPhoneFilterOrderFild(Enum):
     type = "type"
     phone_number = "phone_number"
+    created_at = "created_at"
 
 
 # ---------------------------------------------------------------------------

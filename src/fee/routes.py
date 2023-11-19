@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.exception import InCorrectDataException
 from src.fee.crud import fee as fee_crud
+from src.fee.models import Fee
 from src.log.crud import log as log_crud
 from src.fee.schema import FeeBase, FeeCreate, FeeRead, FeeUpdate
 from src.log.models import LogType
@@ -56,8 +58,10 @@ async def delete_fee(
         db=db,
         user_id=current_user.id,
         log_type=LogType.DELETE_FEE,
-        detail="کارمزد سقف {} با موفقیت توسط کاربر {} حذف شد".format(
+        detail="کارمزد سقف {} برای نوع {} و کاربران {}با موفقیت توسط کاربر {} حذف شد".format(
             fee.limit,
+            fee.type,
+            fee.user_type,
             current_user.username,
         ),
     )
@@ -242,7 +246,8 @@ async def read_fee_list(
     fee_list
         List of fee
     """
-    fee_list = await fee_crud.get_multi(db=db, skip=skip, limit=limit)
+    query = select(Fee).order_by(Fee.created_at.desc())
+    fee_list = await fee_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return fee_list
 
 

@@ -88,3 +88,10 @@ class CardFilter(BaseModel):
 # ---------------------------------------------------------------------------
 class BuyCardResponse(BaseModel):
     card_number: str
+
+
+class CardToCardInput(BaseModel):
+    receiver_card_number: str
+    transferor_card_number: str
+    amount: int
+    dynamic_password: constr(min_length=6, max_length=6)

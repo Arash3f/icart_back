@@ -89,14 +89,14 @@ async def get_log(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            Log.user.mapper.class_.first_name.contains(filter_data.name),
-            Log.user.mapper.class_.last_name.contains(filter_data.name),
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
     )
     filter_data.national_code = (
-        (Log.user.mapper.class_.national_code.contains(filter_data.national_code))
+        (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code is not None
         else True
     )
@@ -106,13 +106,18 @@ async def get_log(
     filter_data.type = (Log.type == filter_data.type) if filter_data.type else True
 
     # * Add filter fields
-    query = select(Log).filter(
-        and_(
-            filter_data.name,
-            filter_data.national_code,
-            filter_data.user_id,
-            filter_data.type,
-        ),
+    query = (
+        select(Log)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.user_id,
+                filter_data.type,
+            ),
+        )
+        .join(Log.user)
+        .order_by(Log.created_at.desc())
     )
     # * Find All agent with filters
     obj_list = await log_crud.get_multi(db=db, skip=skip, limit=limit, query=query)

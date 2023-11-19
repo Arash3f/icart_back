@@ -19,6 +19,7 @@ class TransactionReasonEnum(enum.Enum):
     REGISTER = "REGISTER"
     CONTRACT = "CONTRACT"
     CASH_BACK = "CASH_BACK"
+    CARD_TO_CARD = "CARD_TO_CARD"
 
 
 class TransactionStatusEnum(enum.Enum):

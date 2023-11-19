@@ -85,7 +85,10 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         CardNotFoundException
         """
         response = await db.execute(
-            select(self.model).where(self.model.number == number),
+            select(self.model).where(
+                self.model.number == number,
+                self.model.is_active == True,
+            ),
         )
 
         card_obj = response.scalar_one_or_none()

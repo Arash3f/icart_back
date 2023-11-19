@@ -118,12 +118,17 @@ async def read_verify_phone(
         (VerifyPhone.type == filter_data.type) if filter_data.type else True
     )
     # * Add filter fields
-    query = select(VerifyPhone).filter(
-        and_(
-            filter_data.phone_number,
-            filter_data.type,
-        ),
+    query = (
+        select(VerifyPhone)
+        .filter(
+            and_(
+                filter_data.phone_number,
+                filter_data.type,
+            ),
+        )
+        .order_by(VerifyPhone.created_at.desc())
     )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:

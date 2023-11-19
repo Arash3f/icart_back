@@ -3,6 +3,8 @@ from random import randint
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.schema import UserInDB
+from src.card.models import Card
+from src.cash.models import Cash
 from src.core.config import settings
 from src.core.security import hash_password
 from src.credit.models import Credit
@@ -76,6 +78,11 @@ async def init_db(db: AsyncSession) -> None:
             user=created_user,
         )
 
+        # ? Create Cash
+        cash = Cash(
+            user=created_user,
+        )
+
         # ? Create Wallet
         wallet_number = randint(100000, 999999)
         wallet = Wallet(
@@ -85,6 +92,7 @@ async def init_db(db: AsyncSession) -> None:
         credit.user = created_user
 
         db.add(credit)
+        db.add(cash)
         db.add(wallet)
         await db.commit()
 

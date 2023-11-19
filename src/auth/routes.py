@@ -378,6 +378,7 @@ async def forget_password(
         username=request_data.phone_number,
         national_code=request_data.national_code,
     )
+    print("123")
 
     verify_phone_crud.verify_with_verify_code(
         db=db,
