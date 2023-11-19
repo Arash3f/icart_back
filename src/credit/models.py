@@ -16,6 +16,7 @@ class Credit(Base, BaseMixin):
     debt = Column(BigInteger, default=0)
     active = Column(Boolean, default=False)
     credit_back = Column(BigInteger, default=0)
+    used = Column(BigInteger, default=0)
 
     # ! Maybe it will be used in the future
     consumed = Column(BigInteger, default=0)

@@ -96,7 +96,10 @@ class TransactionCRUD(BaseCRUD[Transaction, TransactionCreate, None]):
         )
         income = response.scalar_one_or_none()
 
-        return income
+        if income is None:
+            income = 0
+
+        return int(income)
 
     async def find_by_code(
         self,
