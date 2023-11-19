@@ -3,11 +3,15 @@ from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.schema import AccessToken
+from src.cash.models import Cash
 from src.core.config import settings
 from src.core.security import generate_access_token, verify_password
+from src.credit.models import Credit
 from src.database.base_crud import BaseCRUD
 from src.user.crud import user as user_crud
 from src.user.models import User
+from src.wallet.models import Wallet
+from src.wallet.crud import wallet as wallet_crud
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +105,49 @@ class AuthCRUD(BaseCRUD[User, None, None]):
         )
         access_token: AccessToken = AccessToken(access_token=token, token_type="bearer")
         return access_token
+
+    async def create_new_user(
+        self,
+        db: AsyncSession,
+        user: User,
+    ) -> AccessToken:
+        """
+        ! Create new user
+
+        Parameters
+        ----------
+        user
+            New User Data
+
+        Returns
+        -------
+        user
+            Created User
+        """
+        # ? Create Credit
+        credit = Credit(
+            user=user,
+        )
+
+        # ? Create Cash
+        cash = Cash(
+            user=user,
+        )
+
+        # ? Create Wallet
+        wallet_number = await wallet_crud.generate_wallet_number(db=db)
+        wallet = Wallet(
+            user=user,
+            number=wallet_number,
+        )
+
+        db.add(user)
+        db.add(credit)
+        db.add(cash)
+        db.add(wallet)
+        await db.commit()
+        await db.refresh(user)
+        return user
 
 
 # ---------------------------------------------------------------------------

@@ -22,10 +22,8 @@ from src.auth.schema import (
     VerifyUsernameAndNationalCode,
     UpdateUserValidationRequest,
 )
-from src.cash.models import Cash
 from src.core.config import settings
 from src.core.security import hash_password
-from src.credit.models import Credit
 from src.role.crud import role as role_crud
 from src.schema import ResultResponse, IDRequest
 from src.user.crud import user as user_crud
@@ -34,7 +32,6 @@ from src.user.schema import UserRead
 from src.user_message.models import UserMessage
 from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
-from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -65,10 +62,7 @@ async def login(
     Raises
     ------
     IncorrectUsernameOrPasswordException
-        Username Or Password Is Incorrect
     InactiveUserException
-        User Is Inactive
-
     """
     user = await auth_crud.authenticate(
         db=db,
@@ -204,14 +198,16 @@ async def request_one_time_password(
     user.expiration_password_at = datetime.now(timezone("Asia/Tehran")) + timedelta(
         minutes=settings.DYNAMIC_PASSWORD_EXPIRE_MINUTES,
     )
-    db.add(user)
-    await db.commit()
-    # ? Send SMS to user's phone
+
+    # todo: SMS Send SMS to user's phone
     send_one_time_password_sms(
         phone_number=user.phone_number,
         one_time_password=str(one_time_password),
         exp_time=user.expiration_password_at,
     )
+
+    db.add(user)
+    await db.commit()
     return ResultResponse(result="Code sent successfully")
 
 
@@ -241,7 +237,7 @@ async def verify_register_data(
     ------
     UsernameIsDuplicatedException
     """
-    # todo: verify phone number and national code with web server
+    # todo: Verify verify phone number and national code with web server
 
     await user_crud.verify_not_existence_by_username_and_national_code(
         db=db,
@@ -290,7 +286,7 @@ async def register(
     current_time = datetime.now(timezone("Asia/Tehran"))
     role = await role_crud.verify_existence_by_name(db=db, name="کاربر ساده")
 
-    # todo: verify phone number and national code with web server
+    # todo: Verify phone number and national code with web server
 
     # ? Verify Phone Number
     verify_code_number = await verify_phone_crud.find_by_phone_number(
@@ -322,46 +318,25 @@ async def register(
         national_code=register_data.national_code,
         phone_number=phone_number,
     )
-
-    # ? Create Credit
-    credit = Credit(
-        user=created_user,
-    )
-
-    # ? Create Cash
-    cash = Cash(
-        user=created_user,
-    )
-
-    # ? Create Wallet
-    wallet_number = randint(100000, 999999)
-    wallet = Wallet(
-        user=created_user,
-        number=wallet_number,
-    )
+    user = await auth_crud.create_new_user(db=db, user=created_user)
 
     # ? Create User Message
     user_message = UserMessage(
         title="خوش آمدید",
         text="{} عزیز ، عضویت شما را به خانواده آیکارت تبریک میگویم".format(
-            created_user.first_name,
+            user.first_name,
         ),
-        user_id=created_user.id,
+        user_id=user.id,
     )
-
-    db.add(created_user)
-    db.add(credit)
-    db.add(cash)
-    db.add(wallet)
-    db.add(user_message)
-    await db.commit()
-    await db.refresh(created_user)
 
     # * Send Register SMS
     send_welcome_sms(
         phone_number=phone_number,
         full_name="{} {}".format(created_user.first_name, created_user.last_name),
     )
+
+    db.add(user_message)
+    await db.commit()
 
     return ResultResponse(result="User Created Successfully")
 
@@ -378,7 +353,6 @@ async def forget_password(
         username=request_data.phone_number,
         national_code=request_data.national_code,
     )
-    print("123")
 
     verify_phone_crud.verify_with_verify_code(
         db=db,

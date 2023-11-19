@@ -64,7 +64,7 @@ async def verify_user(
 
     verify.verify_code = randint(100000, 999999)
     verify.expiration_code_at = expiration_code_at
-    # ! Send SMS to phone number
+    # todo: SMS Send SMS to phone number
     send_verify_phone_sms(
         phone_number=phone_number,
         code=verify.verify_code,

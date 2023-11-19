@@ -394,9 +394,9 @@ async def config(
         password=config_data.password,
     )
     if not user:
-        raise IncorrectUsernameOrPasswordException(time=str(jdatetime.datetime.now()))
+        raise IncorrectUsernameOrPasswordException()
     elif not user.is_active:
-        raise InactiveUserException(time=str(jdatetime.datetime.now()))
+        raise InactiveUserException()
 
     return ConfigurationPosOutput(
         merchant_name=pos.merchant.contract.name,
