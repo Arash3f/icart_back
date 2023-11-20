@@ -199,7 +199,7 @@ async def get_merchant_list(
     )
     filter_data.agent_id = (
         (Merchant.agent_id == filter_data.agent_id)
-        if filter_data.user_id is not None
+        if filter_data.agent_id is not None
         else True
     )
 
@@ -308,7 +308,7 @@ async def get_stores(
     )
     filter_data.agent_id = (
         (Merchant.agent_id == filter_data.agent_id)
-        if filter_data.user_id is not None
+        if filter_data.agent_id is not None
         else True
     )
 
