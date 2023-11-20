@@ -87,6 +87,7 @@ class MerchantUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 class MerchantFilterOrderFild(Enum):
     created_at = "created_at"
+    updated_at = "updated_at"
     best_sellers = "best_sellers"
 
 
@@ -102,6 +103,7 @@ class MerchantFilter(BaseModel):
     national_code: None | str = None
     location_id: None | UUID = None
     user_id: None | UUID = None
+    agent_id: None | UUID = None
     selling_type: None | SellingType = None
     is_active: None | bool = None
     field_of_work: None | FieldOfWorkType = None

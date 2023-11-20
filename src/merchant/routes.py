@@ -6,6 +6,7 @@ from sqlalchemy import select, and_, or_, orm, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
+from src.agent.models import Agent
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.log.crud import log as log_crud
@@ -173,7 +174,7 @@ async def get_merchant_list(
     )
     filter_data.location_id = (
         (Merchant.location_id == filter_data.location_id)
-        if filter_data.location_id
+        if filter_data.location_id is not None
         else True
     )
     filter_data.selling_type = (
@@ -183,21 +184,24 @@ async def get_merchant_list(
     )
     filter_data.field_of_work = (
         (Merchant.field_of_work == filter_data.field_of_work)
-        if filter_data.selling_type
+        if filter_data.field_of_work is not None
         else True
     )
     filter_data.is_active = (
-        (Merchant.is_active == filter_data.is_active) if filter_data.is_active else True
+        (Merchant.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
     )
-
-    if filter_data.user_id:
-        agent = await agent_crud.find_by_user_id(
-            db=db,
-            user_id=filter_data.user_id,
-        )
-        filter_data.user_id = Merchant.agent_id == agent.id
-    else:
-        filter_data.user_id = True
+    filter_data.user_id = (
+        (Merchant.user_id == filter_data.national_code)
+        if filter_data.user_id is not None
+        else True
+    )
+    filter_data.agent_id = (
+        (Merchant.agent_id == filter_data.agent_id)
+        if filter_data.agent_id is not None
+        else True
+    )
 
     # * Add filter fields
     query = (
@@ -210,11 +214,12 @@ async def get_merchant_list(
                 filter_data.national_code,
                 filter_data.selling_type,
                 filter_data.user_id,
+                filter_data.agent_id,
                 filter_data.field_of_work,
             ),
         )
         .join(Merchant.user)
-    )
+    ).order_by(Merchant.created_at)
 
     # * Prepare order fields
     if filter_data.order_by:
@@ -222,10 +227,14 @@ async def get_merchant_list(
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.desc())
+            elif field == MerchantFilterOrderFild.updated_at:
+                query = query.order_by(Merchant.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.asc())
+            elif field == MerchantFilterOrderFild.updated_at:
+                query = query.order_by(Merchant.updated_at.asc())
     obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list
 
@@ -274,7 +283,7 @@ async def get_stores(
     )
     filter_data.location_id = (
         (Merchant.location_id == filter_data.location_id)
-        if filter_data.location_id
+        if filter_data.location_id is not None
         else True
     )
     filter_data.selling_type = (
@@ -284,35 +293,42 @@ async def get_stores(
     )
     filter_data.field_of_work = (
         (Merchant.field_of_work == filter_data.field_of_work)
-        if filter_data.selling_type
+        if filter_data.field_of_work is not None
         else True
     )
-
-    if filter_data.user_id:
-        agent = await agent_crud.find_by_user_id(
-            db=db,
-            user_id=filter_data.user_id,
-        )
-        filter_data.user_id = Merchant.agent_id == agent.id
-    else:
-        filter_data.user_id = True
+    filter_data.is_active = (
+        (Merchant.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
+    )
+    filter_data.user_id = (
+        (Merchant.user_id == filter_data.national_code)
+        if filter_data.user_id is not None
+        else True
+    )
+    filter_data.agent_id = (
+        (Merchant.agent_id == filter_data.agent_id)
+        if filter_data.agent_id is not None
+        else True
+    )
 
     # * Add filter fields
     query = (
         select(Merchant)
         .filter(
             and_(
-                filter_data.is_active == True,
+                Merchant.is_active == True,
                 filter_data.location_id,
                 filter_data.name,
                 filter_data.national_code,
                 filter_data.selling_type,
                 filter_data.user_id,
+                filter_data.agent_id,
                 filter_data.field_of_work,
             ),
         )
         .join(Merchant.user)
-    )
+    ).order_by(Merchant.created_at)
 
     # * Prepare order fields
     if filter_data.order_by:
@@ -320,10 +336,14 @@ async def get_stores(
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.desc())
+            elif field == MerchantFilterOrderFild.updated_at:
+                query = query.order_by(Merchant.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == MerchantFilterOrderFild.created_at:
                 query = query.order_by(Merchant.created_at.asc())
+            elif field == MerchantFilterOrderFild.updated_at:
+                query = query.order_by(Merchant.updated_at.asc())
     obj_list = await merchant_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list
 

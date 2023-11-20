@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,5 +17,6 @@ class PermissionNotFoundException(HTTPException):
             "code": 2500,
             "persian_message": "دسترسی مورد نظر پیدا نشد!",
             "english_message": "Permission Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, or_, and_
 
 from src import deps
 from src.credit.crud import credit as credit_crud
@@ -115,8 +115,40 @@ async def get_list_credit(
     obj_list
         List of ability
     """
+    # * Prepare filter fields
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
+    filter_data.phone_number = (
+        (User.phone_number.contains(filter_data.phone_number))
+        if filter_data.phone_number is not None
+        else True
+    )
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+
     # * Add filter fields
-    query = select(Credit).filter()
+    query = (
+        select(Credit)
+        .filter(
+            and_(
+                filter_data.phone_number,
+                filter_data.national_code,
+                filter_data.name,
+            ),
+        )
+        .join(Credit.user)
+        .order_by(Credit.created_at.desc())
+    )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:
@@ -131,6 +163,10 @@ async def get_list_credit(
                 query = query.order_by(Credit.transferred.desc())
             elif field == CreditFilterOrderFild.debt:
                 query = query.order_by(Credit.debt.desc())
+            elif field == CreditFilterOrderFild.created_at:
+                query = query.order_by(Credit.created_at.desc())
+            elif field == CreditFilterOrderFild.updated_at:
+                query = query.order_by(Credit.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == CreditFilterOrderFild.received:
@@ -143,6 +179,10 @@ async def get_list_credit(
                 query = query.order_by(Credit.transferred.asc())
             elif field == CreditFilterOrderFild.debt:
                 query = query.order_by(Credit.debt.asc())
+            elif field == CreditFilterOrderFild.created_at:
+                query = query.order_by(Credit.created_at.asc())
+            elif field == CreditFilterOrderFild.updated_at:
+                query = query.order_by(Credit.updated_at.asc())
     # * Find All ability with filters
-    obj_list = await credit_crud.get_multi(db=db, skip=skip, limit=limit)
+    obj_list = await credit_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

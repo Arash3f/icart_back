@@ -1,3 +1,4 @@
+from random import randint
 from typing import Type
 from uuid import UUID
 
@@ -107,6 +108,52 @@ class WalletCRUD(BaseCRUD[Wallet, None, None]):
             raise WalletNotFoundException()
 
         return obj
+
+    async def find_by_number(self, *, db: AsyncSession, number: int) -> Type[Wallet]:
+        """
+        ! Find Wallet by number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        number
+            Target wallet number
+
+        Returns
+        -------
+        found_item
+            Found Item
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.number == number),
+        )
+
+        found_item = response.scalar_one_or_none()
+        return found_item
+
+    async def generate_wallet_number(self, *, db: AsyncSession) -> int:
+        """
+        ! Generate wallet number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+
+        Returns
+        -------
+        code
+            generated number
+        """
+        number = 0
+        while not number:
+            generate_number = randint(100000, 999999)
+            is_duplicate = await self.find_by_number(db=db, number=generate_number)
+            if not is_duplicate:
+                number = generate_number
+
+        return number
 
 
 # ---------------------------------------------------------------------------

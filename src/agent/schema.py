@@ -61,6 +61,8 @@ class AgentPublicResponse(BaseModel):
 class AgentFilterOrderFild(Enum):
     profit_rate = "profit_rate"
     is_main = "is_main"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------

@@ -103,10 +103,33 @@ class UserMeResponse(UserRead):
 
 
 # ---------------------------------------------------------------------------
+class UserFilterOrderFild(Enum):
+    national_code = "national_code"
+    phone_number = "phone_number"
+    first_name = "first_name"
+    last_name = "last_name"
+    is_active = "is_active"
+    is_valid = "is_valid"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+# ---------------------------------------------------------------------------
+class UserFilterOrderBy(BaseModel):
+    desc: list[UserFilterOrderFild] = []
+    asc: list[UserFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class UserFilter(BaseModel):
     national_code: None | str = None
     phone_number: None | str = None
-    full_search: str | None = None
+    name: str | None = None
+    is_active: bool | None = None
+    is_valid: bool | None = None
+    father_name: str | None = None
+    tel: str | None = None
+    order_by: UserFilterOrderBy | None = None
 
 
 # ---------------------------------------------------------------------------

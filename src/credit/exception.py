@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!
@@ -16,5 +17,6 @@ class CreditNotFoundException(HTTPException):
             "code": 700,
             "persian_message": "اعتبار مورد نظر پیدا نشد!",
             "english_message": "Credit Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

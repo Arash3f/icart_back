@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, conint, confloat
+from pydantic import BaseModel, ConfigDict, confloat
 
 from src.fee.models import FeeTypeEnum, FeeUserType
 from src.schema import IDRequest

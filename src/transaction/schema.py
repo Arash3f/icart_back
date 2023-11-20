@@ -1,5 +1,6 @@
 import enum
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -10,7 +11,7 @@ from src.transaction.models import (
     TransactionReasonEnum,
     TransactionStatusEnum,
 )
-from src.wallet.schema import WalletRead, WalletReadV2
+from src.wallet.schema import WalletReadV2
 
 
 class TransactionChartType(enum.Enum):
@@ -85,13 +86,29 @@ class TransactionRead(TransactionBase):
 
 
 # ---------------------------------------------------------------------------
+class TransactionFilterOrderFild(Enum):
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+# ---------------------------------------------------------------------------
+class TransactionFilterOrderBy(BaseModel):
+    desc: list[TransactionFilterOrderFild] = []
+    asc: list[TransactionFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class TransactionFilter(BaseModel):
     gt_value: float | None = None
     lt_value: float | None = None
     value_type: TransactionValueType | None = None
     gt_created_date: datetime | None = None
     lt_created_date: datetime | None = None
+    card_number: None | str = None
+    name: None | str = None
+    national_code: None | str = None
     reason: TransactionReasonEnum | None = None
+    order_by: TransactionFilterOrderBy | None = None
 
 
 # ---------------------------------------------------------------------------

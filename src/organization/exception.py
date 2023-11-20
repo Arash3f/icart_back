@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,5 +17,6 @@ class OrganizationNotFoundException(HTTPException):
             "code": 1300,
             "persian_message": "سازمان مورد نظر پیدا نشد!",
             "english_message": "Organization Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

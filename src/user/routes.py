@@ -7,6 +7,7 @@ from src import deps
 from src.auth.exception import AccessDeniedException
 from src.core.config import settings
 from src.log.models import LogType
+from src.organization.models import Organization
 from src.schema import ResultResponse, ChartResponse, ChartFilterInput, Duration
 from src.user.models import User
 from src.user.schema import (
@@ -16,6 +17,7 @@ from src.user.schema import (
     UpdateUserRequest,
     UserRead2,
     UpdateUserActivityRequest,
+    UserFilterOrderFild,
 )
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
@@ -265,34 +267,96 @@ async def user_list(
     filter_data.national_code = (
         (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code
-        else True
+        else True is not None
     )
     filter_data.phone_number = (
         (User.phone_number.contains(filter_data.phone_number))
-        if filter_data.phone_number
+        if filter_data.phone_number is not None
         else True
     )
-    filter_data.full_search = (
-        (
-            or_(
-                User.username.contains(filter_data.full_search),
-                User.first_name.contains(filter_data.full_search),
-                User.last_name.contains(filter_data.full_search),
-            )
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
         )
-        if filter_data.full_search
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.is_active = (
+        (User.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
+    )
+    filter_data.is_valid = (
+        (User.is_active == filter_data.is_valid)
+        if filter_data.is_valid is not None
+        else True
+    )
+    filter_data.father_name = (
+        (User.father_name.contains(filter_data.father_name))
+        if filter_data.father_name is not None
+        else True
+    )
+    filter_data.tel = (
+        (User.father_name.contains(filter_data.tel))
+        if filter_data.tel is not None
         else True
     )
 
     # * Add filter fields
-    query = select(User).filter(
-        and_(
-            filter_data.phone_number,
-            filter_data.national_code,
-            filter_data.full_search,
-        ),
+    query = (
+        select(User)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.phone_number,
+                filter_data.is_active,
+                filter_data.is_valid,
+                filter_data.father_name,
+                filter_data.tel,
+            ),
+        )
+        .order_by(User.created_at.desc())
     )
-    query = query.order_by(User.created_at.desc())
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == UserFilterOrderFild.national_code:
+                query = query.order_by(User.national_code.desc())
+            elif field == UserFilterOrderFild.phone_number:
+                query = query.order_by(User.phone_number.desc())
+            elif field == UserFilterOrderFild.first_name:
+                query = query.order_by(User.first_name.desc())
+            elif field == UserFilterOrderFild.last_name:
+                query = query.order_by(User.last_name.desc())
+            elif field == UserFilterOrderFild.is_active:
+                query = query.order_by(User.is_active.desc())
+            elif field == UserFilterOrderFild.is_valid:
+                query = query.order_by(User.is_valid.desc())
+            elif field == UserFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == UserFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == UserFilterOrderFild.national_code:
+                query = query.order_by(User.national_code.asc())
+            elif field == UserFilterOrderFild.phone_number:
+                query = query.order_by(User.phone_number.asc())
+            elif field == UserFilterOrderFild.first_name:
+                query = query.order_by(User.first_name.asc())
+            elif field == UserFilterOrderFild.last_name:
+                query = query.order_by(User.last_name.asc())
+            elif field == UserFilterOrderFild.is_active:
+                query = query.order_by(User.is_active.asc())
+            elif field == UserFilterOrderFild.is_valid:
+                query = query.order_by(User.is_valid.asc())
+            elif field == UserFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == UserFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     obj_list = await user_crud.get_multi(
         db=db,
@@ -432,7 +496,7 @@ async def update_user_activity(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/organization/list", response_model=List[UserRead2])
-async def user_list(
+async def organization_user_list(
     *,
     db=Depends(deps.get_db),
     filter_data: UserFilter,
@@ -479,22 +543,97 @@ async def user_list(
     filter_data.national_code = (
         (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code
-        else True
+        else True is not None
     )
     filter_data.phone_number = (
         (User.phone_number.contains(filter_data.phone_number))
-        if filter_data.phone_number
+        if filter_data.phone_number is not None
+        else True
+    )
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.is_active = (
+        (User.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
+    )
+    filter_data.is_valid = (
+        (User.is_active == filter_data.is_valid)
+        if filter_data.is_valid is not None
+        else True
+    )
+    filter_data.father_name = (
+        (User.father_name.contains(filter_data.father_name))
+        if filter_data.father_name is not None
+        else True
+    )
+    filter_data.tel = (
+        (User.father_name.contains(filter_data.tel))
+        if filter_data.tel is not None
         else True
     )
 
     # * Add filter fields
-    query = select(User).filter(
-        and_(
-            filter_data.phone_number,
-            filter_data.national_code,
-            User.organization_id == organization_user.id,
-        ),
+    query = (
+        select(User)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.phone_number,
+                filter_data.is_active,
+                filter_data.is_valid,
+                filter_data.father_name,
+                filter_data.tel,
+                User.organization_id == organization_user.id,
+            ),
+        )
+        .order_by(User.created_at.desc())
     )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == UserFilterOrderFild.national_code:
+                query = query.order_by(User.national_code.desc())
+            elif field == UserFilterOrderFild.phone_number:
+                query = query.order_by(User.phone_number.desc())
+            elif field == UserFilterOrderFild.first_name:
+                query = query.order_by(User.first_name.desc())
+            elif field == UserFilterOrderFild.last_name:
+                query = query.order_by(User.last_name.desc())
+            elif field == UserFilterOrderFild.is_active:
+                query = query.order_by(User.is_active.desc())
+            elif field == UserFilterOrderFild.is_valid:
+                query = query.order_by(User.is_valid.desc())
+            elif field == UserFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == UserFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == UserFilterOrderFild.national_code:
+                query = query.order_by(User.national_code.asc())
+            elif field == UserFilterOrderFild.phone_number:
+                query = query.order_by(User.phone_number.asc())
+            elif field == UserFilterOrderFild.first_name:
+                query = query.order_by(User.first_name.asc())
+            elif field == UserFilterOrderFild.last_name:
+                query = query.order_by(User.last_name.asc())
+            elif field == UserFilterOrderFild.is_active:
+                query = query.order_by(User.is_active.asc())
+            elif field == UserFilterOrderFild.is_valid:
+                query = query.order_by(User.is_valid.asc())
+            elif field == UserFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == UserFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     obj_list = await user_crud.get_multi(
         db=db,
@@ -554,29 +693,110 @@ async def agent_list(
 
     agent_user = await organization_crud.find_by_user_id(db=db, user_id=current_user.id)
 
+    organization_user = await organization_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
     # * Prepare filter fields
     filter_data.national_code = (
         (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code
-        else True
+        else True is not None
     )
     filter_data.phone_number = (
         (User.phone_number.contains(filter_data.phone_number))
-        if filter_data.phone_number
+        if filter_data.phone_number is not None
+        else True
+    )
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.is_active = (
+        (User.is_active == filter_data.is_active)
+        if filter_data.is_active is not None
+        else True
+    )
+    filter_data.is_valid = (
+        (User.is_active == filter_data.is_valid)
+        if filter_data.is_valid is not None
+        else True
+    )
+    filter_data.father_name = (
+        (User.father_name.contains(filter_data.father_name))
+        if filter_data.father_name is not None
+        else True
+    )
+    filter_data.tel = (
+        (User.father_name.contains(filter_data.tel))
+        if filter_data.tel is not None
         else True
     )
 
     # * Add filter fields
-    query = select(User).filter(
-        and_(
-            filter_data.phone_number,
-            filter_data.national_code,
-        ),
-        or_(
-            User.organization.mapper.class_.agent_id == agent_user.id,
-            User.agent_id == agent_user.id,
-        ),
+    query = (
+        select(User)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.phone_number,
+                filter_data.is_active,
+                filter_data.is_valid,
+                filter_data.father_name,
+                filter_data.tel,
+            ),
+            or_(
+                Organization.agent_id == agent_user.id,
+                User.agent_id == agent_user.id,
+            ),
+        )
+        .join(User.organization)
+        .order_by(User.created_at.desc())
     )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == UserFilterOrderFild.national_code:
+                query = query.order_by(User.national_code.desc())
+            elif field == UserFilterOrderFild.phone_number:
+                query = query.order_by(User.phone_number.desc())
+            elif field == UserFilterOrderFild.first_name:
+                query = query.order_by(User.first_name.desc())
+            elif field == UserFilterOrderFild.last_name:
+                query = query.order_by(User.last_name.desc())
+            elif field == UserFilterOrderFild.is_active:
+                query = query.order_by(User.is_active.desc())
+            elif field == UserFilterOrderFild.is_valid:
+                query = query.order_by(User.is_valid.desc())
+            elif field == UserFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == UserFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == UserFilterOrderFild.national_code:
+                query = query.order_by(User.national_code.asc())
+            elif field == UserFilterOrderFild.phone_number:
+                query = query.order_by(User.phone_number.asc())
+            elif field == UserFilterOrderFild.first_name:
+                query = query.order_by(User.first_name.asc())
+            elif field == UserFilterOrderFild.last_name:
+                query = query.order_by(User.last_name.asc())
+            elif field == UserFilterOrderFild.is_active:
+                query = query.order_by(User.is_active.asc())
+            elif field == UserFilterOrderFild.is_valid:
+                query = query.order_by(User.is_valid.asc())
+            elif field == UserFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == UserFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     obj_list = await user_crud.get_multi(
         db=db,

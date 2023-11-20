@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 from random import randint
 from typing import Type
 from uuid import UUID
@@ -9,6 +10,7 @@ from src.database.base_crud import BaseCRUD
 from src.transaction.exception import TransactionNotFoundException
 from src.transaction.models import Transaction, TransactionRow
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
+from src.user.models import User
 
 
 # ---------------------------------------------------------------------------
@@ -70,8 +72,8 @@ class TransactionCRUD(BaseCRUD[Transaction, TransactionCreate, None]):
             .select_from(self.model)
             .where(
                 or_(
-                    self.model.transferor_id == wallet_id,
-                    self.model.receiver_id == wallet_id,
+                    self.model.transferor.mapper.class_.wallet_id == wallet_id,
+                    self.model.receiver.mapper.class_.wallet_id == wallet_id,
                 ),
             ),
         )
@@ -89,12 +91,15 @@ class TransactionCRUD(BaseCRUD[Transaction, TransactionCreate, None]):
             select(func.sum(Transaction.value))
             .select_from(Transaction)
             .filter(
-                Transaction.receiver_id == wallet_id,
+                Transaction.receiver.mapper.class_.wallet_id == wallet_id,
             ),
         )
         income = response.scalar_one_or_none()
 
-        return income
+        if income is None:
+            income = 0
+
+        return int(income)
 
     async def find_by_code(
         self,
@@ -231,6 +236,30 @@ class TransactionRowCRUD(BaseCRUD[TransactionRow, TransactionRowCreate, None]):
                 code = generate_code
 
         return code
+
+    async def calculate_user_amount_transaction(
+        self,
+        *,
+        db: AsyncSession,
+        user: User,
+        min: int,
+    ) -> int:
+        start = datetime.now()
+        end = start - timedelta(
+            minutes=min,
+        )
+        my_query = await db.execute(
+            select(func.sum(self.model.value))
+            .select_from(self.model)
+            .where(
+                self.model.transferor.mapper.class_.wallet == user.wallet,
+                self.model.created_at <= start,
+                self.model.created_at >= end,
+            ),
+        )
+
+        response = my_query.scalar()
+        return response
 
 
 # ---------------------------------------------------------------------------

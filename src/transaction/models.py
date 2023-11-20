@@ -17,8 +17,10 @@ class TransactionReasonEnum(enum.Enum):
     PURCHASE = "PURCHASE"
     FEE = "FEE"
     REGISTER = "REGISTER"
+    ORGANIZATION_REGISTER = "ORGANIZATION_REGISTER"
     CONTRACT = "CONTRACT"
     CASH_BACK = "CASH_BACK"
+    CARD_TO_CARD = "CARD_TO_CARD"
 
 
 class TransactionStatusEnum(enum.Enum):
@@ -41,15 +43,15 @@ class Transaction(Base, BaseMixin):
         default=TransactionStatusEnum.ACCEPTED,
     )
     # ! Relations
-    receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)
-    receiver = relationship("Wallet", foreign_keys=[receiver_id], lazy="selectin")
+    receiver_id = Column(UUID(as_uuid=True), ForeignKey("card.id"), nullable=False)
+    receiver = relationship("Card", foreign_keys=[receiver_id], lazy="selectin")
 
-    transferor_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)
-    transferor = relationship("Wallet", foreign_keys=[transferor_id], lazy="selectin")
+    transferor_id = Column(UUID(as_uuid=True), ForeignKey("card.id"), nullable=False)
+    transferor = relationship("Card", foreign_keys=[transferor_id], lazy="selectin")
 
-    intermediary_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=True)
+    intermediary_id = Column(UUID(as_uuid=True), ForeignKey("card.id"), nullable=True)
     intermediary = relationship(
-        "Wallet",
+        "Card",
         foreign_keys=[intermediary_id],
         lazy="selectin",
     )
@@ -88,11 +90,11 @@ class TransactionRow(Base, BaseMixin):
         default=TransactionStatusEnum.ACCEPTED,
     )
     # ! Relations
-    receiver_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)
-    receiver = relationship("Wallet", foreign_keys=[receiver_id], lazy="selectin")
+    receiver_id = Column(UUID(as_uuid=True), ForeignKey("card.id"), nullable=False)
+    receiver = relationship("Card", foreign_keys=[receiver_id], lazy="selectin")
 
-    transferor_id = Column(UUID(as_uuid=True), ForeignKey("wallet.id"), nullable=False)
-    transferor = relationship("Wallet", foreign_keys=[transferor_id], lazy="selectin")
+    transferor_id = Column(UUID(as_uuid=True), ForeignKey("card.id"), nullable=False)
+    transferor = relationship("Card", foreign_keys=[transferor_id], lazy="selectin")
 
     transaction_id = Column(UUID(as_uuid=True), ForeignKey("transaction.id"))
     transaction = relationship(

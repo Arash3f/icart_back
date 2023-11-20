@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import case, desc, func, not_, select, and_
+from sqlalchemy import case, desc, func, not_, select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -74,6 +74,7 @@ async def read_tickets(
             func.count(case((not_(TicketMessage.supporter_status), 1))),
         )
         .join(TicketMessage)
+        .join(Ticket.creator)
         .group_by(Ticket.id)
         .select_from(Ticket)
         .order_by(desc(Ticket.created_at), desc(Ticket.updated_at))
@@ -83,6 +84,19 @@ async def read_tickets(
         query = query.where(Ticket.creator_id == verify_data.user.id)
 
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.type = (Ticket.type == filter_data.type) if filter_data.type else True
     filter_data.position = (
         (Ticket.position == filter_data.position) if filter_data.position else True
@@ -102,6 +116,8 @@ async def read_tickets(
     query = (
         query.filter(
             and_(
+                filter_data.name,
+                filter_data.national_code,
                 filter_data.type,
                 filter_data.position,
                 filter_data.important,
@@ -136,16 +152,20 @@ async def read_tickets(
                 query = query.order_by(Ticket.important.desc())
             elif field == TicketFilterOrderFild.number:
                 query = query.order_by(Ticket.number.desc())
+            elif field == TicketFilterOrderFild.created_at:
+                query = query.order_by(Ticket.created_at.desc())
+            elif field == TicketFilterOrderFild.updated_at:
+                query = query.order_by(Ticket.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == TicketFilterOrderFild.type:
                 query = query.order_by(Ticket.type.asc())
             elif field == TicketFilterOrderFild.position:
                 query = query.order_by(Ticket.important.asc())
-            elif field == TicketFilterOrderFild.important:
-                query = query.order_by(Ticket.parent_id.asc())
-            elif field == TicketFilterOrderFild.number:
-                query = query.order_by(Ticket.number.asc())
+            elif field == TicketFilterOrderFild.created_at:
+                query = query.order_by(Ticket.created_at.asc())
+            elif field == TicketFilterOrderFild.updated_at:
+                query = query.order_by(Ticket.updated_at.asc())
 
     res: List[TicketReadV2] = []
     response = await db.execute(query)

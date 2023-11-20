@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!
@@ -10,13 +11,13 @@ class IncorrectUsernameOrPasswordException(HTTPException):
     ? Exception When Username Or Password Is Incorrect
     """
 
-    def __init__(self, time: str = None):
+    def __init__(self):
         self.status_code = 400
         self.detail = {
             "code": 200,
             "english_message": "Incorrect username or password!",
             "persian_message": "نام کاربری یا رمز عبور اشتباه است!",
-            "time": time,
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -26,13 +27,13 @@ class InactiveUserException(HTTPException):
     ? Exception When User is Inactive
     """
 
-    def __init__(self, time: str = None):
+    def __init__(self):
         self.status_code = 400
         self.detail = {
             "code": 203,
             "english_message": "User Is Inactive!",
             "persian_message": "کاربر مورد نظر غیر فعال است!",
-            "time": time,
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -48,6 +49,7 @@ class IncorrectVerifyCodeException(HTTPException):
             "code": 204,
             "english_message": "Verify Code Is Incorrect!",
             "persian_message": "کد فعال سازی نامعتبر است!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -63,6 +65,7 @@ class AccessDeniedException(HTTPException):
             "code": 205,
             "english_message": "Access Denied Exception!",
             "persian_message": "دسترسی داده نشده است!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -78,5 +81,6 @@ class UserNotAuthenticatedException(HTTPException):
             "code": 206,
             "english_message": "User Is Not Authenticated!",
             "persian_message": "ابتدا وارد شوید!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

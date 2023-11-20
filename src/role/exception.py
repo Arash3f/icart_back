@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class RoleNotFoundException(HTTPException):
             "code": 1600,
             "persian_message": "رول مورد نظر پیدا نشد!",
             "english_message": "Role Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,6 +33,7 @@ class RoleNameIsDuplicatedException(HTTPException):
             "code": 1601,
             "persian_message": "نام رول تکراری است!",
             "english_message": "Role Name Is Duplicated!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -46,5 +49,6 @@ class RoleHaveUserException(HTTPException):
             "code": 1602,
             "persian_message": "نمی توان رول داری کاربر را پاک کرد!",
             "english_message": "Cannot delete the role that have user!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

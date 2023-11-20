@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,5 +17,6 @@ class UserMessageNotFoundException(HTTPException):
             "code": 2001,
             "persian_message": "اطلاعات پیام مورد نظر پیدا نشد!",
             "english_message": "User Message Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

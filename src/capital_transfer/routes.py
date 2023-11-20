@@ -7,7 +7,7 @@ from fastapi import (
     Form,
     UploadFile,
 )
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -31,18 +31,22 @@ from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import IDRequest, VerifyUserDep
 from src.transaction.models import (
-    Transaction,
     TransactionValueType,
     TransactionReasonEnum,
+    TransactionStatusEnum,
 )
+from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.user.crud import user as user_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
 from src.transaction.crud import transaction as transaction_crud
+from src.transaction.crud import transaction_row as transaction_row_crud
 from src.log.crud import log as log_crud
+from src.card.crud import card as card_crud, CardValueType
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.credit.crud import credit as credit_crud, CreditField
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/capital_transfer", tags=["capital_transfer"])
@@ -98,7 +102,7 @@ async def find_capital_transfer(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[CapitalTransferRead])
-async def read_capital_transfer(
+async def capital_transfer_list(
     *,
     db=Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
@@ -130,6 +134,19 @@ async def read_capital_transfer(
         List of capital transfer
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.gt_value = (
         (CapitalTransfer.value > filter_data.gt_value) if filter_data.gt_value else True
     )
@@ -157,17 +174,24 @@ async def read_capital_transfer(
     )
 
     # * Add filter fields
-    query = select(CapitalTransfer).filter(
-        and_(
-            filter_data.gt_value,
-            filter_data.lt_value,
-            filter_data.transfer_type,
-            filter_data.code,
-            filter_data.finish,
-            filter_data.receiver_id,
-            filter_data.status,
-        ),
+    query = (
+        select(CapitalTransfer)
+        .filter(
+            and_(
+                filter_data.gt_value,
+                filter_data.lt_value,
+                filter_data.transfer_type,
+                filter_data.code,
+                filter_data.finish,
+                filter_data.receiver_id,
+                filter_data.status,
+            ),
+        )
+        .join(CapitalTransfer.receiver)
+        .join(Wallet.user)
+        .order_by(CapitalTransfer.created_at.desc())
     )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:
@@ -178,6 +202,10 @@ async def read_capital_transfer(
                 query = query.order_by(CapitalTransfer.transfer_type.desc())
             elif field == CapitalTransferFilterOrderFild.finish:
                 query = query.order_by(CapitalTransfer.finish.desc())
+            elif field == CapitalTransferFilterOrderFild.created_at:
+                query = query.order_by(CapitalTransfer.created_at.desc())
+            elif field == CapitalTransferFilterOrderFild.updated_at:
+                query = query.order_by(CapitalTransfer.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == CapitalTransferFilterOrderFild.value:
@@ -186,6 +214,10 @@ async def read_capital_transfer(
                 query = query.order_by(CapitalTransfer.transfer_type.asc())
             elif field == CapitalTransferFilterOrderFild.finish:
                 query = query.order_by(CapitalTransfer.finish.asc())
+            elif field == CapitalTransferFilterOrderFild.created_at:
+                query = query.order_by(CapitalTransfer.created_at.asc())
+            elif field == CapitalTransferFilterOrderFild.updated_at:
+                query = query.order_by(CapitalTransfer.updated_at.asc())
 
     if not verify_data.is_valid:
         query = query.where(
@@ -316,10 +348,24 @@ async def approve_capital_transfer(
         obj_current.status = CapitalTransferStatusEnum.FAILED
 
     else:
-        receiver_wallet = await wallet_crud.get(db=db, item_id=obj_current.receiver_id)
         admin_user = await user_crud.verify_existence_by_username(
             db=db,
             username=settings.ADMIN_USERNAME,
+        )
+        user_wallet: Wallet = await wallet_crud.get(
+            db=db,
+            item_id=obj_current.receiver_id,
+        )
+
+        transferor_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=user_wallet,
+        )
+        receiver_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=admin_user.wallet,
         )
 
         # * Update capital transfer
@@ -330,36 +376,44 @@ async def approve_capital_transfer(
                 db=db,
                 credit_field=CreditField.BALANCE,
                 type_operation=TypeOperation.INCREASE,
-                user=receiver_wallet.user,
+                user=user_wallet.user,
                 amount=obj_current.value,
             )
-            receiver_wallet.credit_balance += obj_current.value
         elif obj_current.transfer_type == CapitalTransferEnum.Cash:
             tr_type = TransactionValueType.CASH
             await cash_crud.update_cash_by_user(
                 db=db,
                 cash_field=CashField.BALANCE,
                 type_operation=TypeOperation.INCREASE,
-                user=receiver_wallet.user,
+                user=user_wallet.user,
                 amount=obj_current.value,
             )
 
         # ? Create Transaction
-        code = await transaction_crud.generate_code(db=db)
-        transaction_create = Transaction(
+        transaction_create = TransactionCreate(
+            status=TransactionStatusEnum.ACCEPTED,
             value=obj_current.value,
-            receiver_id=obj_current.receiver_id,
-            transferor_id=admin_user.wallet.id,
-            value_type=tr_type,
             text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
-            capital_transfer=obj_current,
-            code=code,
+            value_type=tr_type,
+            receiver_id=receiver_card.id,
+            transferor_id=transferor_card.id,
+            code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.WALLET_CHARGING,
         )
-        db.add(transaction_create)
-        db.add(receiver_wallet)
+        main_tr = await transaction_crud.create(db=db, obj_in=transaction_create)
+        transaction_row_create = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=obj_current.value,
+            text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
+            value_type=tr_type,
+            receiver_id=receiver_card.id,
+            transferor_id=transferor_card.id,
+            code=await transaction_crud.generate_code(db=db),
+            reason=TransactionReasonEnum.WALLET_CHARGING,
+        )
+        await transaction_crud.create(db=db, obj_in=transaction_row_create)
 
-    db.add(obj_current)
     await db.commit()
     await db.refresh(obj_current)
 

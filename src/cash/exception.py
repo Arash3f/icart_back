@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,5 +17,6 @@ class CashNotFoundException(HTTPException):
             "code": 7700,
             "persian_message": "کیف پول مورد نظر پیدا نشد!",
             "english_message": "Cash Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

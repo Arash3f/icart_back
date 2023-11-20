@@ -141,7 +141,7 @@ async def create_role(
 
 
 # ---------------------------------------------------------------------------
-@router.put("/update/", response_model=RoleRead)
+@router.put("/update", response_model=RoleRead)
 async def update_role(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -248,8 +248,12 @@ async def get_roles_list(
         Role.name.contains(filter_data.name) if filter_data.name is not None else True
     )
     # * Add filter fields
-    query = select(Role).filter(
-        or_(filter_data.name),
+    query = (
+        select(Role)
+        .filter(
+            or_(filter_data.name),
+        )
+        .order_by(Role.created_at.desc)
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -257,10 +261,18 @@ async def get_roles_list(
             # * Add filter fields
             if field == RoleFilterOrderFild.name:
                 query = query.order_by(Role.name.desc())
+            elif field == RoleFilterOrderFild.created_at:
+                query = query.order_by(Role.created_at.desc())
+            elif field == RoleFilterOrderFild.updated_at:
+                query = query.order_by(Role.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == RoleFilterOrderFild.name:
                 query = query.order_by(Role.name.asc())
+            elif field == RoleFilterOrderFild.created_at:
+                query = query.order_by(Role.created_at.asc())
+            elif field == RoleFilterOrderFild.updated_at:
+                query = query.order_by(Role.updated_at.asc())
     # * Find All agent with filters
     role_list = await role_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return role_list

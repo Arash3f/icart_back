@@ -16,6 +16,7 @@ class Cash(Base, BaseMixin):
     consumed = Column(BigInteger, default=0)
     transferred = Column(BigInteger, default=0)
     debt = Column(BigInteger, default=0)
+    used = Column(BigInteger, default=0)
 
     # ! Relations
     user = relationship("User", uselist=False, back_populates="cash", lazy="selectin")

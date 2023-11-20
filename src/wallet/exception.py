@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 
@@ -17,6 +18,7 @@ class WalletNotFoundException(HTTPException):
             "code": 2201,
             "persian_message": "ولت مورد نظر پیدا نشد!",
             "english_message": "Wallet Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -26,13 +28,13 @@ class LackOfCreditException(HTTPException):
     ? Exception when wallet's credit does not have enough money
     """
 
-    def __init__(self, time: str = None):
+    def __init__(self):
         self.status_code = 400
         self.detail = {
             "code": 2204,
             "persian_message": "موجودی اعتباری شما کم است!",
             "english_message": "Lack Of Credit Exception!",
-            "time": time,
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -42,13 +44,13 @@ class LackOfMoneyException(HTTPException):
     ? Exception when wallet's cache does not have enough money
     """
 
-    def __init__(self, time: str = None):
+    def __init__(self):
         self.status_code = 400
         self.detail = {
             "code": 2205,
             "persian_message": "موجودی نقدی شما کم است!",
             "english_message": "Lack Of Money Exception!",
-            "time": time,
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -64,7 +66,7 @@ class LockWalletException(HTTPException):
             "code": 2206,
             "persian_message": "ولت شما غیر فعال است!",
             "english_message": "Wallet is locked!",
-            "time": time,
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -74,12 +76,12 @@ class MerchantLackOfMoneyException(HTTPException):
     ? Exception when wallet's cache does not have enough money
     """
 
-    def __init__(self, time: str = None):
+    def __init__(self):
         self.status_code = 400
         self.detail = {
             "code": 2205,
             "persian_message": "موجودی نقدی پذیرنده کم است!",
             "english_message": "Merchant Lack Of Money Exception!",
-            "time": time,
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

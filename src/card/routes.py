@@ -4,17 +4,21 @@ from fastapi import APIRouter, Depends
 from pytz import timezone
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.operators import or_
 
 from src import deps
 from src.auth.exception import AccessDeniedException
-from src.card.crud import card as card_crud
+from src.card.crud import card as card_crud, CardValueType
+from src.card.exception import CardNotFoundException, CardPasswordInValidException
 from src.log.models import LogType
-from src.transaction.schema import TransactionCreate
+from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.user.crud import user as user_crud
 from src.log.crud import log as log_crud
+from src.wallet.crud import wallet as wallet_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.important_data.crud import important_data as important_data_crud
 from src.transaction.crud import transaction as transaction_crud
+from src.transaction.crud import transaction_row as transaction_row_crud
 from src.card.models import Card, CardEnum
 from src.card.schema import (
     CardDynamicPasswordInput,
@@ -22,12 +26,12 @@ from src.card.schema import (
     CardUpdatePassword,
     CardFilter,
     CardFilterOrderFild,
-    BuyCard,
     BuyCardResponse,
     CardForgetPasswordInput,
+    CardToCardInput,
 )
 from src.core.config import settings
-from src.core.security import hash_password, pwd_context
+from src.core.security import hash_password, pwd_context, verify_password
 from src.exception import InCorrectDataException
 from src.permission import permission_codes as permission
 from src.schema import (
@@ -51,30 +55,37 @@ from src.utils.card_number import (
     CreditType,
     CompanyType,
 )
-from src.wallet.exception import LackOfMoneyException
+from src.wallet.exception import LackOfMoneyException, LockWalletException
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/card", tags=["card"])
 
 
 # ---------------------------------------------------------------------------
-@router.post("/buy", response_model=BuyCardResponse)
+@router.post("/buy/blue", response_model=BuyCardResponse)
 async def buy_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
-    data_in: BuyCard,
 ) -> BuyCardResponse:
     # todo: set validation for type card
     # * Verify card existence with this type
     await card_crud.verify_existence_with_type(
         db=db,
         user=current_user,
-        card_type=data_in.type,
+        card_type=CardEnum.BLUE,
+        is_active=True,
     )
-    icart_user = await user_crud.find_by_username(
+
+    admin_user = await user_crud.verify_existence_by_username(
         db=db,
         username=settings.ADMIN_USERNAME,
+    )
+    receiver_card = await card_crud.get_active_card(
+        db=db,
+        card_value_type=CardValueType.CASH,
+        wallet=admin_user.wallet,
     )
 
     # * Check user cash credit
@@ -83,32 +94,11 @@ async def buy_card(
         raise LackOfMoneyException()
 
     # * Generate card number
-    if data_in.type == CardEnum.CREDIT:
-        card_number = await generate_card_number(
-            db=db,
-            card_type=CardType.Credit,
-            credit_type=CreditType.Rial,
-            company_type=CompanyType.Icart,
-        )
-    else:
-        card_number = await generate_card_number(
-            db=db,
-            card_type=CardType.Swipe,
-            credit_type=CreditType.Rial,
-            company_type=CompanyType.Icart,
-        )
-
-    # ? Generate transaction
-    code = await transaction_crud.generate_code(db=db)
-    transaction = TransactionCreate(
-        value=buy_cost,
-        text="خرید کارت {}".format(card_number),
-        value_type=TransactionValueType.CASH,
-        receiver_id=icart_user.wallet.id,
-        transferor_id=current_user.wallet.id,
-        code=code,
-        status=TransactionStatusEnum.ACCEPTED,
-        reason=TransactionReasonEnum.PURCHASE,
+    card_number = await generate_card_number(
+        db=db,
+        card_type=CardType.Swipe,
+        credit_type=CreditType.Rial,
+        company_type=CompanyType.Icart,
     )
 
     # ? Generate Card
@@ -119,13 +109,40 @@ async def buy_card(
     card = Card(
         number=card_number,
         cvv2=randint(100, 999),
-        type=data_in.type,
+        type=CardEnum.BLUE,
         password=hash_password(str(card_password)),
         wallet_id=current_user.wallet.id,
     )
     card.expiration_at = expiration_at
-
     db.add(card)
+    await db.commit()
+    await db.refresh(card)
+
+    # ? Generate transaction
+    transaction = TransactionCreate(
+        value=buy_cost,
+        text="خرید کارت {}".format(card_number),
+        value_type=TransactionValueType.CASH,
+        receiver_id=receiver_card.id,
+        transferor_id=card.id,
+        code=await transaction_crud.generate_code(db=db),
+        status=TransactionStatusEnum.ACCEPTED,
+        reason=TransactionReasonEnum.PURCHASE,
+    )
+    main_tr = await transaction_crud.create(db=db, obj_in=transaction)
+    transaction_row = TransactionRowCreate(
+        transaction_id=main_tr.id,
+        value=buy_cost,
+        text="خرید کارت {}".format(card_number),
+        value_type=TransactionValueType.CASH,
+        receiver_id=receiver_card.id,
+        transferor_id=card.id,
+        code=await transaction_crud.generate_code(db=db),
+        status=TransactionStatusEnum.ACCEPTED,
+        reason=TransactionReasonEnum.PURCHASE,
+    )
+    await transaction_row_crud.create(db=db, obj_in=transaction_row)
+
     await cash_crud.update_cash_by_user(
         db=db,
         user=current_user,
@@ -135,12 +152,11 @@ async def buy_card(
     )
     await cash_crud.update_cash_by_user(
         db=db,
-        user=icart_user,
+        user=admin_user,
         amount=buy_cost,
         cash_field=CashField.BALANCE,
         type_operation=TypeOperation.INCREASE,
     )
-    await transaction_crud.create(db=db, obj_in=transaction)
 
     # ? Generate Log
     await log_crud.auto_generate(
@@ -252,37 +268,62 @@ async def read_card_list(
     UserNotFoundException
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.number = (
         (Card.number.contains(filter_data.number)) if filter_data.number else True
     )
     filter_data.type = (Card.type == filter_data.type) if filter_data.type else True
-    if filter_data.user_id:
-        filter_user = await user_crud.verify_existence(
-            db=db,
-            user_id=filter_data.user_id,
-        )
-        filter_data.user_id = Card.wallet_id == filter_user.wallet.id
-    else:
-        filter_data.user_id = True
+    filter_data.user_id = (
+        (User.id == filter_data.user_id) if filter_data.user_id else True
+    )
 
     # * Add filter fields
-    query = select(Card).filter(
-        and_(
-            filter_data.number,
-            filter_data.type,
-            filter_data.user_id,
-        ),
+    query = (
+        select(Card)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.number,
+                filter_data.type,
+                filter_data.user_id,
+            ),
+        )
+        .join(Card.wallet)
+        .join(Wallet.user)
+        .order_by(Card.created_at.desc())
     )
+
     # * Prepare order fields
     if filter_data.order_by:
         for field in filter_data.order_by.desc:
             # * Add filter fields
             if field == CardFilterOrderFild.number:
                 query = query.order_by(Card.number.desc())
+            elif field == CardFilterOrderFild.created_at:
+                query = query.order_by(Card.created_at.desc())
+            elif field == CardFilterOrderFild.updated_at:
+                query = query.order_by(Card.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == CardFilterOrderFild.number:
                 query = query.order_by(Card.number.asc())
+            elif field == CardFilterOrderFild.created_at:
+                query = query.order_by(Card.created_at.asc())
+            elif field == CardFilterOrderFild.updated_at:
+                query = query.order_by(Card.updated_at.asc())
 
     # * Have permissions
     if not verify_data.is_valid:
@@ -463,7 +504,8 @@ async def get_manage_chart(
         .select_from(TransactionRow)
         .filter(
             and_(
-                TransactionRow.transferor_id == current_user.wallet.id,
+                TransactionRow.transferor.mapper.class_.wallet_id
+                == current_user.wallet.id,
                 TransactionRow.created_at >= start,
             ),
         )
@@ -493,7 +535,8 @@ async def get_manage_chart(
             .select_from(TransactionRow)
             .filter(
                 and_(
-                    TransactionRow.transferor_id == current_user.wallet.id,
+                    TransactionRow.transferor.mapper.class_.wallet_id
+                    == current_user.wallet.id,
                     TransactionRow.created_at >= duration.start_date,
                     TransactionRow.created_at < duration.end_date,
                 ),
@@ -535,3 +578,96 @@ async def get_manage_chart(
 
         buf_time = buf_end
     return chart_data
+
+
+# ---------------------------------------------------------------------------
+@router.post("/card_to_card", response_model=ResultResponse)
+async def card_to_card(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    data: CardToCardInput,
+) -> ResultResponse:
+    # * Verify card existence for this user
+    transferor_card = await card_crud.verify_by_number(
+        db=db,
+        number=data.transferor_card_number,
+    )
+    receiver_card = await card_crud.verify_by_number(
+        db=db,
+        number=data.receiver_card_number,
+    )
+    receiver_user = await wallet_crud.verify_existence(
+        db=db,
+        wallet_id=receiver_card.wallet_id,
+    )
+    if (
+        transferor_card.wallet != current_user.wallet
+        or transferor_card.type != CardEnum.CREDIT
+    ):
+        raise CardNotFoundException()
+    # * Verify Card exp
+    await card_crud.check_card_exp(db=db, card_id=transferor_card.id)
+
+    verify_pass = verify_password(
+        data.dynamic_password,
+        transferor_card.dynamic_password,
+    )
+    if not verify_pass:
+        raise CardPasswordInValidException()
+
+    if transferor_card.wallet.is_lock:
+        raise LockWalletException()
+
+    # * Check user cash credit
+    if current_user.cash.balance < data.amount:
+        raise LackOfMoneyException()
+
+    await cash_crud.update_cash_by_user(
+        db=db,
+        user=current_user,
+        amount=data.amount,
+        cash_field=CashField.BALANCE,
+        type_operation=TypeOperation.DECREASE,
+    )
+    await cash_crud.update_cash_by_user(
+        db=db,
+        user=receiver_user,
+        amount=data.amount,
+        cash_field=CashField.BALANCE,
+        type_operation=TypeOperation.INCREASE,
+    )
+
+    # ? Generate transaction
+    transaction = TransactionCreate(
+        value=data.amount,
+        text="عملیات انتقال پوا از {} به {}".format(
+            transferor_card.number,
+            receiver_card.number,
+        ),
+        value_type=TransactionValueType.CASH,
+        receiver_id=receiver_card.wallet_id,
+        transferor_id=transferor_card.wallet_id,
+        code=await transaction_crud.generate_code(db=db),
+        status=TransactionStatusEnum.ACCEPTED,
+        reason=TransactionReasonEnum.CARD_TO_CARD,
+    )
+    main_tr = await transaction_crud.create(db=db, obj_in=transaction)
+    transaction_row = TransactionRowCreate(
+        transaction_id=main_tr.id,
+        value=data.amount,
+        text="عملیات انتقال پوا از {} به {}".format(
+            transferor_card.number,
+            receiver_card.number,
+        ),
+        value_type=TransactionValueType.CASH,
+        receiver_id=receiver_card.wallet_id,
+        transferor_id=transferor_card.wallet_id,
+        code=await transaction_crud.generate_code(db=db),
+        status=TransactionStatusEnum.ACCEPTED,
+        reason=TransactionReasonEnum.CARD_TO_CARD,
+    )
+    await transaction_row_crud.create(db=db, obj_in=transaction_row)
+
+    await db.commit()
+    return ResultResponse(result="Successful")

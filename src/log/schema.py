@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -35,8 +36,21 @@ class LogRead(LogBase):
 
 
 # ---------------------------------------------------------------------------
+class LogFilterOrderFild(Enum):
+    type = "type"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+# ---------------------------------------------------------------------------
+class LogFilterOrderBy(BaseModel):
+    desc: list[LogFilterOrderFild] = []
+    asc: list[LogFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class LogFilter(BaseModel):
     name: None | str = None
     national_code: None | str = None
-    user_id: None | UUID = None
     type: LogType | None = None
+    order_by: LogFilterOrderBy | None = None

@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class LocationParentNotFoundException(HTTPException):
             "code": 1100,
             "persian_message": "منطقه والد پیدا نشد!",
             "english_message": "Location Parent Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,6 +33,7 @@ class LocationNotFoundException(HTTPException):
             "code": 1101,
             "persian_message": "منطقه مورد نظر پیدا نشد!",
             "english_message": "Location Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -46,6 +49,7 @@ class LocationNameIsDuplicatedException(HTTPException):
             "code": 1102,
             "persian_message": "نام منطقه تکراری است!",
             "english_message": "Location Name Is Duplicated!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -61,5 +65,6 @@ class LocationHaveChildException(HTTPException):
             "code": 1102,
             "persian_message": "منطقه مورد نظر دارای زیر منطقه است!",
             "english_message": "Location Have Child!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

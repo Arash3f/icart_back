@@ -1,9 +1,10 @@
+import enum
 from datetime import datetime
 from typing import Type
 from uuid import UUID
 
 import jdatetime
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.card.exception import (
@@ -11,11 +12,18 @@ from src.card.exception import (
     UserCardDuplicateException,
     UserCardIsDeActiveException,
 )
-from src.card.models import Card
+from src.card.models import Card, CardEnum
 from src.card.schema import CardUpdatePassword, CreateCard
 from src.database.base_crud import BaseCRUD
 from src.user.models import User
 from src.utils.card_number import CardType
+from src.wallet.crud import wallet as wallet_card
+from src.wallet.models import Wallet
+
+
+class CardValueType(enum.Enum):
+    CASH = "CASH"
+    CREDIT = "CREDIT"
 
 
 # ---------------------------------------------------------------------------
@@ -77,12 +85,15 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         CardNotFoundException
         """
         response = await db.execute(
-            select(self.model).where(self.model.number == number),
+            select(self.model).where(
+                self.model.number == number,
+                self.model.is_active == True,
+            ),
         )
 
         card_obj = response.scalar_one_or_none()
         if not card_obj:
-            raise CardNotFoundException(time=str(jdatetime.datetime.now()))
+            raise CardNotFoundException()
 
         return card_obj
 
@@ -91,7 +102,8 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         *,
         db: AsyncSession,
         user: User,
-        card_type: CardType,
+        card_type: CardEnum,
+        is_active: bool = True,
     ) -> bool | UserCardDuplicateException:
         """
         ! Verify user have card with type
@@ -104,6 +116,8 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
             Target User
         card_type
             Target Card Type
+        is_active
+            Is card active
 
         Returns
         -------
@@ -118,6 +132,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
             select(self.model).where(
                 Card.wallet == user.wallet,
                 self.model.type == card_type,
+                self.model.is_active == is_active,
             ),
         )
 
@@ -187,6 +202,55 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         )
 
         card_obj = response.scalar_one_or_none()
+
+        return card_obj
+
+    async def get_active_card(
+        self,
+        *,
+        db: AsyncSession,
+        wallet: Wallet,
+        card_value_type: CardValueType,
+    ) -> Card | None:
+        """
+        ! Find active card for user
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        wallet
+            Target User wallet
+        card_value_type
+            Target Card Type
+
+        Returns
+        -------
+        card
+            Found Item
+        """
+        type_filter = True
+        if card_value_type == CardValueType.CASH:
+            type_filter = or_(
+                self.model.type == CardEnum.BLUE,
+                self.model.type == CardEnum.GOLD,
+                # self.model.type == CardEnum.SILVER,
+            )
+        elif card_value_type == CardValueType.CREDIT:
+            type_filter = (self.model.type == CardEnum.CREDIT,)
+
+        response = await db.execute(
+            select(self.model).where(
+                self.model.wallet == wallet,
+                type_filter,
+                self.model.is_active == True,
+            ),
+        )
+
+        card_obj = response.scalar_one_or_none()
+
+        if card_obj is None:
+            raise CardNotFoundException()
 
         return card_obj
 

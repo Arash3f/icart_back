@@ -34,6 +34,8 @@ class CashFilterOrderFild(Enum):
     remaining = "remaining"
     transferred = "transferred"
     debt = "debt"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
@@ -44,4 +46,7 @@ class CashFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class CashFilter(BaseModel):
+    national_code: None | str = None
+    phone_number: None | str = None
+    name: str | None = None
     order_by: CashFilterOrderBy | None = None

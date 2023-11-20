@@ -45,6 +45,8 @@ class UserMessageShortRead(BaseModel):
 class UserMessageFilterOrderFild(Enum):
     status = "status"
     title = "title"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
@@ -57,4 +59,6 @@ class UserMessageFilterOrderBy(BaseModel):
 class UserMessageFilter(BaseModel):
     status: bool | None = None
     title: str | None = None
+    name: None | str = None
+    national_code: None | str = None
     order_by: UserMessageFilterOrderBy | None = None

@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!
@@ -16,6 +17,7 @@ class UserNotFoundException(HTTPException):
             "code": 100,
             "english_message": "User not found!",
             "persian_message": "کاربر مورد نظر پیدا نشد!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,6 +33,7 @@ class IncorrectUsernameOrPasswordException(HTTPException):
             "code": 101,
             "english_message": "Incorrect username or password!",
             "persian_message": "نام کاربری یا رمز عبور اشتباه است!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -46,6 +49,7 @@ class UsernameIsDuplicatedException(HTTPException):
             "code": 102,
             "english_message": "Username is duplicated!",
             "persian_message": "نام کاربری تکراری است!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -61,5 +65,6 @@ class NationalCodeIsDuplicatedException(HTTPException):
             "code": 103,
             "english_message": "National Code is duplicated!",
             "persian_message": "کد ملی تکراری است!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

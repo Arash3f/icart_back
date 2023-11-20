@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!
@@ -16,5 +17,6 @@ class AgentNotFoundException(HTTPException):
             "code": 400,
             "persian_message": "نماینده مورد نظر پیدا نشد!",
             "english_message": "Agent Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

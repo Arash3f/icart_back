@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,5 +17,6 @@ class NewsNotFoundException(HTTPException):
             "code": 2600,
             "persian_message": "اخبار مورد نظر پیدا نشد!",
             "english_message": "News Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

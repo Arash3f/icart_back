@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class VerifyPhoneNotFoundException(HTTPException):
             "code": 2900,
             "persian_message": "اطلاعات پیامک مورد نظر پیدا نشد!",
             "english_message": "Verify Phone Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,5 +33,6 @@ class IncorrectCodeException(HTTPException):
             "code": 2901,
             "english_message": "Code Is Incorrect!",
             "persian_message": "کد نامعتبر است!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

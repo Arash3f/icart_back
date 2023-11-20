@@ -1,5 +1,6 @@
 import enum
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -47,8 +48,26 @@ class PosRead(PosBase):
 
 
 # ---------------------------------------------------------------------------
+class PosFilterOrderFild(Enum):
+    number = "number"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+# ---------------------------------------------------------------------------
+class PosFilterOrderBy(BaseModel):
+    desc: list[PosFilterOrderFild] = []
+    asc: list[PosFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
 class PosFilter(BaseModel):
     merchant_id: UUID | None = None
+    name: None | str = None
+    national_code: None | str = None
+    number: None | str = None
+    merchant_number: None | str = None
+    order_by: PosFilterOrderBy | None = None
 
 
 # ---------------------------------------------------------------------------

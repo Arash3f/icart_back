@@ -50,6 +50,8 @@ class CapitalTransferFilterOrderFild(Enum):
     value = "value"
     transfer_type = "transfer_type"
     finish = "finish"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +62,8 @@ class CapitalTransferFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class CapitalTransferFilter(BaseModel):
+    name: None | str = None
+    national_code: None | str = None
     gt_value: float | None = None
     lt_value: float | None = None
     transfer_type: None | CapitalTransferEnum = None

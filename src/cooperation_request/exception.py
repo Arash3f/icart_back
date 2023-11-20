@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,5 +17,6 @@ class CooperationRequestNotFoundException(HTTPException):
             "code": 5100,
             "persian_message": "درخواست همکاری مورد نظر پیدا نشد!",
             "english_message": "Cooperation Request Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, and_, func, or_, orm
+from sqlalchemy import select, and_, func, or_
 
 from src import deps
 from src.ability.crud import ability as ability_crud
@@ -21,7 +21,7 @@ from src.agent.schema import (
     AgentPublicRead,
 )
 from src.schema import IDRequest, ResultResponse, UpdateActivityRequest
-from src.transaction.models import Transaction, TransactionRow, TransactionReasonEnum
+from src.transaction.models import TransactionRow, TransactionReasonEnum
 from src.user.models import User
 from src.permission import permission_codes as permission
 
@@ -135,7 +135,7 @@ async def find_agent(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[AgentRead])
-async def get_agent_list(
+async def agent_list(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
@@ -174,7 +174,7 @@ async def get_agent_list(
         else True
     )
     filter_data.national_code = (
-        (Agent.user.mapper.class_.national_code.contains(filter_data.national_code))
+        (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code is not None
         else True
     )
@@ -206,7 +206,7 @@ async def get_agent_list(
             ),
         )
         .join(Agent.user)
-    )
+    ).order_by(Agent.created_at.desc())
 
     if filter_data.is_main is not None:
         query = query.filter(Agent.is_main == filter_data.is_main)
@@ -219,12 +219,20 @@ async def get_agent_list(
                 query = query.order_by(Agent.is_main.desc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.desc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == AgentFilterOrderFild.is_main:
                 query = query.order_by(Agent.is_main.asc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.asc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     agent_list = await agent_crud.get_multi(
         db=db,
@@ -238,7 +246,7 @@ async def get_agent_list(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list/public", response_model=AgentPublicResponse)
-async def get_agent_list_public(
+async def agent_list_public(
     *,
     db=Depends(deps.get_db),
     filter_data: AgentFilter,
@@ -252,8 +260,6 @@ async def get_agent_list_public(
     ----------
     db
         Target database connection
-    current_user
-        Requester user object
     skip
         Pagination skip
     limit
@@ -276,7 +282,7 @@ async def get_agent_list_public(
         else True
     )
     filter_data.national_code = (
-        (Agent.user.mapper.class_.national_code.contains(filter_data.national_code))
+        (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code is not None
         else True
     )
@@ -303,7 +309,7 @@ async def get_agent_list_public(
             ),
         )
         .join(Agent.user)
-    )
+    ).order_by(Agent.created_at.desc())
 
     if filter_data.is_main is not None:
         query = query.filter(Agent.is_main == filter_data.is_main)
@@ -316,12 +322,20 @@ async def get_agent_list_public(
                 query = query.order_by(Agent.is_main.desc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.desc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.desc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == AgentFilterOrderFild.is_main:
                 query = query.order_by(Agent.is_main.asc())
             elif field == AgentFilterOrderFild.profit_rate:
                 query = query.order_by(Agent.profit_rate.asc())
+            elif field == AgentFilterOrderFild.created_at:
+                query = query.order_by(User.created_at.asc())
+            elif field == AgentFilterOrderFild.updated_at:
+                query = query.order_by(User.updated_at.asc())
     # * Find All agent with filters
     agent_list = await agent_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 
@@ -370,8 +384,8 @@ async def get_income_from(
         .select_from(TransactionRow)
         .filter(
             and_(
-                TransactionRow.transaction.intermediary_id == user.wallet.id,
-                TransactionRow.receiver_id == current_user.wallet.id,
+                TransactionRow.transaction.intermediary_id == user.id,
+                TransactionRow.receiver_id == current_user.id,
             ),
         )
         .group_by(TransactionRow.value_type)

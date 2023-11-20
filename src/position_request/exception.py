@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class PositionRequestNotFoundException(HTTPException):
             "code": 1400,
             "persian_message": "درخواست مورد نظر پیدا نشد!",
             "english_message": "PositionRequest Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,6 +33,7 @@ class ApproveAccessDeniedException(HTTPException):
             "code": 1401,
             "persian_message": "شما اجازه تایید درخواست را ندارید!",
             "english_message": "You are not allowed to approve the request!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -46,5 +49,6 @@ class PositionRequestClosedException(HTTPException):
             "code": 1402,
             "persian_message": "درخواست مورد نظر بسته شده است!",
             "english_message": "The position request is closed!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

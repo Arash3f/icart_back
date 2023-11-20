@@ -36,6 +36,8 @@ class AbilityRead(AbilityBase):
 # ---------------------------------------------------------------------------
 class AbilityFilterOrderFild(Enum):
     name = "name"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
