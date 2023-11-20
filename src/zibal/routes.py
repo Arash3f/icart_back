@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.card.crud import CardValueType
 from src.core.config import settings
+from src.exception import TechnicalProblemException
 from src.log.crud import log as log_crud
 from src.transaction.models import (
     TransactionStatusEnum,
@@ -12,7 +13,7 @@ from src.transaction.models import (
     TransactionReasonEnum,
 )
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
-from src.zibal.schema import ZibalCashChargingRequest
+from src.zibal.schema import ZibalCashChargingRequest, ZibalCashChargingRequestResponse
 from src.log.models import LogType
 from src.transaction.crud import transaction as transaction_crud
 from src.user.crud import user as user_crud
@@ -20,7 +21,6 @@ from src.card.crud import card as card_crud
 from src.wallet.crud import wallet as wallet_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.transaction.crud import transaction_row as transaction_row_crud
-from src.permission import permission_codes as permission
 from src.schema import ResultResponse
 from src.user.models import User
 
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/zibal", tags=["zibal"])
 
 
 # ---------------------------------------------------------------------------
-@router.post("/cash/charging/request", response_model=ResultResponse)
+@router.post("/cash/charging/request", response_model=ZibalCashChargingRequestResponse)
 async def delete_zibal(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -37,7 +37,7 @@ async def delete_zibal(
         deps.get_current_user(),
     ),
     ipg_data: ZibalCashChargingRequest,
-) -> ResultResponse:
+) -> ZibalCashChargingRequestResponse:
     """
     ! Create a Transaction for zibal IPG
 
@@ -57,8 +57,11 @@ async def delete_zibal(
     """
     url = "https://gateway.zibal.ir/v1/request"
     res = requests.post(
+        headers={
+            "Content-Type": "application/json",
+        },
         url=url,
-        data={
+        json={
             "merchant": "6559b8aea9a498000fde7cc8",
             "amount": int(ipg_data.amount),
             "callbackUrl": "https://icarts.ir/zibal/cash/charging/verify/",
@@ -67,6 +70,10 @@ async def delete_zibal(
             ),
         },
     )
+
+    response = res.json()
+    if response["message"] != "success":
+        raise TechnicalProblemException()
 
     admin_user = await user_crud.verify_existence_by_username(
         db=db,
@@ -82,13 +89,6 @@ async def delete_zibal(
         db=db,
         card_value_type=CardValueType.CASH,
         wallet=current_user.wallet,
-    )
-
-    print(res)
-
-    icart_user = await user_crud.find_by_username(
-        db=db,
-        username=settings.ADMIN_USERNAME,
     )
 
     # ! Main
@@ -117,7 +117,7 @@ async def delete_zibal(
     )
     await transaction_row_crud.create(db=db, obj_in=merchant_fee_tr)
 
-    return ResultResponse(result="Zibal IPG Create Successfully")
+    return ZibalCashChargingRequestResponse(track_id=response["trackId"])
 
 
 # ---------------------------------------------------------------------------
