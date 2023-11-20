@@ -23,7 +23,7 @@ from src.agent.crud import agent as agent_crud
 from src.log.crud import log as log_crud
 from src.merchant.crud import merchant as merchant_crud
 from src.organization.crud import organization as organization_crud
-from src.agent.models import Agent
+from src.agent.models import Agent, AgentLocation
 from src.location.crud import location as location_crud
 from src.merchant.models import Merchant
 from src.organization.models import Organization
@@ -437,7 +437,7 @@ async def approve_position_request(
                 if obj_current.target_position == PositionRequestType.AGENT:
                     new_agent = Agent()
                     new_agent.user_id = obj_current.requester_user_id
-                    new_agent.location = location
+                    new_agent.locations = [location]
                     new_agent.parent = parent_agent
                     new_agent.is_main = True
                     new_agent.profit_rate = 40
