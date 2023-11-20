@@ -34,7 +34,7 @@ async def delete_zibal(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions(),
+        deps.get_current_user(),
     ),
     ipg_data: ZibalCashChargingRequest,
 ) -> ResultResponse:
