@@ -34,7 +34,7 @@ async def delete_zibal(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.DELETE_FEE]),
+        deps.get_current_user_with_permissions(),
     ),
     ipg_data: ZibalCashChargingRequest,
 ) -> ResultResponse:
@@ -84,7 +84,7 @@ async def delete_zibal(
         wallet=current_user.wallet,
     )
 
-    print(res.data)
+    print(res)
 
     icart_user = await user_crud.find_by_username(
         db=db,
