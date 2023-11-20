@@ -113,11 +113,12 @@ async def delete_zibal(
         receiver_id=receiver_card.id,
         transferor_id=transferor_card.id,
         code=main_code,
+        zibal_track_id=str(response["trackId"]),
         reason=TransactionReasonEnum.WALLET_CHARGING,
     )
     await transaction_row_crud.create(db=db, obj_in=merchant_fee_tr)
 
-    return ZibalCashChargingRequestResponse(track_id=response["trackId"])
+    return ZibalCashChargingRequestResponse(track_id=str(response["trackId"]))
 
 
 # ---------------------------------------------------------------------------

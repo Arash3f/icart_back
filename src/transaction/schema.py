@@ -34,6 +34,7 @@ class TransactionRowCreate(TransactionRowBase):
     transaction_id: UUID
     receiver_id: UUID
     transferor_id: UUID
+    zibal_track_id: str | None = None
     reason: TransactionReasonEnum
     code: int | None = None
 
