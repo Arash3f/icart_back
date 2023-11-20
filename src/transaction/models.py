@@ -25,6 +25,7 @@ class TransactionReasonEnum(enum.Enum):
 
 class TransactionStatusEnum(enum.Enum):
     FAILED = "FAILED"
+    IN_PROGRESS = "IN_PROGRESS"
     ACCEPTED = "ACCEPTED"
 
 
@@ -84,6 +85,7 @@ class TransactionRow(Base, BaseMixin):
     value_type = Column(Enum(TransactionValueType), nullable=False)
     code = Column(Integer, unique=True)
     reason = Column(Enum(TransactionReasonEnum), nullable=True)
+    zibal_track_id = Column(String, nullable=True)
     status = Column(
         Enum(TransactionStatusEnum),
         nullable=False,

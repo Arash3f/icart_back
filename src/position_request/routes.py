@@ -107,8 +107,7 @@ async def update_position_request(
             number=update_data.data.number,
             exception_number=position_request.contract.number,
         )
-        print(number_duplicated)
-        if number_duplicated is None:
+        if number_duplicated:
             raise ContractNumberIsDuplicatedException()
 
     # * Update Contract
