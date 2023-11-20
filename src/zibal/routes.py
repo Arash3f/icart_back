@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
+from src.card.crud import CardValueType
 from src.core.config import settings
 from src.log.crud import log as log_crud
 from src.transaction.models import (
@@ -15,6 +16,7 @@ from src.zibal.schema import ZibalCashChargingRequest
 from src.log.models import LogType
 from src.transaction.crud import transaction as transaction_crud
 from src.user.crud import user as user_crud
+from src.card.crud import card as card_crud
 from src.wallet.crud import wallet as wallet_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.transaction.crud import transaction_row as transaction_row_crud
@@ -58,12 +60,28 @@ async def delete_zibal(
         url=url,
         data={
             "merchant": "6559b8aea9a498000fde7cc8",
-            "amount": ipg_data.amount,
+            "amount": int(ipg_data.amount),
             "callbackUrl": "https://icarts.ir/zibal/cash/charging/verify/",
             "description": "عملیات شارژ کردن کیف پول کاربر با شناسه {}".format(
                 current_user.id,
             ),
         },
+    )
+
+    admin_user = await user_crud.verify_existence_by_username(
+        db=db,
+        username=settings.ADMIN_USERNAME,
+    )
+
+    transferor_card = await card_crud.get_active_card(
+        db=db,
+        card_value_type=CardValueType.CASH,
+        wallet=admin_user.wallet,
+    )
+    receiver_card = await card_crud.get_active_card(
+        db=db,
+        card_value_type=CardValueType.CASH,
+        wallet=current_user.wallet,
     )
 
     print(res.data)
@@ -80,8 +98,8 @@ async def delete_zibal(
         value=float(ipg_data.amount),
         text="عملیات شارژ کردن کیف پول کاربر",
         value_type=TransactionValueType.CASH,
-        receiver_id=current_user.wallet.id,
-        transferor_id=icart_user.wallet.id,
+        receiver_id=receiver_card.id,
+        transferor_id=transferor_card.id,
         code=main_code,
         reason=TransactionReasonEnum.WALLET_CHARGING,
     )
@@ -92,8 +110,8 @@ async def delete_zibal(
         value=float(ipg_data.amount),
         text="عملیات شارژ کردن کیف پول کاربر",
         value_type=TransactionValueType.CASH,
-        receiver_id=current_user.wallet.id,
-        transferor_id=icart_user.wallet.id,
+        receiver_id=receiver_card.id,
+        transferor_id=transferor_card.id,
         code=main_code,
         reason=TransactionReasonEnum.WALLET_CHARGING,
     )
