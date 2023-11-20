@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!
@@ -16,6 +17,7 @@ class CapitalTransferNotFoundException(HTTPException):
             "code": 500,
             "persian_message": "اننقال مورد نظر پیدا نشد!",
             "english_message": "CapitalTransfer Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,5 +33,6 @@ class CapitalTransferFinishException(HTTPException):
             "code": 501,
             "persian_message": "اننقال مورد نظر قبلا به اتمام رسیده است!",
             "english_message": "CapitalTransfer is finished!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

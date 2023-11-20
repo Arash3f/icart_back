@@ -610,31 +610,58 @@ async def list_position_request(
     # * Prepare filter fields
     filter_data.field_of_work = (
         (PositionRequest.field_of_work == filter_data.field_of_work)
-        if filter_data.field_of_work
+        if filter_data.field_of_work is not None
         else True
     )
     filter_data.target_position = (
         (PositionRequest.target_position == filter_data.target_position)
-        if filter_data.target_position
+        if filter_data.target_position is not None
         else True
     )
     filter_data.is_approve = (
         (PositionRequest.is_approve == filter_data.is_approve)
-        if filter_data.is_approve
+        if filter_data.is_approve is not None
         else True
     )
     filter_data.status = (
-        (PositionRequest.status == filter_data.status) if filter_data.status else True
+        (PositionRequest.status == filter_data.status)
+        if filter_data.status is not None
+        else True
+    )
+    filter_data.position_request_name = (
+        (PositionRequest.name.contains(filter_data.position_request_name))
+        if filter_data.position_request_name
+        else True
+    )
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
     )
 
     # * Add filter fields
-    query = select(PositionRequest).filter(
-        and_(
-            filter_data.field_of_work,
-            filter_data.target_position,
-            filter_data.is_approve,
-            filter_data.status,
-        ),
+    query = (
+        select(PositionRequest)
+        .filter(
+            and_(
+                filter_data.field_of_work,
+                filter_data.target_position,
+                filter_data.is_approve,
+                filter_data.status,
+                filter_data.name,
+                filter_data.national_code,
+            ),
+        )
+        .join(PositionRequest.requester_user)
+        .order_by(PositionRequest.created_at.desc())
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -648,6 +675,10 @@ async def list_position_request(
                 query = query.order_by(PositionRequest.is_approve.desc())
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.desc())
+            elif field == PositionRequestFilterOrderFild.created_at:
+                query = query.order_by(PositionRequest.created_at.desc())
+            elif field == PositionRequestFilterOrderFild.updated_at:
+                query = query.order_by(PositionRequest.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == PositionRequestFilterOrderFild.field_of_work:
@@ -658,6 +689,10 @@ async def list_position_request(
                 query = query.order_by(PositionRequest.is_approve.asc())
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.asc())
+            elif field == PositionRequestFilterOrderFild.created_at:
+                query = query.order_by(PositionRequest.created_at.asc())
+            elif field == PositionRequestFilterOrderFild.updated_at:
+                query = query.order_by(PositionRequest.updated_at.asc())
 
     # * Not Have permissions
     if not verify_data.is_valid:
@@ -712,45 +747,58 @@ async def get_must_approve_position_request(
     # * Prepare filter fields
     filter_data.field_of_work = (
         (PositionRequest.field_of_work == filter_data.field_of_work)
-        if filter_data.field_of_work
+        if filter_data.field_of_work is not None
         else True
     )
     filter_data.target_position = (
         (PositionRequest.target_position == filter_data.target_position)
-        if filter_data.target_position
+        if filter_data.target_position is not None
         else True
     )
     filter_data.is_approve = (
         (PositionRequest.is_approve == filter_data.is_approve)
-        if filter_data.is_approve
+        if filter_data.is_approve is not None
         else True
     )
     filter_data.status = (
-        (PositionRequest.status == filter_data.status) if filter_data.status else True
+        (PositionRequest.status == filter_data.status)
+        if filter_data.status is not None
+        else True
+    )
+    filter_data.position_request_name = (
+        (PositionRequest.name.contains(filter_data.position_request_name))
+        if filter_data.position_request_name
+        else True
     )
     filter_data.name = (
-        (PositionRequest.name.contains(filter_data.name)) if filter_data.name else True
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
     )
     filter_data.national_code = (
-        (
-            PositionRequest.requester_user.national_code.contains(
-                filter_data.national_code,
-            )
-        )
-        if filter_data.national_code
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
         else True
     )
 
     # * Add filter fields
-    query = select(PositionRequest).filter(
-        and_(
-            filter_data.field_of_work,
-            filter_data.target_position,
-            filter_data.is_approve,
-            filter_data.status,
-            filter_data.name,
-            filter_data.national_code,
-        ),
+    query = (
+        select(PositionRequest)
+        .filter(
+            and_(
+                filter_data.field_of_work,
+                filter_data.target_position,
+                filter_data.is_approve,
+                filter_data.status,
+                filter_data.name,
+                filter_data.national_code,
+            ),
+        )
+        .join(PositionRequest.requester_user)
+        .order_by(PositionRequest.created_at.desc())
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -764,6 +812,10 @@ async def get_must_approve_position_request(
                 query = query.order_by(PositionRequest.is_approve.desc())
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.desc())
+            elif field == PositionRequestFilterOrderFild.created_at:
+                query = query.order_by(PositionRequest.created_at.desc())
+            elif field == PositionRequestFilterOrderFild.updated_at:
+                query = query.order_by(PositionRequest.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == PositionRequestFilterOrderFild.field_of_work:
@@ -774,6 +826,10 @@ async def get_must_approve_position_request(
                 query = query.order_by(PositionRequest.is_approve.asc())
             elif field == PositionRequestFilterOrderFild.status:
                 query = query.order_by(PositionRequest.status.asc())
+            elif field == PositionRequestFilterOrderFild.created_at:
+                query = query.order_by(PositionRequest.created_at.asc())
+            elif field == PositionRequestFilterOrderFild.updated_at:
+                query = query.order_by(PositionRequest.updated_at.asc())
 
     # * Not Have permissions
     if not verify_data.is_valid:

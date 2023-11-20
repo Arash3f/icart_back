@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -53,3 +54,29 @@ class CooperationRequestRead(CooperationRequestBase):
 
     # ! relations
     location: LocationComplex
+
+
+# ---------------------------------------------------------------------------
+class CooperationRequestFilterOrderFild(Enum):
+    field_of_work = "field_of_work"
+    type = "type"
+    status = "status"
+    created_at = "created_at"
+    updated_at = "updated_at"
+
+
+# ---------------------------------------------------------------------------
+class CooperationRequestFilterOrderBy(BaseModel):
+    desc: list[CooperationRequestFilterOrderFild] = []
+    asc: list[CooperationRequestFilterOrderFild] = []
+
+
+# ---------------------------------------------------------------------------
+class CooperationRequestFilter(BaseModel):
+    field_of_work: CooperationRequestFieldOfWorkType | None = None
+    type: CooperationType | None = None
+    requester_name: str | None = None
+    status: bool | None = None
+    name: str | None = None
+    tel: str | None = None
+    order_by: CooperationRequestFilterOrderBy | None = None

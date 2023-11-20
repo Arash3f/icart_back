@@ -105,6 +105,8 @@ class TicketFilterOrderFild(Enum):
     position = "position"
     important = "important"
     number = "number"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +118,8 @@ class TicketFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class TicketFilter(BaseModel):
     creator_id: UUID | None = None
+    name: str | None = None
+    national_code: str | None = None
     type: None | TicketType = None
     admin_visited: bool = False
     waiting_for_reply: bool = False

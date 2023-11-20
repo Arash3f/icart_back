@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from pytz import timezone
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.operators import or_
 
 from src import deps
 from src.auth.exception import AccessDeniedException
@@ -55,6 +56,7 @@ from src.utils.card_number import (
     CompanyType,
 )
 from src.wallet.exception import LackOfMoneyException, LockWalletException
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/card", tags=["card"])
@@ -266,29 +268,41 @@ async def read_card_list(
     UserNotFoundException
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.number = (
         (Card.number.contains(filter_data.number)) if filter_data.number else True
     )
     filter_data.type = (Card.type == filter_data.type) if filter_data.type else True
-    if filter_data.user_id:
-        filter_user = await user_crud.verify_existence(
-            db=db,
-            user_id=filter_data.user_id,
-        )
-        filter_data.user_id = Card.wallet_id == filter_user.wallet.id
-    else:
-        filter_data.user_id = True
+    filter_data.user_id = (
+        (User.id == filter_data.user_id) if filter_data.user_id else True
+    )
 
     # * Add filter fields
     query = (
         select(Card)
         .filter(
             and_(
+                filter_data.name,
+                filter_data.national_code,
                 filter_data.number,
                 filter_data.type,
                 filter_data.user_id,
             ),
         )
+        .join(Card.wallet)
+        .join(Wallet.user)
         .order_by(Card.created_at.desc())
     )
 
@@ -298,10 +312,18 @@ async def read_card_list(
             # * Add filter fields
             if field == CardFilterOrderFild.number:
                 query = query.order_by(Card.number.desc())
+            elif field == CardFilterOrderFild.created_at:
+                query = query.order_by(Card.created_at.desc())
+            elif field == CardFilterOrderFild.updated_at:
+                query = query.order_by(Card.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == CardFilterOrderFild.number:
                 query = query.order_by(Card.number.asc())
+            elif field == CardFilterOrderFild.created_at:
+                query = query.order_by(Card.created_at.asc())
+            elif field == CardFilterOrderFild.updated_at:
+                query = query.order_by(Card.updated_at.asc())
 
     # * Have permissions
     if not verify_data.is_valid:
@@ -560,7 +582,7 @@ async def get_manage_chart(
 
 # ---------------------------------------------------------------------------
 @router.post("/card_to_card", response_model=ResultResponse)
-async def buy_card(
+async def card_to_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),

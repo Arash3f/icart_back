@@ -187,7 +187,7 @@ async def find_location(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[LocationRead])
-async def get_location(
+async def get_location_list(
     *,
     db=Depends(deps.get_db),
     filter_data: LocationFilter,
@@ -222,19 +222,27 @@ async def get_location(
             is_main = Location.parent_id.is_not(None)
 
     filter_data.parent_id = (
-        (Location.parent_id == filter_data.parent_id) if filter_data.parent_id else True
+        (Location.parent_id == filter_data.parent_id)
+        if filter_data.parent_id is not None
+        else True
     )
     filter_data.name = (
-        (Location.name.contains(filter_data.name)) if filter_data.name else True
+        (Location.name.contains(filter_data.name))
+        if filter_data.name is not None
+        else True
     )
 
     # * Add filter fields
-    query = select(Location).filter(
-        and_(
-            is_main,
-            filter_data.parent_id,
-            filter_data.name,
-        ),
+    query = (
+        select(Location)
+        .filter(
+            and_(
+                is_main,
+                filter_data.parent_id,
+                filter_data.name,
+            ),
+        )
+        .order_by(Location.created_at.desc())
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -246,6 +254,10 @@ async def get_location(
                 query = query.order_by(Location.name.desc())
             elif field == LocationFilterOrderFild.parent_id:
                 query = query.order_by(Location.parent_id.desc())
+            elif field == LocationFilterOrderFild.created_at:
+                query = query.order_by(Location.created_at.desc())
+            elif field == LocationFilterOrderFild.updated_at:
+                query = query.order_by(Location.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == LocationFilterOrderFild.is_main:
@@ -254,6 +266,10 @@ async def get_location(
                 query = query.order_by(Location.name.asc())
             elif field == LocationFilterOrderFild.parent_id:
                 query = query.order_by(Location.parent_id.asc())
+            elif field == LocationFilterOrderFild.created_at:
+                query = query.order_by(Location.created_at.asc())
+            elif field == LocationFilterOrderFild.updated_at:
+                query = query.order_by(Location.updated_at.asc())
     # * Find All agent with filters
     obj_list = await location_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 

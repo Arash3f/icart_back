@@ -1,7 +1,7 @@
 from random import randint
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import jdatetime
@@ -19,6 +19,7 @@ from src.installments.schema import InstallmentsCreate
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.card.crud import card as card_crud
+from src.merchant.models import Merchant
 from src.transaction.exception import TransactionLimitException
 from src.wallet.crud import wallet as wallet_crud
 from src.merchant.exception import MerchantNotFoundException
@@ -57,6 +58,7 @@ from src.pos.schema import (
     InstallmentsPurchaseOutput,
     InstallmentsPurchaseInput,
     CardBalanceType,
+    PosFilterOrderFild,
 )
 from src.schema import DeleteResponse, IDRequest
 from src.user.models import User
@@ -271,15 +273,67 @@ async def read_pos_list(
         List of pos
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.merchant_id = (
         (Pos.merchant_id == filter_data.merchant_id)
-        if filter_data.merchant_id
+        if filter_data.merchant_id is not None
+        else True
+    )
+    filter_data.number = (
+        (Pos.number.contains(filter_data.number))
+        if filter_data.number is not None
+        else True
+    )
+    filter_data.merchant_number = (
+        (Merchant.number.contains(filter_data.merchant_number))
+        if filter_data.merchant_number is not None
         else True
     )
     # * Add filter fields
-    query = select(Pos).filter(
-        filter_data.merchant_id,
-    )
+    query = (
+        select(Pos)
+        .filter(
+            and_(
+                filter_data.name,
+                filter_data.national_code,
+                filter_data.merchant_id,
+                filter_data.number,
+                filter_data.merchant_number,
+            ),
+        )
+        .join(Pos.merchant)
+        .join(Merchant.user)
+    ).order_by(Pos.created_at.desc())
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == PosFilterOrderFild.number:
+                query = query.order_by(Pos.number.desc())
+            elif field == PosFilterOrderFild.created_at:
+                query = query.order_by(Pos.created_at.desc())
+            elif field == PosFilterOrderFild.updated_at:
+                query = query.order_by(Pos.updated_at.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == PosFilterOrderFild.number:
+                query = query.order_by(Pos.number.asc())
+            elif field == PosFilterOrderFild.created_at:
+                query = query.order_by(Pos.created_at.asc())
+            elif field == PosFilterOrderFild.updated_at:
+                query = query.order_by(Pos.updated_at.asc())
     pos_list = await pos_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return pos_list
 
@@ -406,7 +460,7 @@ async def config(
 
 # ---------------------------------------------------------------------------
 @router.post("/balance", response_model=BalanceOutput)
-async def config(
+async def balance(
     *,
     db: AsyncSession = Depends(deps.get_db),
     card_data: BalanceInput,
@@ -437,7 +491,7 @@ async def config(
     pos = await pos_crud.find_by_number(db=db, number=card_data.terminal_number)
 
     if pos.merchant.number != card_data.merchant_number:
-        raise PosNotFoundException(time=c_time)
+        raise PosNotFoundException()
 
     # * Verify Card number existence
     card = await card_crud.verify_by_number(db=db, number=card_data.card_track)
@@ -445,7 +499,7 @@ async def config(
     # * Verify Card password
     verify_pass = verify_password(card_data.password, card.password)
     if not verify_pass:
-        raise CardPasswordInValidException(time=c_time)
+        raise CardPasswordInValidException()
 
     cash_balance = card.wallet.user.cash.balance
     cash_balance += card.wallet.user.cash.cash_back
@@ -512,7 +566,7 @@ async def purchase(
         min=44640,
     )
     if user_transactions_amount >= 400000000:
-        raise TransactionLimitException(time=str(jdatetime.datetime.now()))
+        raise TransactionLimitException()
 
     # * Find All users
     agent = pos.merchant.agent

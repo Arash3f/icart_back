@@ -1,14 +1,18 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.cooperation_request.crud import cooperation_request as cooperation_request_crud
+from src.cooperation_request.models import CooperationRequest
 from src.log.crud import log as log_crud
 from src.location.crud import location as location_crud
 from src.cooperation_request.schema import (
     CooperationRequestCreate,
     CooperationRequestRead,
     CooperationRequestUpdateStatus,
+    CooperationRequestFilter,
+    CooperationRequestFilterOrderFild,
 )
 from src.log.models import LogType
 from src.permission import permission_codes as permission
@@ -182,6 +186,7 @@ async def read_cooperation_request_list(
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.VIEW_COOPERATION_REQUEST]),
     ),
+    filter_data: CooperationRequestFilter,
     skip: int = 0,
     limit: int = 10,
 ) -> list[CooperationRequestRead]:
@@ -198,16 +203,93 @@ async def read_cooperation_request_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     cooperation_request_list
         List of cooperation_request
     """
+    # * Prepare filter fields
+    filter_data.field_of_work = (
+        (CooperationRequest.field_of_work == filter_data.field_of_work)
+        if filter_data.field_of_work is not None
+        else True
+    )
+    filter_data.type = (
+        (CooperationRequest.type == filter_data.type)
+        if filter_data.type is not None
+        else True
+    )
+    filter_data.requester_name = (
+        (CooperationRequest.requester_name.contains(filter_data.requester_name))
+        if filter_data.requester_name is not None
+        else True
+    )
+    filter_data.status = (
+        (CooperationRequest.status == filter_data.status)
+        if filter_data.status is not None
+        else True
+    )
+    filter_data.name = (
+        (CooperationRequest.name.contains(filter_data.name))
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.tel = (
+        (CooperationRequest.name.contains(filter_data.tel))
+        if filter_data.tel is not None
+        else True
+    )
+
+    # * Add filter fields
+    query = (
+        select(CooperationRequest)
+        .filter(
+            and_(
+                filter_data.field_of_work,
+                filter_data.type,
+                filter_data.requester_name,
+                filter_data.status,
+                filter_data.name,
+                filter_data.tel,
+            ),
+        )
+        .order_by(CooperationRequest.created_at.desc())
+    )
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == CooperationRequestFilterOrderFild.field_of_work:
+                query = query.order_by(CooperationRequest.field_of_work.desc())
+            elif field == CooperationRequestFilterOrderFild.type:
+                query = query.order_by(CooperationRequest.type.desc())
+            elif field == CooperationRequestFilterOrderFild.status:
+                query = query.order_by(CooperationRequest.status.desc())
+            elif field == CooperationRequestFilterOrderFild.created_at:
+                query = query.order_by(CooperationRequest.created_at.desc())
+            elif field == CooperationRequestFilterOrderFild.updated_at:
+                query = query.order_by(CooperationRequest.updated_at.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == CooperationRequestFilterOrderFild.field_of_work:
+                query = query.order_by(CooperationRequest.field_of_work.asc())
+            elif field == CooperationRequestFilterOrderFild.type:
+                query = query.order_by(CooperationRequest.type.asc())
+            elif field == CooperationRequestFilterOrderFild.status:
+                query = query.order_by(CooperationRequest.status.asc())
+            elif field == CooperationRequestFilterOrderFild.created_at:
+                query = query.order_by(CooperationRequest.created_at.asc())
+            elif field == CooperationRequestFilterOrderFild.updated_at:
+                query = query.order_by(CooperationRequest.updated_at.asc())
+
     cooperation_request_list = await cooperation_request_crud.get_multi(
         db=db,
         skip=skip,
         limit=limit,
+        query=query,
     )
     return cooperation_request_list
 

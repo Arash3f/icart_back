@@ -93,7 +93,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
 
         card_obj = response.scalar_one_or_none()
         if not card_obj:
-            raise CardNotFoundException(time=str(jdatetime.datetime.now()))
+            raise CardNotFoundException()
 
         return card_obj
 
@@ -250,7 +250,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         card_obj = response.scalar_one_or_none()
 
         if card_obj is None:
-            raise CardNotFoundException(time=str(jdatetime.datetime.now()))
+            raise CardNotFoundException()
 
         return card_obj
 

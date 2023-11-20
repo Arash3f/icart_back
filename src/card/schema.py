@@ -69,6 +69,8 @@ class CardForgetPasswordInput(BaseModel):
 # ---------------------------------------------------------------------------
 class CardFilterOrderFild(Enum):
     number = "number"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +81,8 @@ class CardFilterOrderBy(BaseModel):
 
 # ---------------------------------------------------------------------------
 class CardFilter(BaseModel):
+    name: None | str = None
+    national_code: None | str = None
     number: None | str = None
     type: None | CardEnum = None
     user_id: None | UUID = None

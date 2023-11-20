@@ -57,6 +57,8 @@ class LocationFilterOrderFild(Enum):
     is_main = "is_main"
     name = "name"
     parent_id = "parent_id"
+    created_at = "created_at"
+    updated_at = "updated_at"
 
 
 # ---------------------------------------------------------------------------

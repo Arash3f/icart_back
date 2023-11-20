@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!
@@ -16,6 +17,7 @@ class ContractNotFoundException(HTTPException):
             "code": 600,
             "persian_message": "قرارداد مورد نظر پیدا نشد!",
             "english_message": "Contract Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,5 +33,6 @@ class ContractNumberIsDuplicatedException(HTTPException):
             "code": 601,
             "persian_message": "شماره قرارداد تکراری است!",
             "english_message": "Contract Number Is Duplicated!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

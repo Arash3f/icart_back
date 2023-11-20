@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class ImportantDataNotFoundException(HTTPException):
             "code": 900,
             "persian_message": "داده مورد نظر پیدا نشد!",
             "english_message": "ImportantData Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,5 +33,6 @@ class MaxImportantDataException(HTTPException):
             "code": 901,
             "persian_message": "نمی توان داده ی جدید ساخت!",
             "english_message": "Can not create a new important data!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class TicketNotFoundException(HTTPException):
             "code": 2300,
             "persian_message": "تیکت مورد نظر پیدا نشد!",
             "english_message": "Ticket Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,5 +33,6 @@ class TicketClosePositionException(HTTPException):
             "code": 2301,
             "persian_message": "تیکت مورد نظر بسته شده است!",
             "english_message": "Ticket position is Closed!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None

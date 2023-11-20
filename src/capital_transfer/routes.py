@@ -7,7 +7,7 @@ from fastapi import (
     Form,
     UploadFile,
 )
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -134,6 +134,19 @@ async def capital_transfer_list(
         List of capital transfer
     """
     # * Prepare filter fields
+    filter_data.name = (
+        or_(
+            User.first_name.contains(filter_data.name),
+            User.last_name.contains(filter_data.name),
+        )
+        if filter_data.name is not None
+        else True
+    )
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code is not None
+        else True
+    )
     filter_data.gt_value = (
         (CapitalTransfer.value > filter_data.gt_value) if filter_data.gt_value else True
     )
@@ -174,6 +187,8 @@ async def capital_transfer_list(
                 filter_data.status,
             ),
         )
+        .join(CapitalTransfer.receiver)
+        .join(Wallet.user)
         .order_by(CapitalTransfer.created_at.desc())
     )
 
@@ -187,6 +202,10 @@ async def capital_transfer_list(
                 query = query.order_by(CapitalTransfer.transfer_type.desc())
             elif field == CapitalTransferFilterOrderFild.finish:
                 query = query.order_by(CapitalTransfer.finish.desc())
+            elif field == CapitalTransferFilterOrderFild.created_at:
+                query = query.order_by(CapitalTransfer.created_at.desc())
+            elif field == CapitalTransferFilterOrderFild.updated_at:
+                query = query.order_by(CapitalTransfer.updated_at.desc())
         for field in filter_data.order_by.asc:
             # * Add filter fields
             if field == CapitalTransferFilterOrderFild.value:
@@ -195,6 +214,10 @@ async def capital_transfer_list(
                 query = query.order_by(CapitalTransfer.transfer_type.asc())
             elif field == CapitalTransferFilterOrderFild.finish:
                 query = query.order_by(CapitalTransfer.finish.asc())
+            elif field == CapitalTransferFilterOrderFild.created_at:
+                query = query.order_by(CapitalTransfer.created_at.asc())
+            elif field == CapitalTransferFilterOrderFild.updated_at:
+                query = query.order_by(CapitalTransfer.updated_at.asc())
 
     if not verify_data.is_valid:
         query = query.where(
