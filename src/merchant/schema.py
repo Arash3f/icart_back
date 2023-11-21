@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, confloat
 
 from src.contract.schema import ContractRead, ContractShortInfo, ContractReadV2
 from src.location.schema import LocationRead
+from src.pos.schema import PosRead
 from src.position_request.models import FieldOfWorkType, SellingType
 from src.schema import IDRequest
 from src.user.schema import UserRead
@@ -36,6 +37,7 @@ class MerchantRead(MerchantBase):
     # # ! Relation
     contract: ContractRead | None = None
     user: UserRead
+    pos: PosRead | None = None
     location: LocationRead | None = None
 
 
