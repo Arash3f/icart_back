@@ -7,6 +7,7 @@ from sqlalchemy import (
     Integer,
     CheckConstraint,
     Boolean,
+    Float,
 )
 from sqlalchemy.orm import relationship
 
@@ -33,24 +34,24 @@ class Merchant(Base, BaseMixin):
 
     # ? PROFIT
     blue_profit = Column(
-        Integer,
+        Float,
         CheckConstraint("blue_profit >= 0 AND blue_profit <= 100"),
-        default=0,
+        default=0.0,
     )
     silver_profit = Column(
-        Integer,
+        Float,
         CheckConstraint("silver_profit >= 0 AND silver_profit <= 100"),
-        default=0,
+        default=0.0,
     )
     gold_profit = Column(
-        Integer,
+        Float,
         CheckConstraint("gold_profit >= 0 AND gold_profit <= 100"),
-        default=0,
+        default=0.0,
     )
     corporate_profit = Column(
-        Integer,
+        Float,
         CheckConstraint("corporate_profit >= 0 AND corporate_profit <= 100"),
-        default=0,
+        default=0.0,
     )
 
     # ! Relations

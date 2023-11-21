@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, conint
+from pydantic import BaseModel, ConfigDict, confloat
 
 from src.contract.schema import ContractRead, ContractShortInfo, ContractReadV2
 from src.location.schema import LocationRead
@@ -19,10 +19,10 @@ class MerchantBase(BaseModel):
     geo: str | None
     selling_type: SellingType
 
-    blue_profit: conint(ge=0, le=100) = 0
-    silver_profit: conint(ge=0, le=100) = 0
-    gold_profit: conint(ge=0, le=100) = 0
-    corporate_profit: conint(ge=0, le=100) = 0
+    blue_profit: confloat(ge=0, le=100) = 0.0
+    silver_profit: confloat(ge=0, le=100) = 0.0
+    gold_profit: confloat(ge=0, le=100) = 0.0
+    corporate_profit: confloat(ge=0, le=100) = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -47,10 +47,10 @@ class MerchantReadV2(MerchantBase):
     geo: str | None
     selling_type: SellingType
 
-    blue_profit: conint(ge=0, le=100) = 0
-    silver_profit: conint(ge=0, le=100) = 0
-    gold_profit: conint(ge=0, le=100) = 0
-    corporate_profit: conint(ge=0, le=100) = 0
+    blue_profit: confloat(ge=0, le=100) = 0.0
+    silver_profit: confloat(ge=0, le=100) = 0.0
+    gold_profit: confloat(ge=0, le=100) = 0.0
+    corporate_profit: confloat(ge=0, le=100) = 0.0
 
     # # ! Relation
     contract: ContractReadV2 | None = None
@@ -72,10 +72,10 @@ class StoresRead(MerchantBase):
 
 # ---------------------------------------------------------------------------
 class MerchantUpdateData(BaseModel):
-    blue_profit: conint(ge=0, le=100) = 0
-    silver_profit: conint(ge=0, le=100) = 0
-    gold_profit: conint(ge=0, le=100) = 0
-    corporate_profit: conint(ge=0, le=100) = 0
+    blue_profit: confloat(ge=0, le=100) = 0.0
+    silver_profit: confloat(ge=0, le=100) = 0.0
+    gold_profit: confloat(ge=0, le=100) = 0.0
+    corporate_profit: confloat(ge=0, le=100) = 0.0
 
 
 # ---------------------------------------------------------------------------

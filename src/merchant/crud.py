@@ -152,7 +152,7 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
         db: AsyncSession,
         merchant: Merchant,
         card: Card,
-    ) -> int:
+    ) -> float:
         """
         Calculate user cash back from merchant
 
@@ -170,7 +170,7 @@ class MerchantCRUD(BaseCRUD[Merchant, None, MerchantUpdate]):
         cash_back
             user cash back
         """
-        cash_back = 0
+        cash_back = 0.0
         if card.type == CardEnum.BLUE:
             cash_back = merchant.blue_profit
         elif card.type == CardEnum.CREDIT:
