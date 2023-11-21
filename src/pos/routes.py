@@ -567,8 +567,9 @@ async def purchase(
             min=44640,
         )
     )
-    if user_transactions_amount >= 400000000:
-        raise TransactionLimitException()
+    if user_transactions_amount:
+        if user_transactions_amount >= 400000000:
+            raise TransactionLimitException()
 
     # * Find All users
     agent = pos.merchant.agent
