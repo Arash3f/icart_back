@@ -563,7 +563,7 @@ async def purchase(
     user_transactions_amount = (
         await transaction_row_crud.calculate_user_amount_transaction(
             db=db,
-            user=card.wallet.user,
+            card=card,
             min=44640,
         )
     )

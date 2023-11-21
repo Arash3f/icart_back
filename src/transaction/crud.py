@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.card.models import Card
 from src.database.base_crud import BaseCRUD
 from src.transaction.exception import TransactionNotFoundException
 from src.transaction.models import Transaction, TransactionRow
@@ -241,7 +242,7 @@ class TransactionRowCRUD(BaseCRUD[TransactionRow, TransactionRowCreate, None]):
         self,
         *,
         db: AsyncSession,
-        user: User,
+        card: Card,
         min: int,
     ) -> int:
         start = datetime.now()
@@ -252,7 +253,7 @@ class TransactionRowCRUD(BaseCRUD[TransactionRow, TransactionRowCreate, None]):
             select(func.sum(self.model.value))
             .select_from(self.model)
             .where(
-                self.model.transferor.mapper.class_.wallet == user.wallet,
+                self.model.transferor == card,
                 self.model.created_at <= start,
                 self.model.created_at >= end,
             ),
