@@ -35,7 +35,7 @@ class Location(Base, BaseMixin):
 
     cooperation_requests = relationship(CooperationRequest, back_populates="location")
 
-    children = relationship("Location", back_populates="parent")
+    children = relationship("Location", back_populates="parent", lazy="selectin")
 
     users = relationship("User", back_populates="location")
 

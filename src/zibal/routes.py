@@ -156,6 +156,7 @@ async def create_zibal(
     ------
     TransactionNotFoundException
     """
+    # todo: just from Zibal
     transaction_row = await transaction_row_crud.verify_by_zibal_track_id(
         db=db,
         zibal_track_id=trackId,

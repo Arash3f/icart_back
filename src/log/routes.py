@@ -110,7 +110,6 @@ async def get_log(
             and_(
                 filter_data.name,
                 filter_data.national_code,
-                filter_data.user_id,
                 filter_data.type,
             ),
         )
