@@ -54,7 +54,8 @@ async def create_bank_card(*,
     if card_exist:
         raise BankCardDuplicate()
     bank_card_created = await bank_card_crud.create(db=db, obj_in=bank_card_in)
-    background_tasks.add_task(verify_bank_card,)
+    background_tasks.add_task(verify_bank_card,current_user.id,bank_card_in.card_number,bank_card_in.shaba_number)
+    return bank_card_created
 
 # -------------------------------------------------------------
 
@@ -62,10 +63,11 @@ async def create_bank_card(*,
 @router.delete("/delete/{bank_card_id}", response_model=BankCardRead)
 async def delete_bank_card(*,
                            db: AsyncSession = Depends(deps.get_db),
-                           current_user: User = Depends(deps.get_current_user()),
-                           bank_card_id:UUID):
-    bank_card_exist = await bank_card_crud.read_user_bank_card(db=db,user_id=current_user.id,card_id=bank_card_id)
+                           current_user: User = Depends(
+                               deps.get_current_user()),
+                           bank_card_id: UUID):
+    bank_card_exist = await bank_card_crud.read_user_bank_card(db=db, user_id=current_user.id, card_id=bank_card_id)
     if not bank_card_exist:
         raise BankCardNotFound()
-    bank_card_crud.delete(db=db,item_id=bank_card_id)
+    bank_card_crud.delete(db=db, item_id=bank_card_exist.id)
     return bank_card_exist

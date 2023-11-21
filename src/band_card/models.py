@@ -2,7 +2,8 @@ from sqlalchemy import (Column,
                         String,
                         ForeignKey,
                         Boolean,
-                        UUID)
+                        UUID,
+                        Integer)
 from sqlalchemy.orm import relationship
 
 from src.database.base_class import Base, BaseMixin
