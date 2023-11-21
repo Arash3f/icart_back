@@ -40,7 +40,7 @@ from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.credit.crud import credit as credit_crud, CreditField
 from src.transaction.crud import transaction_row as transaction_row_crud
 from src.transaction.crud import transaction as transaction_crud
-from src.pos.exception import PosNotFoundException
+from src.pos.exception import PosNotFoundException, PosIsDuplicatedException
 from src.pos.models import Pos
 from src.pos.schema import (
     PosBase,
@@ -75,54 +75,54 @@ from src.wallet.models import Wallet
 router = APIRouter(prefix="/pos", tags=["pos"])
 
 
-# ---------------------------------------------------------------------------
-@router.delete("/delete", response_model=DeleteResponse)
-async def delete_pos(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.DELETE_POS]),
-    ),
-    delete_data: IDRequest,
-) -> DeleteResponse:
-    """
-    ! Delete Pos
-
-    Parameters
-    ----------
-    db
-        Target database connection
-    current_user
-        Requester User
-    delete_data
-        Necessary data for delete pos
-
-    Returns
-    -------
-    response
-        Result of operation
-
-    Raises
-    ------
-    PosNotFoundException
-    """
-    # * Verify pos existence
-    pos = await pos_crud.verify_existence(db=db, pos_id=delete_data.id)
-    # * Delete Pos
-    await pos_crud.delete(db=db, item_id=delete_data.id)
-
-    # ? Generate Log
-    await log_crud.auto_generate(
-        db=db,
-        log_type=LogType.UPDATE_POS,
-        user_id=current_user.id,
-        detail="پوز با شماره {} با موفقیت توسط کاربر {} حذف شد".format(
-            pos.number,
-            current_user.username,
-        ),
-    )
-
-    return DeleteResponse(result="Pos Deleted Successfully")
+# # ---------------------------------------------------------------------------
+# @router.delete("/delete", response_model=DeleteResponse)
+# async def delete_pos(
+#     *,
+#     db: AsyncSession = Depends(deps.get_db),
+#     current_user: User = Depends(
+#         deps.get_current_user_with_permissions([permission.DELETE_POS]),
+#     ),
+#     delete_data: IDRequest,
+# ) -> DeleteResponse:
+#     """
+#     ! Delete Pos
+#
+#     Parameters
+#     ----------
+#     db
+#         Target database connection
+#     current_user
+#         Requester User
+#     delete_data
+#         Necessary data for delete pos
+#
+#     Returns
+#     -------
+#     response
+#         Result of operation
+#
+#     Raises
+#     ------
+#     PosNotFoundException
+#     """
+#     # * Verify pos existence
+#     pos = await pos_crud.verify_existence(db=db, pos_id=delete_data.id)
+#     # * Delete Pos
+#     await pos_crud.delete(db=db, item_id=delete_data.id)
+#
+#     # ? Generate Log
+#     await log_crud.auto_generate(
+#         db=db,
+#         log_type=LogType.UPDATE_POS,
+#         user_id=current_user.id,
+#         detail="پوز با شماره {} با موفقیت توسط کاربر {} حذف شد".format(
+#             pos.number,
+#             current_user.username,
+#         ),
+#     )
+#
+#     return DeleteResponse(result="Pos Deleted Successfully")
 
 
 # ---------------------------------------------------------------------------
@@ -158,11 +158,23 @@ async def create_pos(
     MerchantNotFoundException
     """
     # * Verify merchant existence
-    await merchant_crud.verify_existence(db=db, merchant_id=create_data.merchant_id)
+    merchant = await merchant_crud.verify_existence(
+        db=db,
+        merchant_id=create_data.merchant_id,
+    )
+    if merchant.pos:
+        raise PosIsDuplicatedException()
     # * Verify pos Token duplicated
     await pos_crud.verify_duplicate_number(db=db, number=create_data.number)
     # * Create Pos
-    pos = await pos_crud.create(db=db, obj_in=create_data)
+    pos = Pos()
+    pos.merchant_id = create_data.merchant_id
+    pos.number = await pos_crud.generate_wallet_number(
+        db=db,
+    )
+    await db.commit()
+    await db.refresh(pos)
+    return pos
 
     # ? Generate Log
     await log_crud.auto_generate(

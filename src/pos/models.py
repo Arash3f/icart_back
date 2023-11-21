@@ -18,6 +18,6 @@ class Pos(Base, BaseMixin):
     merchant = relationship(
         "Merchant",
         foreign_keys=[merchant_id],
-        back_populates="poses",
+        back_populates="pos",
         lazy="selectin",
     )

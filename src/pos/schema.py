@@ -29,8 +29,9 @@ class PosBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-class PosCreate(PosBase):
-    pass
+class PosCreate(BaseModel):
+    # ! Relations
+    merchant_id: UUID
 
 
 # ---------------------------------------------------------------------------

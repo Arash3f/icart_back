@@ -34,3 +34,18 @@ class PosNumberIsDuplicatedException(HTTPException):
             "english_message": "Pos Number Is Duplicated!",
         }
         self.headers = None
+
+
+class PosIsDuplicatedException(HTTPException):
+    """
+    ? Exception when pos is duplicated
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 3001,
+            "persian_message": "پوز تکراری است!",
+            "english_message": "Pos Is Duplicated!",
+        }
+        self.headers = None

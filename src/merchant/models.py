@@ -83,4 +83,9 @@ class Merchant(Base, BaseMixin):
 
     installments = relationship(Installments, back_populates="merchant")
 
-    poses = relationship(Pos, back_populates="merchant")
+    pos = relationship(
+        Pos,
+        uselist=False,
+        back_populates="merchant",
+        lazy="selectin",
+    )
