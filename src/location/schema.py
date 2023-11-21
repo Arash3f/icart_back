@@ -18,6 +18,13 @@ class LocationBase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class LocationBaseV2(BaseModel):
+    id: UUID
+    name: str
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------------------------------------------------------------------
 class LocationComplex(BaseModel):
     name: str
     model_config = ConfigDict(extra="forbid")
@@ -41,6 +48,19 @@ class LocationUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 class LocationRead(LocationBase):
     id: uuid.UUID
+
+    created_at: datetime
+    updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+class LocationCompleteRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    model_config = ConfigDict(extra="forbid")
+
+    # ! Relations
+    children: list[LocationBaseV2] = []
 
     created_at: datetime
     updated_at: datetime | None

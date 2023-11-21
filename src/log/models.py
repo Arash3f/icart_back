@@ -58,6 +58,7 @@ class LogType(enum.Enum):
     APPROVE_POSITION_REQUEST = "APPROVE_POSITION_REQUEST"
     # ! CARD
     BUY_CARD = "BUY_CARD"
+    CHARGING_CARD = "CHARGING_CARD"
 
 
 # ---------------------------------------------------------------------------

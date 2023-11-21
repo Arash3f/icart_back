@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, and_
+from sqlalchemy.orm import selectinload
 
 from src import deps
 from src.location.crud import location as location_crud
@@ -13,6 +14,7 @@ from src.location.schema import (
     LocationRead,
     LocationUpdate,
     LocationFilterOrderFild,
+    LocationCompleteRead,
 )
 from src.log.models import LogType
 from src.permission import permission_codes as permission
@@ -273,4 +275,89 @@ async def get_location_list(
     # * Find All agent with filters
     obj_list = await location_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
 
+    return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/list/complete", response_model=List[LocationCompleteRead])
+async def get_compelete_location_list(
+    *,
+    db=Depends(deps.get_db),
+    filter_data: LocationFilter,
+    skip: int = 0,
+    limit: int = 20,
+) -> List[LocationCompleteRead]:
+    """
+    ! Get All Location
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    skip
+        Pagination skip
+    limit
+        Pagination limit
+    filter_data
+        Filter data
+
+    Returns
+    -------
+    obj_list
+        List of ability
+    """
+    # * Prepare filter fields
+    is_main = Location.parent_id.is_(None)
+
+    filter_data.parent_id = (
+        (Location.parent_id == filter_data.parent_id)
+        if filter_data.parent_id is not None
+        else True
+    )
+    filter_data.name = (
+        (Location.name.contains(filter_data.name))
+        if filter_data.name is not None
+        else True
+    )
+
+    # * Add filter fields
+    query = (
+        select(Location)
+        .filter(
+            and_(
+                is_main,
+                filter_data.parent_id,
+                filter_data.name,
+            ),
+        )
+        .order_by(Location.created_at.desc())
+    ).options(selectinload(Location.children))
+    # * Prepare order fields
+    if filter_data.order_by:
+        for field in filter_data.order_by.desc:
+            # * Add filter fields
+            if field == LocationFilterOrderFild.is_main:
+                query = query.order_by(Location.is_main.desc())
+            elif field == LocationFilterOrderFild.name:
+                query = query.order_by(Location.name.desc())
+            elif field == LocationFilterOrderFild.parent_id:
+                query = query.order_by(Location.parent_id.desc())
+            elif field == LocationFilterOrderFild.created_at:
+                query = query.order_by(Location.created_at.desc())
+            elif field == LocationFilterOrderFild.updated_at:
+                query = query.order_by(Location.updated_at.desc())
+        for field in filter_data.order_by.asc:
+            # * Add filter fields
+            if field == LocationFilterOrderFild.is_main:
+                query = query.order_by(Location.is_main.asc())
+            elif field == LocationFilterOrderFild.name:
+                query = query.order_by(Location.name.asc())
+            elif field == LocationFilterOrderFild.parent_id:
+                query = query.order_by(Location.parent_id.asc())
+            elif field == LocationFilterOrderFild.created_at:
+                query = query.order_by(Location.created_at.asc())
+            elif field == LocationFilterOrderFild.updated_at:
+                query = query.order_by(Location.updated_at.asc())
+    # * Find All agent with filters
+    obj_list = await location_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
     return obj_list

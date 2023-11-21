@@ -63,7 +63,7 @@ async def read_permissions_list(
         .filter(
             filter_data.name,
         )
-        .order_by(Permission.created_at.desc)
+        .order_by(Permission.created_at.desc())
     )
     # * Prepare order fields
     if filter_data.order_by:

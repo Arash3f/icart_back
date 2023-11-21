@@ -261,6 +261,40 @@ class TransactionRowCRUD(BaseCRUD[TransactionRow, TransactionRowCreate, None]):
         response = my_query.scalar()
         return response
 
+    async def verify_by_zibal_track_id(
+        self,
+        *,
+        db: AsyncSession,
+        zibal_track_id: str,
+    ) -> Type[TransactionRow]:
+        """
+        ! Verify Transaction by zibal_track_id
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        zibal_track_id
+            zibal_track_id
+
+        Returns
+        -------
+        found_item
+            Found Item
+
+        Raises
+        ------
+        TransactionNotFoundException
+        """
+        response = await db.execute(
+            select(self.model).where(self.model.zibal_track_id == zibal_track_id),
+        )
+
+        found_item = response.scalar_one_or_none()
+        if not found_item:
+            raise TransactionNotFoundException()
+        return found_item
+
 
 # ---------------------------------------------------------------------------
 transaction = TransactionCRUD(Transaction)
