@@ -253,7 +253,7 @@ async def get_roles_list(
         .filter(
             or_(filter_data.name),
         )
-        .order_by(Role.created_at.desc)
+        .order_by(Role.created_at.desc())
     )
     # * Prepare order fields
     if filter_data.order_by:
