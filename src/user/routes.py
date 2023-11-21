@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.core.config import settings
+from src.exception import TechnicalProblemException
 from src.log.models import LogType
 from src.organization.models import Organization
+from src.role.exception import RoleNotFoundException, CanNotChantUserWithMainRole
 from src.schema import ResultResponse, ChartResponse, ChartFilterInput, Duration
 from src.user.models import User
 from src.user.schema import (
@@ -18,11 +20,13 @@ from src.user.schema import (
     UserRead2,
     UpdateUserActivityRequest,
     UserFilterOrderFild,
+    UserRoleUpdate,
 )
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
 from src.user.crud import user as user_crud
 from src.organization.crud import organization as organization_crud
+from src.role.crud import role as role_crud
 from src.location.crud import location as location_crud
 from src.log.crud import log as log_crud
 from src.permission import permission_codes as permission
@@ -881,3 +885,69 @@ async def acquisition_statistics(
         buf_time = buf_end
 
     return chart_data
+
+
+# ---------------------------------------------------------------------------
+@router.put("/update/role", response_model=ResultResponse)
+async def update_user_role(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_ROLE]),
+    ),
+    update_data: UserRoleUpdate,
+) -> ResultResponse:
+    """
+    ! Update User Role
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    update_data
+        Necessary data for update role
+
+    Returns
+    -------
+    role
+        Updated role
+
+    Raises
+    ------
+    RoleNotFoundException
+    RoleNameIsDuplicatedException
+    """
+    user = await user_crud.verify_existence(
+        db=db,
+        user_id=update_data.where.id,
+    )
+
+    if (
+        user.role.name == "نماینده"
+        or user.role.name == "پذیرنده"
+        or user.role.name == "سازمان"
+    ):
+        raise CanNotChantUserWithMainRole()
+
+    # * Verify role's name duplicate
+    role = await role_crud.verify_existence(
+        db=db,
+        role_id=update_data.data.role_id,
+    )
+
+    user.role = role
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        user_id=current_user.id,
+        log_type=LogType.UPDATE_ROLE,
+        detail="نقش کاربر {} با موفقیت توسط کاربر {} ویرایش شد".format(
+            user.username,
+            current_user.national_code,
+        ),
+    )
+
+    return ResultResponse(result="User Role Updated Successfully")

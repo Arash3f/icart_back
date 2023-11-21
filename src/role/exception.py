@@ -52,3 +52,19 @@ class RoleHaveUserException(HTTPException):
             "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
+
+
+class CanNotChantUserWithMainRole(HTTPException):
+    """
+    ? Exception When change user with main role
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 1603,
+            "persian_message": "نمی توان کاربر با نقش اصلی را تغییر داد!",
+            "english_message": "Cannot change user with main role!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None

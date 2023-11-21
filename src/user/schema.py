@@ -159,3 +159,14 @@ class UpdateUserActivityData(BaseModel):
 class UpdateUserActivityRequest(BaseModel):
     where: IDRequest
     data: UpdateUserActivityData
+
+
+# ---------------------------------------------------------------------------
+class UserRoleUpdateInput(BaseModel):
+    role_id: UUID
+
+
+# ---------------------------------------------------------------------------
+class UserRoleUpdate(BaseModel):
+    where: IDRequest
+    data: UserRoleUpdateInput
