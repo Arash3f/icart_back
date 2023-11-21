@@ -560,10 +560,12 @@ async def purchase(
         raise LockWalletException()
 
     # ! Transaction ceiling
-    user_transactions_amount = await transaction_crud.calculate_user_amount_transaction(
-        db=db,
-        user=card.wallet.user,
-        min=44640,
+    user_transactions_amount = (
+        await transaction_row_crud.calculate_user_amount_transaction(
+            db=db,
+            user=card.wallet.user,
+            min=44640,
+        )
     )
     if user_transactions_amount >= 400000000:
         raise TransactionLimitException()
