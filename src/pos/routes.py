@@ -18,7 +18,8 @@ from src.fee.models import Fee, FeeTypeEnum, FeeUserType
 from src.installments.schema import InstallmentsCreate
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
-from src.card.crud import card as card_crud
+from src.agent.crud import agent as agent_crud
+from src.card.crud import card as card_crud, CardValueType
 from src.merchant.models import Merchant
 from src.transaction.exception import TransactionLimitException
 from src.wallet.crud import wallet as wallet_crud
@@ -68,6 +69,7 @@ from src.wallet.exception import (
     LockWalletException,
     MerchantLackOfMoneyException,
 )
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/pos", tags=["pos"])
@@ -572,12 +574,21 @@ async def purchase(
             raise TransactionLimitException()
 
     # * Find All users
-    agent = pos.merchant.agent
-    merchant = pos.merchant
-    icart_user = await user_crud.find_by_username(
+    admin_user = await user_crud.verify_existence_by_username(
         db=db,
         username=settings.ADMIN_USERNAME,
     )
+    user_wallet: Wallet = await wallet_crud.get(
+        db=db,
+        item_id=card.wallet_id,
+    )
+    merchant = await merchant_crud.get(
+        db=db,
+        item_id=pos.merchant_id,
+    )
+
+    main_agent = pos.merchant.agent
+
     # * Calculate cashback for requester card with merchant
     find_cash_back = merchant_crud.calculate_user_cash_back(
         db=db,
@@ -591,7 +602,7 @@ async def purchase(
     new_amount = contract_amount - cash_back
 
     # ! Agent
-    agent_profit = (new_amount * agent.profit_rate) / 100
+    agent_profit = (new_amount * main_agent.profit_rate) / 100
     icart_profit = new_amount - agent_profit
 
     # * Calculate Fee
@@ -619,12 +630,52 @@ async def purchase(
     merchant_user = pos.merchant.user
 
     if input_data.type == PosPurchaseType.DIRECT:
+        user_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=user_wallet,
+        )
+        admin_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=admin_user.wallet,
+        )
+        merchant_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=merchant.user.wallet,
+        )
+        main_agent_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=merchant.agent.user.wallet,
+        )
         if (
             merchant_user.cash.balance < merchant_fee
             and input_data.amount < merchant_fee
         ):
             raise MerchantLackOfMoneyException()
     elif input_data.type == PosPurchaseType.CREDIT:
+        user_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CREDIT,
+            wallet=user_wallet,
+        )
+        admin_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CREDIT,
+            wallet=admin_user.wallet,
+        )
+        merchant_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CREDIT,
+            wallet=merchant.user.wallet,
+        )
+        main_agent_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CREDIT,
+            wallet=merchant.agent.user.wallet,
+        )
         if merchant_user.cash.balance < merchant_fee:
             raise MerchantLackOfMoneyException()
     else:
@@ -664,8 +715,8 @@ async def purchase(
         value=float(input_data.amount),
         text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
         value_type=TransactionValueType.CASH,
-        receiver_id=merchant.user.wallet.id,
-        transferor_id=card.wallet.id,
+        receiver_id=merchant_card.id,
+        transferor_id=user_card.id,
         code=main_code,
         reason=TransactionReasonEnum.PURCHASE,
     )
@@ -675,7 +726,7 @@ async def purchase(
     merchant_user.cash.balance = merchant.user.cash.balance - merchant_fee
     await cash_crud.update_cash_by_user(
         db=db,
-        user=icart_user,
+        user=admin_user,
         amount=merchant_fee,
         cash_field=CashField.BALANCE,
         type_operation=TypeOperation.INCREASE,
@@ -686,8 +737,8 @@ async def purchase(
         value=float(merchant_fee),
         text="کارمزد تراکنش",
         value_type=TransactionValueType.CASH,
-        receiver_id=icart_user.wallet.id,
-        transferor_id=merchant_user.wallet.id,
+        receiver_id=admin_card.id,
+        transferor_id=merchant_card.id,
         code=await transaction_crud.generate_code(db=db),
         reason=TransactionReasonEnum.FEE,
     )
@@ -697,7 +748,7 @@ async def purchase(
     requester_user.cash.balance = requester_user.cash.balance - user_fee
     await cash_crud.update_cash_by_user(
         db=db,
-        user=icart_user,
+        user=admin_user,
         amount=user_fee,
         cash_field=CashField.BALANCE,
         type_operation=TypeOperation.INCREASE,
@@ -708,8 +759,8 @@ async def purchase(
         value=float(user_fee),
         text="کارمزد تراکنش",
         value_type=TransactionValueType.CASH,
-        receiver_id=icart_user.wallet.id,
-        transferor_id=card.wallet.id,
+        receiver_id=admin_card.id,
+        transferor_id=user_card.id,
         code=await transaction_crud.generate_code(db=db),
         reason=TransactionReasonEnum.FEE,
     )
@@ -746,18 +797,24 @@ async def purchase(
             value=float(input_data.amount),
             text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CASH,
-            receiver_id=merchant.user.wallet.id,
-            transferor_id=card.wallet.id,
+            receiver_id=merchant_card.id,
+            transferor_id=user_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.PURCHASE,
         )
         await transaction_row_crud.create(db=db, obj_in=sub_main_tr)
 
-        if agent.parent:
-            agent_parent_profit = (agent_profit * agent.parent.profit_rate) / 100
+        if main_agent.parent:
+            # ! Card
+            agent_card = await card_crud.get_active_card(
+                db=db,
+                card_value_type=CardValueType.CASH,
+                wallet=main_agent.parent.user.wallet,
+            )
+            agent_parent_profit = (agent_profit * main_agent.parent.profit_rate) / 100
             await cash_crud.update_cash_by_user(
                 db=db,
-                user=agent.parent.user,
+                user=main_agent.parent.user,
                 amount=agent_parent_profit,
                 cash_field=CashField.BALANCE,
                 type_operation=TypeOperation.INCREASE,
@@ -768,8 +825,8 @@ async def purchase(
                 value=float(agent_parent_profit),
                 text="سود از فروشنده {}".format(merchant.contract.name),
                 value_type=TransactionValueType.CASH,
-                receiver_id=agent.parent.user.wallet.id,
-                transferor_id=merchant.user.wallet.id,
+                receiver_id=agent_card.id,
+                transferor_id=merchant_card.id,
                 code=await transaction_crud.generate_code(db=db),
                 reason=TransactionReasonEnum.PROFIT,
             )
@@ -777,7 +834,7 @@ async def purchase(
             agent_profit -= agent_parent_profit
         await cash_crud.update_cash_by_user(
             db=db,
-            user=agent.user,
+            user=main_agent.user,
             amount=agent_profit,
             cash_field=CashField.BALANCE,
             type_operation=TypeOperation.INCREASE,
@@ -788,8 +845,8 @@ async def purchase(
             value=float(agent_profit),
             text="سود از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CASH,
-            receiver_id=agent.user.wallet.id,
-            transferor_id=merchant.user.wallet.id,
+            receiver_id=main_agent_card.id,
+            transferor_id=merchant_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.PROFIT,
         )
@@ -797,7 +854,7 @@ async def purchase(
 
         await cash_crud.update_cash_by_user(
             db=db,
-            user=icart_user,
+            user=admin_user,
             amount=icart_profit,
             cash_field=CashField.BALANCE,
             type_operation=TypeOperation.INCREASE,
@@ -808,8 +865,8 @@ async def purchase(
             value=float(icart_profit),
             text="سود از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CASH,
-            receiver_id=icart_user.wallet.id,
-            transferor_id=merchant.user.wallet.id,
+            receiver_id=admin_card.id,
+            transferor_id=merchant_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.PROFIT,
         )
@@ -820,8 +877,8 @@ async def purchase(
             value=float(contract_amount),
             text="برداشت سود خدمات",
             value_type=TransactionValueType.CASH,
-            receiver_id=icart_user.wallet.id,
-            transferor_id=merchant.user.wallet.id,
+            receiver_id=admin_card.id,
+            transferor_id=merchant_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.CONTRACT,
         )
@@ -840,8 +897,8 @@ async def purchase(
             value=float(cash_back),
             text="کش بک شما بابت خرید از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CASH,
-            receiver_id=card.wallet.id,
-            transferor_id=icart_user.wallet.id,
+            receiver_id=user_card.id,
+            transferor_id=admin_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.CASH_BACK,
         )
@@ -876,18 +933,23 @@ async def purchase(
             value=float(input_data.amount),
             text="عملیات خرید از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CREDIT,
-            receiver_id=merchant.user.wallet.id,
-            transferor_id=card.wallet.id,
+            receiver_id=merchant_card.id,
+            transferor_id=user_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.PURCHASE,
         )
         await transaction_row_crud.create(db=db, obj_in=sub_main_tr)
 
-        if agent.parent:
-            agent_parent_profit = (agent_profit * agent.parent.profit_rate) / 100
+        if main_agent.parent:
+            agent_card = await card_crud.get_active_card(
+                db=db,
+                card_value_type=CardValueType.CASH,
+                wallet=main_agent.parent.user.wallet,
+            )
+            agent_parent_profit = (agent_profit * main_agent.parent.profit_rate) / 100
             await credit_crud.update_credit_by_user(
                 db=db,
-                user=agent.parent.user,
+                user=main_agent.parent.user,
                 amount=agent_parent_profit,
                 cash_field=CashField.BALANCE,
                 type_operation=TypeOperation.INCREASE,
@@ -898,8 +960,8 @@ async def purchase(
                 value=float(agent_parent_profit),
                 text="سود از فروشنده {}".format(merchant.contract.name),
                 value_type=TransactionValueType.CREDIT,
-                receiver_id=agent.parent.user.wallet.id,
-                transferor_id=merchant.user.wallet.id,
+                receiver_id=agent_card.id,
+                transferor_id=merchant_card.id,
                 code=await transaction_crud.generate_code(db=db),
                 reason=TransactionReasonEnum.PROFIT,
             )
@@ -907,7 +969,7 @@ async def purchase(
             agent_profit -= agent_parent_profit
         await credit_crud.update_credit_by_user(
             db=db,
-            user=agent.user,
+            user=main_agent.user,
             amount=agent_profit,
             cash_field=CashField.BALANCE,
             type_operation=TypeOperation.INCREASE,
@@ -918,8 +980,8 @@ async def purchase(
             value=float(agent_profit),
             text="سود از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CREDIT,
-            receiver_id=agent.user.wallet.id,
-            transferor_id=merchant.user.wallet.id,
+            receiver_id=main_agent_card.id,
+            transferor_id=merchant_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.PROFIT,
         )
@@ -927,7 +989,7 @@ async def purchase(
 
         await credit_crud.update_credit_by_user(
             db=db,
-            user=icart_user,
+            user=admin_user,
             amount=icart_profit,
             cash_field=CashField.BALANCE,
             type_operation=TypeOperation.INCREASE,
@@ -938,8 +1000,8 @@ async def purchase(
             value=float(icart_profit),
             text="سود از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CREDIT,
-            receiver_id=icart_user.wallet.id,
-            transferor_id=merchant.user.wallet.id,
+            receiver_id=admin_card.id,
+            transferor_id=merchant_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.PROFIT,
         )
@@ -950,8 +1012,8 @@ async def purchase(
             value=float(contract_amount),
             text="برداشت سود خدمات",
             value_type=TransactionValueType.CREDIT,
-            receiver_id=icart_user.wallet.id,
-            transferor_id=merchant.user.wallet.id,
+            receiver_id=admin_card.id,
+            transferor_id=merchant_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.CONTRACT,
         )
@@ -971,8 +1033,8 @@ async def purchase(
             value=float(cash_back),
             text="کش بک شما بابت خرید از فروشنده {}".format(merchant.contract.name),
             value_type=TransactionValueType.CREDIT,
-            receiver_id=card.wallet.id,
-            transferor_id=icart_user.wallet.id,
+            receiver_id=user_card.id,
+            transferor_id=admin_card.id,
             code=await transaction_crud.generate_code(db=db),
             reason=TransactionReasonEnum.CASH_BACK,
         )
