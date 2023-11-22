@@ -23,7 +23,8 @@ class AccessToken(BaseModel):
 
 # ---------------------------------------------------------------------------
 class LoginResponse(BaseModel):
-    token: AccessToken
+    access_token: str
+    token_type: str
     role_name: str
     is_valid: bool
 

@@ -76,7 +76,8 @@ async def login(
     # * Generate Access Token
     access_token = await auth_crud.generate_access_token(user=user)
     res = LoginResponse(
-        token=access_token,
+        access_token=access_token.access_token,
+        token_type=access_token.token_type,
         role_name=user.role.name,
         is_valid=user.is_valid,
     )
@@ -116,8 +117,9 @@ async def login_from_admin(
     # * Generate Access Token
     access_token = await auth_crud.generate_access_token(user=user)
     res = LoginResponse(
-        token=access_token,
-        role_name=user.role,
+        access_token=access_token.access_token,
+        token_type=access_token.token_type,
+        role_name=user.role.name,
         is_valid=user.is_valid,
     )
     return res
@@ -166,7 +168,8 @@ async def login_one_time_password(
     access_token = await auth_crud.generate_access_token(user=user)
 
     res = LoginResponse(
-        token=access_token,
+        access_token=access_token.access_token,
+        token_type=access_token.token_type,
         role_name=user.role.name,
         is_valid=user.is_valid,
     )
