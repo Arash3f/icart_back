@@ -6,6 +6,7 @@ from sqlalchemy import select, and_, func, or_
 from src import deps
 from src.ability.crud import ability as ability_crud
 from src.agent.crud import agent as agent_crud
+from src.contract.models import Contract
 from src.location.models import Location
 from src.log.models import LogType
 from src.user.crud import user as user_crud
@@ -167,8 +168,7 @@ async def agent_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
+            Contract.name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -206,6 +206,7 @@ async def agent_list(
             ),
         )
         .join(Agent.user)
+        .join(Agent.contract)
     ).order_by(Agent.created_at.desc())
 
     if filter_data.is_main is not None:
@@ -275,8 +276,7 @@ async def agent_list_public(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
+            Contract.name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -309,6 +309,7 @@ async def agent_list_public(
             ),
         )
         .join(Agent.user)
+        .join(Agent.contract)
     ).order_by(Agent.created_at.desc())
 
     if filter_data.is_main is not None:
