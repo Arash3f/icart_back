@@ -126,7 +126,7 @@ async def delete_zibal(
 
 
 # ---------------------------------------------------------------------------
-@router.get(
+@router.post(
     "/cash/charging/verify/",
     response_model=ResultResponse,
 )
