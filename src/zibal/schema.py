@@ -9,3 +9,8 @@ class ZibalCashChargingRequest(BaseModel):
 # ---------------------------------------------------------------------------
 class ZibalCashChargingRequestResponse(BaseModel):
     track_id: str
+
+
+# ---------------------------------------------------------------------------
+class ZibalVerifyInput(BaseModel):
+    track_id: str

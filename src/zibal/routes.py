@@ -13,7 +13,11 @@ from src.transaction.models import (
     TransactionReasonEnum,
 )
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
-from src.zibal.schema import ZibalCashChargingRequest, ZibalCashChargingRequestResponse
+from src.zibal.schema import (
+    ZibalCashChargingRequest,
+    ZibalCashChargingRequestResponse,
+    ZibalVerifyInput,
+)
 from src.log.models import LogType
 from src.transaction.crud import transaction as transaction_crud
 from src.user.crud import user as user_crud
@@ -129,9 +133,7 @@ async def delete_zibal(
 async def create_zibal(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    trackId: int,
-    success: int,
-    status: int,
+    verify_data: ZibalVerifyInput,
 ) -> ResultResponse:
     """
     ! Verify Zibal Request
@@ -140,12 +142,8 @@ async def create_zibal(
     ----------
     db
         Target database connection
-    trackId
-        zibal track id
-    success
-        operation success value
-    status
-        operation status
+    verify_data
+        Necessary data for verify transaction
 
     Returns
     -------
@@ -156,16 +154,35 @@ async def create_zibal(
     ------
     TransactionNotFoundException
     """
-    # todo: just from Zibal
+
+    url = "https://gateway.zibal.ir/v1/verify"
+    res = requests.post(
+        headers={
+            "Content-Type": "application/json",
+        },
+        url=url,
+        json={
+            "merchant": "6559b8aea9a498000fde7cc8",
+            "trackId": int(verify_data.track_id),
+        },
+    )
+
+    response = res.json()
+
     transaction_row = await transaction_row_crud.verify_by_zibal_track_id(
         db=db,
-        zibal_track_id=trackId,
+        zibal_track_id=verify_data.track_id,
     )
-    if (
-        status == 2
-        and success == 1
-        and transaction_row.status == TransactionStatusEnum.IN_PROGRESS
-    ):
+
+    transaction = await transaction_crud.verify_existence(
+        db=db,
+        transaction_id=transaction_row.transaction_id,
+    )
+
+    if response["status"] == -1 or response["status"] == 2:
+        return ResultResponse(result="In Progress")
+
+    elif response["status"] == 1:
         wallet = await wallet_crud.verify_existence(
             db=db,
             wallet_id=transaction_row.receiver_id,
@@ -179,25 +196,30 @@ async def create_zibal(
         )
         transaction_row.status == TransactionStatusEnum.ACCEPTED
 
-        transaction = await transaction_crud.verify_existence(
-            db=db,
-            transaction_id=transaction_row.transaction_id,
-        )
         transaction.status = TransactionStatusEnum.ACCEPTED
+        transaction_row.status = TransactionStatusEnum.ACCEPTED
 
         db.add(transaction_row)
         db.add(transaction)
         await db.commit()
 
-    # ? Generate Log
-    await log_crud.auto_generate(
-        db=db,
-        user_id=wallet.user_id,
-        log_type=LogType.CHARGING_CARD,
-        detail="حساب کاربر {} با موفقیت به اندازه {} شارژ شد".format(
-            wallet.user_id,
-            transaction_row.value,
-        ),
-    )
+        # ? Generate Log
+        await log_crud.auto_generate(
+            db=db,
+            user_id=wallet.user_id,
+            log_type=LogType.CHARGING_CARD,
+            detail="حساب کاربر {} با موفقیت به اندازه {} شارژ شد".format(
+                wallet.user_id,
+                transaction_row.value,
+            ),
+        )
 
-    return ResultResponse(result="Successfully")
+        return ResultResponse(result="Transaction Success")
+    else:
+        transaction.status = TransactionStatusEnum.FAILED
+        transaction_row.status = TransactionStatusEnum.FAILED
+
+        db.add(transaction_row)
+        db.add(transaction)
+        await db.commit()
+        return ResultResponse(result="Transaction Failed")
