@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from src.role.models import Role
+from src.role.schema import RoleBase
 from src.schema import IDRequest
 
 
@@ -17,6 +19,12 @@ class UserBase(BaseModel):
 class AccessToken(BaseModel):
     access_token: str
     token_type: str
+
+
+# ---------------------------------------------------------------------------
+class LoginResponse(BaseModel):
+    token: AccessToken
+    role: RoleBase
 
 
 # ---------------------------------------------------------------------------

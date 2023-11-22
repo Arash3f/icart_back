@@ -1,4 +1,6 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+from pytz import timezone
+
 from random import randint
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -98,6 +100,12 @@ async def init_db(db: AsyncSession) -> None:
         )
         credit.user = created_user
 
+        db.add(credit)
+        db.add(cash)
+        db.add(wallet)
+        await db.commit()
+        await db.refresh(wallet)
+
         # * Generate card number
         card_swip_number = await generate_card_number(
             db=db,
@@ -137,9 +145,6 @@ async def init_db(db: AsyncSession) -> None:
 
         db.add(swip_card)
         db.add(credit_card)
-        db.add(credit)
-        db.add(cash)
-        db.add(wallet)
         await db.commit()
 
     # ! Generate all project permissions

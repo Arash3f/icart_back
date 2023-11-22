@@ -15,12 +15,12 @@ from src.auth.exception import (
     IncorrectVerifyCodeException,
 )
 from src.auth.schema import (
-    AccessToken,
     ForgetPasswordIn,
     OneTimePasswordRequestIn,
     UserRegisterIn,
     VerifyUsernameAndNationalCode,
     UpdateUserValidationRequest,
+    LoginResponse,
 )
 from src.core.config import settings
 from src.core.security import hash_password
@@ -43,7 +43,7 @@ async def login(
     *,
     db: AsyncSession = Depends(deps.get_db),
     login_form: OAuth2PasswordRequestForm = Depends(),
-) -> AccessToken:
+) -> LoginResponse:
     """
     ! Normal Login
 
@@ -75,7 +75,11 @@ async def login(
         raise InactiveUserException()
     # * Generate Access Token
     access_token = await auth_crud.generate_access_token(user=user)
-    return access_token
+    res = LoginResponse(
+        token=access_token,
+        role=user.role,
+    )
+    return res
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +91,7 @@ async def login_from_admin(
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.LOGIN_AS_ADMIN]),
     ),
-) -> AccessToken:
+) -> LoginResponse:
     """
     ! Normal Login
 
@@ -110,7 +114,11 @@ async def login_from_admin(
     user = await user_crud.verify_existence(db=db, user_id=data_in.id)
     # * Generate Access Token
     access_token = await auth_crud.generate_access_token(user=user)
-    return access_token
+    res = LoginResponse(
+        token=access_token,
+        role=user.role,
+    )
+    return res
 
 
 @router.post("/login/one_time_password")
@@ -118,7 +126,7 @@ async def login_one_time_password(
     *,
     db: AsyncSession = Depends(deps.get_db),
     login_form: OAuth2PasswordRequestForm = Depends(),
-) -> AccessToken:
+) -> LoginResponse:
     """
     ! Login with one time password
 
@@ -154,7 +162,12 @@ async def login_one_time_password(
         raise InactiveUserException()
     # * Generate Access Token
     access_token = await auth_crud.generate_access_token(user=user)
-    return access_token
+
+    res = LoginResponse(
+        token=access_token,
+        role=user.role,
+    )
+    return res
 
 
 # ---------------------------------------------------------------------------

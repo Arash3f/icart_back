@@ -179,6 +179,9 @@ async def create_zibal(
         transaction_id=transaction_row.transaction_id,
     )
 
+    if response["result"] != 201 or response["result"] != 202:
+        return ResultResponse(result="In Progress")
+
     if response["status"] == -1 or response["status"] == 2:
         return ResultResponse(result="In Progress")
 
