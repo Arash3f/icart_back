@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, contains_eager
 
 from src import deps
 from src.cooperation_request.crud import cooperation_request as cooperation_request_crud
 from src.cooperation_request.models import CooperationRequest
+from src.location.models import Location
 from src.log.crud import log as log_crud
 from src.location.crud import location as location_crud
 from src.cooperation_request.schema import (
