@@ -106,6 +106,10 @@ class OrganizationCRUD(BaseCRUD[Organization, None, None]):
             organization_users = organization_users.where(
                 User.organization == organization,
             )
+        else:
+            organization_users = organization_users.where(
+                User.organization_id.is_not(None),
+            )
 
         organization_users = await db.execute(organization_users)
         organization_users_count = organization_users.scalar()

@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.card.crud import CardValueType
 from src.core.config import settings
-from src.exception import TechnicalProblemException
 from src.log.crud import log as log_crud
 from src.transaction.models import (
     TransactionStatusEnum,
@@ -14,15 +13,12 @@ from src.transaction.models import (
 )
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.zibal.schema import (
-    ZibalCashChargingRequest,
-    ZibalCashChargingRequestResponse,
     ZibalVerifyInput,
 )
 from src.log.models import LogType
 from src.transaction.crud import transaction as transaction_crud
 from src.user.crud import user as user_crud
 from src.card.crud import card as card_crud
-from src.wallet.crud import wallet as wallet_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.transaction.crud import transaction_row as transaction_row_crud
 from src.schema import ResultResponse
@@ -33,15 +29,15 @@ router = APIRouter(prefix="/zibal", tags=["zibal"])
 
 
 # ---------------------------------------------------------------------------
-@router.post("/cash/charging/request", response_model=ZibalCashChargingRequestResponse)
+@router.post("/cash/charging/verify/", response_model=ResultResponse)
 async def delete_zibal(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
         deps.get_current_user(),
     ),
-    ipg_data: ZibalCashChargingRequest,
-) -> ZibalCashChargingRequestResponse:
+    verify_data: ZibalVerifyInput,
+) -> ResultResponse:
     """
     ! Create a Transaction for zibal IPG
 
@@ -51,7 +47,7 @@ async def delete_zibal(
         Target database connection
     current_user
         Requester User
-    ipg_data
+    verify_data
         Necessary data for create zibal ipg
 
     Returns
@@ -59,102 +55,6 @@ async def delete_zibal(
     response
         Result of operation
     """
-    url = "https://gateway.zibal.ir/v1/request"
-    res = requests.post(
-        headers={
-            "Content-Type": "application/json",
-        },
-        url=url,
-        json={
-            "merchant": "6559b8aea9a498000fde7cc8",
-            "amount": int(ipg_data.amount),
-            "callbackUrl": "https://icarts.ir/zibal/cash/charging/verify/",
-            "description": "عملیات شارژ کردن کیف پول کاربر با شناسه {}".format(
-                current_user.id,
-            ),
-        },
-    )
-
-    response = res.json()
-    if response["message"] != "success":
-        raise TechnicalProblemException()
-
-    admin_user = await user_crud.verify_existence_by_username(
-        db=db,
-        username=settings.ADMIN_USERNAME,
-    )
-
-    transferor_card = await card_crud.get_active_card(
-        db=db,
-        card_value_type=CardValueType.CASH,
-        wallet=admin_user.wallet,
-    )
-    receiver_card = await card_crud.get_active_card(
-        db=db,
-        card_value_type=CardValueType.CASH,
-        wallet=current_user.wallet,
-    )
-
-    # ! Main
-    main_code = await transaction_crud.generate_code(db=db)
-    main_tr = TransactionCreate(
-        status=TransactionStatusEnum.IN_PROGRESS,
-        value=float(ipg_data.amount),
-        text="عملیات شارژ کردن کیف پول کاربر",
-        value_type=TransactionValueType.CASH,
-        receiver_id=receiver_card.id,
-        transferor_id=transferor_card.id,
-        code=main_code,
-        reason=TransactionReasonEnum.WALLET_CHARGING,
-    )
-    main_tr = await transaction_crud.create(db=db, obj_in=main_tr)
-    merchant_fee_tr = TransactionRowCreate(
-        transaction_id=main_tr.id,
-        status=TransactionStatusEnum.IN_PROGRESS,
-        value=float(ipg_data.amount),
-        text="عملیات شارژ کردن کیف پول کاربر",
-        value_type=TransactionValueType.CASH,
-        receiver_id=receiver_card.id,
-        transferor_id=transferor_card.id,
-        code=main_code,
-        zibal_track_id=str(response["trackId"]),
-        reason=TransactionReasonEnum.WALLET_CHARGING,
-    )
-    await transaction_row_crud.create(db=db, obj_in=merchant_fee_tr)
-
-    return ZibalCashChargingRequestResponse(track_id=str(response["trackId"]))
-
-
-# ---------------------------------------------------------------------------
-@router.post(
-    "/cash/charging/verify/",
-    response_model=ResultResponse,
-)
-async def create_zibal(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
-    verify_data: ZibalVerifyInput,
-) -> ResultResponse:
-    """
-    ! Verify Zibal Request
-
-    Parameters
-    ----------
-    db
-        Target database connection
-    verify_data
-        Necessary data for verify transaction
-
-    Returns
-    -------
-    zibal
-        verify
-
-    Raises
-    ------
-    TransactionNotFoundException
-    """
-
     url = "https://gateway.zibal.ir/v1/verify"
     res = requests.post(
         headers={
@@ -169,60 +69,68 @@ async def create_zibal(
 
     response = res.json()
 
-    transaction_row = await transaction_row_crud.verify_by_zibal_track_id(
-        db=db,
-        zibal_track_id=verify_data.track_id,
-    )
-
-    transaction = await transaction_crud.verify_existence(
-        db=db,
-        transaction_id=transaction_row.transaction_id,
-    )
-
-    if response["result"] != 201 or response["result"] != 202:
-        return ResultResponse(result="In Progress")
-
-    if response["status"] == -1 or response["status"] == 2:
-        return ResultResponse(result="In Progress")
-
-    elif response["status"] == 1:
-        wallet = await wallet_crud.verify_existence(
+    if response["result"] == 100 and response["message"] == "success":
+        admin_user = await user_crud.verify_existence_by_username(
             db=db,
-            wallet_id=transaction_row.receiver_id,
+            username=settings.ADMIN_USERNAME,
         )
+
+        transferor_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=admin_user.wallet,
+        )
+        receiver_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=current_user.wallet,
+        )
+
+        # ! Main
+        main_code = await transaction_crud.generate_code(db=db)
+        main_tr = TransactionCreate(
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(response["amount"]),
+            text="عملیات شارژ کردن کیف پول کاربر",
+            value_type=TransactionValueType.CASH,
+            receiver_id=receiver_card.id,
+            transferor_id=transferor_card.id,
+            code=main_code,
+            reason=TransactionReasonEnum.WALLET_CHARGING,
+        )
+        main_tr = await transaction_crud.create(db=db, obj_in=main_tr)
+        merchant_fee_tr = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            status=TransactionStatusEnum.ACCEPTED,
+            value=float(response["amount"]),
+            text="عملیات شارژ کردن کیف پول کاربر",
+            value_type=TransactionValueType.CASH,
+            receiver_id=receiver_card.id,
+            transferor_id=transferor_card.id,
+            code=main_code,
+            zibal_track_id=str(response["trackId"]),
+            reason=TransactionReasonEnum.WALLET_CHARGING,
+        )
+        await transaction_row_crud.create(db=db, obj_in=merchant_fee_tr)
+
         await cash_crud.update_cash_by_user(
             db=db,
-            user=wallet.user,
-            amount=transaction_row.value,
+            user=current_user,
+            amount=response["amount"],
             cash_field=CashField.BALANCE,
             type_operation=TypeOperation.INCREASE,
         )
-        transaction_row.status == TransactionStatusEnum.ACCEPTED
-
-        transaction.status = TransactionStatusEnum.ACCEPTED
-        transaction_row.status = TransactionStatusEnum.ACCEPTED
-
-        db.add(transaction_row)
-        db.add(transaction)
-        await db.commit()
 
         # ? Generate Log
         await log_crud.auto_generate(
             db=db,
-            user_id=wallet.user_id,
+            user_id=current_user.id,
             log_type=LogType.CHARGING_CARD,
             detail="حساب کاربر {} با موفقیت به اندازه {} شارژ شد".format(
-                wallet.user_id,
-                transaction_row.value,
+                current_user.id,
+                str(response["amount"]),
             ),
         )
 
-        return ResultResponse(result="Transaction Success")
-    else:
-        transaction.status = TransactionStatusEnum.FAILED
-        transaction_row.status = TransactionStatusEnum.FAILED
-
-        db.add(transaction_row)
-        db.add(transaction)
         await db.commit()
-        return ResultResponse(result="Transaction Failed")
+    return ResultResponse(result="Transaction Check")
