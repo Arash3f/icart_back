@@ -1,9 +1,10 @@
+from datetime import datetime, timezone, timedelta
 from random import randint
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.schema import UserInDB
-from src.card.models import Card
+from src.card.models import Card, CardEnum
 from src.cash.models import Cash
 from src.core.config import settings
 from src.core.security import hash_password
@@ -20,6 +21,12 @@ from src.role.crud import role as role_crud
 from src.role.crud import role_permission as role_permission_crud
 from src.role.schema import RoleCreate, RolePermissionCreate
 from src.user.crud import user as user_crud
+from src.utils.card_number import (
+    generate_card_number,
+    CardType,
+    CreditType,
+    CompanyType,
+)
 from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
@@ -91,6 +98,45 @@ async def init_db(db: AsyncSession) -> None:
         )
         credit.user = created_user
 
+        # * Generate card number
+        card_swip_number = await generate_card_number(
+            db=db,
+            card_type=CardType.Swipe,
+            credit_type=CreditType.Rial,
+            company_type=CompanyType.Icart,
+        )
+        card_credit_number = await generate_card_number(
+            db=db,
+            card_type=CardType.Credit,
+            credit_type=CreditType.Rial,
+            company_type=CompanyType.Icart,
+        )
+
+        # ? Generate Card
+        expiration_at = datetime.now(timezone("Asia/Tehran")) + timedelta(
+            days=360,
+        )
+        card_password = randint(1000, 9999)
+        swip_card = Card(
+            number=card_swip_number,
+            cvv2=randint(100, 999),
+            type=CardEnum.BLUE,
+            password=hash_password(str(card_password)),
+            wallet_id=wallet.id,
+        )
+        swip_card.expiration_at = expiration_at
+
+        credit_card = Card(
+            number=card_credit_number,
+            cvv2=randint(100, 999),
+            type=CardEnum.CREDIT,
+            password=hash_password(str(card_password)),
+            wallet_id=wallet.id,
+        )
+        credit_card.expiration_at = expiration_at
+
+        db.add(swip_card)
+        db.add(credit_card)
         db.add(credit)
         db.add(cash)
         db.add(wallet)
