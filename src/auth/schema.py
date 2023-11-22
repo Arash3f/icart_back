@@ -25,6 +25,7 @@ class AccessToken(BaseModel):
 class LoginResponse(BaseModel):
     token: AccessToken
     role: RoleBase
+    is_valid: bool
 
 
 # ---------------------------------------------------------------------------

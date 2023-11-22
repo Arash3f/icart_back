@@ -78,6 +78,7 @@ async def login(
     res = LoginResponse(
         token=access_token,
         role=user.role,
+        is_valid=user.is_valid,
     )
     return res
 
@@ -117,6 +118,7 @@ async def login_from_admin(
     res = LoginResponse(
         token=access_token,
         role=user.role,
+        is_valid=user.is_valid,
     )
     return res
 
@@ -166,6 +168,7 @@ async def login_one_time_password(
     res = LoginResponse(
         token=access_token,
         role=user.role,
+        is_valid=user.is_valid,
     )
     return res
 
