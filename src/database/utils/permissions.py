@@ -197,4 +197,25 @@ permissions_in: list[PermissionCreate] = [
         name="حذف درخواست همکاری",
         code=permission.DELETE_COOPERATION_REQUEST,
     ),
+    PermissionCreate(
+        name="میتواند درخواست برداشت را ببیند",
+        code=permission.VIEW_WITHDRAW
+    ),
+    PermissionCreate(
+        name="میتواند درخواست برداشت دهد",
+        code=permission.CREATE_WITHDRAW
+    ),
+    PermissionCreate(
+        name="میتواند درخواست برداشت را به روز رسانی کند",
+        code=permission.UPDATE_WITHDRAW
+    ),
+    PermissionCreate(
+        name="میتواند درخواست برداشت را بررسی کند",
+        code=permission.VALIDATE_WITHDRAW
+    ),
+    PermissionCreate(
+        name="میتواند درخواست برداشت را حذف کند",
+        code=permission.DELETE_WITHDRAW
+    )
+
 ]
