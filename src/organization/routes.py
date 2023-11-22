@@ -392,6 +392,11 @@ async def user_list(
         if filter_data.national_code
         else True is not None
     )
+    filter_data.location_id = (
+        (User.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True is not None
+    )
     filter_data.phone_number = (
         (User.phone_number.contains(filter_data.phone_number))
         if filter_data.phone_number is not None
@@ -433,6 +438,7 @@ async def user_list(
             and_(
                 User.organization_id == organization.id,
                 filter_data.name,
+                filter_data.location_id,
                 filter_data.national_code,
                 filter_data.phone_number,
                 filter_data.is_active,

@@ -278,6 +278,11 @@ async def user_list(
         if filter_data.phone_number is not None
         else True
     )
+    filter_data.location_id = (
+        (User.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True is not None
+    )
     filter_data.name = (
         or_(
             User.first_name.contains(filter_data.name),
@@ -319,6 +324,7 @@ async def user_list(
                 filter_data.is_valid,
                 filter_data.father_name,
                 filter_data.tel,
+                filter_data.location_id,
             ),
         )
         .order_by(User.created_at.desc())
@@ -549,6 +555,11 @@ async def organization_user_list(
         if filter_data.national_code
         else True is not None
     )
+    filter_data.location_id = (
+        (User.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True is not None
+    )
     filter_data.phone_number = (
         (User.phone_number.contains(filter_data.phone_number))
         if filter_data.phone_number is not None
@@ -595,6 +606,7 @@ async def organization_user_list(
                 filter_data.is_valid,
                 filter_data.father_name,
                 filter_data.tel,
+                filter_data.location_id,
                 User.organization_id == organization_user.id,
             ),
         )
@@ -708,6 +720,11 @@ async def agent_list(
         if filter_data.national_code
         else True is not None
     )
+    filter_data.location_id = (
+        (User.location_id == filter_data.location_id)
+        if filter_data.location_id
+        else True is not None
+    )
     filter_data.phone_number = (
         (User.phone_number.contains(filter_data.phone_number))
         if filter_data.phone_number is not None
@@ -754,6 +771,7 @@ async def agent_list(
                 filter_data.is_valid,
                 filter_data.father_name,
                 filter_data.tel,
+                filter_data.location_id,
             ),
             or_(
                 Organization.agent_id == agent_user.id,

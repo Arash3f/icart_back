@@ -129,6 +129,7 @@ class UserFilter(BaseModel):
     is_valid: bool | None = None
     father_name: str | None = None
     tel: str | None = None
+    location_id: UUID | None = None
     order_by: UserFilterOrderBy | None = None
 
 
