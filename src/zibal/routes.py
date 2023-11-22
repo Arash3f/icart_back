@@ -127,7 +127,7 @@ async def delete_zibal(
 
 # ---------------------------------------------------------------------------
 @router.get(
-    "/cash/charging/verify/{trackId}/{success}/{status}/",
+    "/cash/charging/verify/",
     response_model=ResultResponse,
 )
 async def create_zibal(
