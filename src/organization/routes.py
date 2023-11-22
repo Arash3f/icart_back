@@ -7,6 +7,7 @@ from sqlalchemy import and_, select, or_
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.card.crud import CardValueType
+from src.contract.models import Contract
 from src.core.config import settings
 from src.log.models import LogType
 from src.organization.crud import organization as organization_crud
@@ -122,8 +123,7 @@ async def get_organization_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
+            Contract.name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -166,6 +166,7 @@ async def get_organization_list(
             ),
         )
         .join(Organization.user)
+        .join(Organization.contract)
     ).order_by(Organization.created_at.desc())
     # * Prepare order fields
     if filter_data.order_by:
@@ -226,8 +227,7 @@ async def get_organization_public_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
+            Contract.name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -271,6 +271,7 @@ async def get_organization_public_list(
             ),
         )
         .join(Organization.user)
+        .join(Organization.contract)
     ).order_by(Organization.created_at.desc())
 
     # * Prepare order fields

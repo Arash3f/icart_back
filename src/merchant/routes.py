@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.agent.models import Agent
+from src.contract.models import Contract
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.log.crud import log as log_crud
@@ -161,8 +162,7 @@ async def get_merchant_list(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
+            Contract.name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -219,6 +219,7 @@ async def get_merchant_list(
             ),
         )
         .join(Merchant.user)
+        .join(Merchant.contract)
     ).order_by(Merchant.created_at)
 
     # * Prepare order fields
@@ -270,8 +271,7 @@ async def get_stores(
     # * Prepare filter fields
     filter_data.name = (
         or_(
-            User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
+            Contract.name.contains(filter_data.name),
         )
         if filter_data.name is not None
         else True
@@ -328,6 +328,7 @@ async def get_stores(
             ),
         )
         .join(Merchant.user)
+        .join(Merchant.contract)
     ).order_by(Merchant.created_at)
 
     # * Prepare order fields
