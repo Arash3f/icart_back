@@ -29,6 +29,12 @@ class RoleRead(RoleBase):
 
 
 # ---------------------------------------------------------------------------
+class RoleReadV2(RoleBase):
+    id: uuid.UUID
+    is_valid: bool | None = None
+
+
+# ---------------------------------------------------------------------------
 class RolePermissionBase(BaseModel):
     role_id: uuid.UUID
     permission_id: uuid.UUID

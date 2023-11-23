@@ -19,6 +19,7 @@ from src.role.schema import (
     RolePermissionCreate,
     RoleRead,
     RoleUpdate,
+    RoleReadV2,
 )
 from src.schema import DeleteResponse, IDRequest, ResultResponse
 from src.user.models import User
@@ -382,12 +383,12 @@ async def add_permissions_to_role(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/me", response_model=RoleRead)
+@router.get(path="/me", response_model=RoleReadV2)
 async def me(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
-) -> RoleRead:
+) -> RoleReadV2:
     """
     ! Get My Role Data
 
@@ -409,4 +410,10 @@ async def me(
     """
     # * Get role requester role id
     role = await role_crud.verify_existence(db=db, role_id=current_user.role_id)
-    return role
+
+    response = RoleReadV2(
+        id=role.id,
+        name=role.name,
+        is_valid=current_user.is_valid,
+    )
+    return response
