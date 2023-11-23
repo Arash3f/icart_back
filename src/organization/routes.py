@@ -1,14 +1,21 @@
 from random import randint
 from typing import List, Annotated
 
-from fastapi import APIRouter, Depends, UploadFile, File
+import pandas as pd
+import os
+from itertools import chain
+
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy import and_, select, or_
 
 from src import deps
+from src.core.security import hash_password
 from src.auth.exception import AccessDeniedException
+from src.cash.models import Cash
 from src.card.crud import CardValueType
 from src.contract.models import Contract
 from src.core.config import settings
+from src.credit.models import Credit
 from src.log.models import LogType
 from src.organization.crud import organization as organization_crud
 from src.location.crud import location as location_crud
@@ -23,6 +30,7 @@ from src.organization.schema import (
     OrganizationAppendUser,
     OrganizationPublicRead,
     OrganizationPublicResponse,
+    ExcellResult,
 )
 from src.schema import IDRequest, ResultResponse, UpdateActivityRequest
 from src.transaction.models import (
@@ -42,9 +50,9 @@ from src.auth.crud import auth as auth_crud
 from src.card.crud import card as card_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.user_message.models import UserMessage
-from src.utils.file import read_excel_file
 from src.utils.sms import send_welcome_sms
 from src.wallet.exception import LackOfMoneyException
+from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/organization", tags=["organization"])
@@ -799,21 +807,6 @@ async def user_activation(
 
 
 # ---------------------------------------------------------------------------
-@router.post(path="/upload/file", response_model=ResultResponse)
-async def upload_file(
-    *,
-    db=Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user(),
-    ),
-    image_file: Annotated[UploadFile, File()],
-) -> ResultResponse:
-    print(dir(image_file.file))
-    await read_excel_file(db=db, user_id=current_user.id)
-    return ResultResponse(result="User Append Successfully")
-
-
-# ---------------------------------------------------------------------------
 @router.put(path="/update/activity", response_model=ResultResponse)
 async def update_user_activity(
     *,
@@ -866,3 +859,149 @@ async def update_user_activity(
     )
 
     return ResultResponse(result="Organization Activity Updated Successfully")
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/upload/file", response_model=ExcellResult)
+async def upload_file(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    excel_file: Annotated[UploadFile, File()],
+) -> ExcellResult:
+    missing_data = list()
+    invalid_username = list()
+    invalid_location = list()
+    duplicate_user = list()
+    invalid_user = list()
+    success_insert = list()
+
+    # Get organization user
+    organization_user = await organization_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    # Check file format
+    file_format = os.path.splitext(excel_file.filename)[1]
+    if file_format not in [".xlsx", ".xls"]:
+        raise HTTPException(detail="فرمت فایل صحیح نمیباشد")
+
+    excel_data = pd.read_excel(excel_file.file, index_col=0, header=1)
+
+    col_dict = {
+        "identity": [
+            "نام",
+            "نام خانوادگی",
+            "کد ملی",
+            "شماره همراه",
+            "نام پدر",
+            "محل تولد",
+        ],
+        "address": ["استان", "شهر", "کد پستی", "شماره ثابت", "آدرس"],
+        "organization": ["شماره پرسنلی", "بخش سازمان", "طبقه شغلی"],
+        "credit": ["میزان ریالی"],
+    }
+
+    flatten_col = list(chain.from_iterable(col_dict.values()))
+    if flatten_col.sort() != list(excel_data.columns).sort():
+        raise HTTPException("فایل نامعتبر است")
+
+    required_data = excel_data[
+        chain.from_iterable(
+            [col_dict["identity"], col_dict["address"], col_dict["credit"]],
+        )
+    ]
+
+    has_null_data = excel_data[required_data.isna().any(axis=1)]
+    missing_data.append(
+        f"کاربران ردیف {has_null_data.index.values} دارای اطلاعات ناقص هستند",
+    )
+    valid_data = excel_data[~required_data.isna().any(axis=1)]
+
+    for index, row in valid_data.iterrows():
+        # Apply insert user
+        if len(str(row["شماره همراه"])) != 11:
+            invalid_username.append(
+                f"کاربر ردیف {index} به دلیل نامعتبر بودن شماره تلفن ثبت نشد",
+            )
+
+        else:
+            # ! find location
+            location = await location_crud.find_by_name(db=db, name=row["شهر"])
+
+            if not location:
+                invalid_location.append(
+                    f"کاربر ردیف {index} به دلیل پیدا نشدن شهر ثبت نشد",
+                )
+            else:
+                # * Check user not exist
+                exist_user = await user_crud.check_by_username_and_national_code(
+                    db=db,
+                    username=str(row["شماره همراه"]),
+                    national_code=str(row["کد ملی"]),
+                )
+                if exist_user:
+                    if exist_user.organization_id:
+                        invalid_user.append(
+                            f"کاربر ردیف {index} به دلیل سازمانی بودن ثبت نشد",
+                        )
+
+                    else:
+                        exist_user.organization_id == organization_user.id
+                        exist_user.credit.considered = int(row["میزان ریالی"])
+                        success_insert.append(f"کاربر ردیف {index} با موفقیت ثبت شد")
+                        current_user.total_considered_credit += int(row["میزان ریالی"])
+                        db.add(exist_user)
+                        db.add(current_user)
+                        await db.commit()
+                else:
+                    find_user = await user_crud.check_by_username_or_national_code(
+                        db=db,
+                        username=str(row["شماره همراه"]),
+                        national_code=str(row["کد ملی"]),
+                    )
+                    if find_user:
+                        duplicate_user.append(
+                            f"کاربر ردیف {index} به دلیل تکراری بودن شماره همراه یا کد ملی ثبت نشد",
+                        )
+                    else:
+                        # ? Generate new User -> validation = False
+                        new_user = User(
+                            organization_id=current_user.id,
+                            first_name=row["نام"],
+                            last_name=row["نام خانوادگی"],
+                            national_code=str(row["کد ملی"]),
+                            phone_number=str(row["شماره همراه"]),
+                            father_name=row["نام پدر"],
+                            birth_place=row["محل تولد"],
+                            location_id=location.id,
+                            postal_code=str(row["کد پستی"]),
+                            tel=str(row["شماره ثابت"]),
+                            address=row["آدرس"],
+                            personnel_number=str(row["شماره پرسنلی"]),
+                            organizational_section=row["بخش سازمان"],
+                            job_class=row["طبقه شغلی"],
+                            password=hash_password(str(123456789)),
+                        )
+
+                        # ? Create User
+                        user = await auth_crud.create_new_user(db=db, user=new_user)
+
+                        user.credit.considered = int(row["میزان ریالی"])
+                        success_insert.append(f"کاربر ردیف {index} با موفقیت ثبت شد")
+                        current_user.total_considered_credit += int(row["میزان ریالی"])
+                        db.add(user)
+                        db.add(current_user)
+                        await db.commit()
+
+                        success_insert.append(f"کاربر ردیف {index} با موفقیت ثبت شد")
+
+    result = ExcellResult(
+        missing_data=missing_data,
+        invalid_username=invalid_username,
+        invalid_location=invalid_location,
+        duplicate_user=duplicate_user,
+        success_insert=success_insert,
+    )
+    return result

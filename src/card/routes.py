@@ -210,22 +210,20 @@ async def update_card(
         number=update_data.where.number,
     )
     # * Verify forget password
-    verify = pwd_context.verify(
+    verify_pass = verify_password(
         update_data.data.forget_password,
         obj_current.forget_password,
     )
-    if not verify:
+    if not verify_pass:
         raise InCorrectDataException()
     # * verify new password
     if update_data.data.new_password != update_data.data.re_password:
         raise InCorrectDataException()
     # * Update card
-    update_data.data.password = hash_password(update_data.data.new_password)
-    await card_crud.update(
-        db=db,
-        obj_current=obj_current,
-        obj_new=update_data.data,
-    )
+    obj_current.password = hash_password(update_data.data.new_password)
+
+    db.add(obj_current)
+    await db.commit()
 
     return ResultResponse(result="Password Updated Successfully")
 

@@ -108,3 +108,12 @@ class OrganizationAppendUser(BaseModel):
     national_code: str
     phone_number: str
     considered_credit: int
+
+
+# ---------------------------------------------------------------------------
+class ExcellResult(BaseModel):
+    missing_data: list[str]
+    invalid_username: list[str]
+    invalid_location: list[str]
+    duplicate_user: list[str]
+    success_insert: list[str]
