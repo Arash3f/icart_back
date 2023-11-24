@@ -62,7 +62,7 @@ async def update_important_data(
     # * Verify important_data existence
     obj_current = await important_data_crud.verify_existence(
         db=db,
-        user_crypto_id=update_data.where.id,
+        important_data_id=update_data.where.id,
     )
     # * Update
     obj = await important_data_crud.update(
