@@ -19,7 +19,7 @@ router = APIRouter(prefix="/permission", tags=["permission"])
 
 
 # ---------------------------------------------------------------------------
-@router.get("/list", response_model=list[PermissionRead])
+@router.post("/list", response_model=list[PermissionRead])
 async def read_permissions_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
