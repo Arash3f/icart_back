@@ -106,7 +106,7 @@ async def create_news(
     await log_crud.auto_generate(
         db=db,
         user_id=current_user.id,
-        log_type=LogType.CREATE_NEWS,
+        log_type=LogType.ADD_NEWS,
         detail="اعلان با عنوان ( {} ) با موفقیت توسط کاربر {} ایحاد شد".format(
             obj.title,
             current_user.username,

@@ -166,7 +166,7 @@ async def update_ability(
     # * Verify ability existence
     obj_current = await ability_crud.verify_existence(
         db=db,
-        ability_id=update_data.where.id,
+        ability_idrole=update_data.where.id,
     )
 
     # * Verify ability name duplicate
