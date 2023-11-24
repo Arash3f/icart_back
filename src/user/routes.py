@@ -38,7 +38,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 # ---------------------------------------------------------------------------
 @router.get("/me", response_model=UserMeResponse)
 async def me(
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(deps.get_current_user_v2()),
 ) -> UserMeResponse:
     """
     ! Get My data

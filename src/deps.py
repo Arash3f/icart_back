@@ -76,6 +76,43 @@ def get_current_user() -> Type[User]:
 
 
 # ---------------------------------------------------------------------------
+def get_current_user_v2() -> Type[User]:
+    """
+    ! Verify Token
+    ! Find User
+    ! Verify User Activity
+
+    Returns
+    -------
+    user
+        Found user
+    """
+
+    async def current_user(
+        db: AsyncSession = Depends(get_db),
+        token: str = Depends(oauth2_scheme),
+    ) -> Type[User]:
+        if not token:
+            raise UserNotAuthenticatedException()
+
+        # ? Verify Token
+        payload = jwt.decode(
+            token=token,
+            key=settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        token_data = TokenData(username=payload["username"], role=payload["role"])
+        # ? Verify User
+        user = await user_crud.find_by_username(db=db, username=token_data.username)
+        # ? Verify user activity
+        if not user.is_active:
+            raise InactiveUserException()
+        return user
+
+    return current_user
+
+
+# ---------------------------------------------------------------------------
 def get_current_user_with_permissions(
     required_permissions: list[int] | None = None,
 ) -> Type[User]:
