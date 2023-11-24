@@ -68,7 +68,7 @@ def get_current_user() -> Type[User]:
         # ? Verify User
         user = await user_crud.find_by_username(db=db, username=token_data.username)
         # ? Verify user activity
-        if not user.is_active:
+        if not user.is_active or not user.is_valid:
             raise InactiveUserException()
         return user
 
@@ -96,6 +96,10 @@ def get_current_user_with_permissions(
 
         # ? Verify User
         user = await user_crud.find_by_username(db=db, username=token_data.username)
+
+        # ? Verify user activity
+        if not user.is_active or not user.is_valid:
+            raise InactiveUserException()
 
         # ? Verify Permissions
         role = await role_crud.verify_existence(db=db, role_id=user.role.id)
@@ -136,6 +140,11 @@ def is_user_have_permission(required_permissions: list[int]) -> VerifyUserDep | 
             db=db,
             username=token_data.username,
         )
+
+        # ? Verify user activity
+        if not user.is_active or not user.is_valid:
+            raise InactiveUserException()
+
         result.user = user
 
         # ? Verify Permissions

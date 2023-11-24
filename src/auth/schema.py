@@ -37,6 +37,7 @@ class UserRegisterIn(BaseModel):
     national_code: str
     phone_number: str
     phone_verify_code: int
+    birth_date: str
 
 
 # ---------------------------------------------------------------------------

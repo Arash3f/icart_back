@@ -5,15 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.card.crud import CardValueType
 from src.core.config import settings
+from src.exception import InCorrectDataException
 from src.log.crud import log as log_crud
 from src.transaction.models import (
     TransactionStatusEnum,
     TransactionValueType,
     TransactionReasonEnum,
 )
+from src.permission import permission_codes as permission
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.zibal.schema import (
     ZibalVerifyInput,
+    NationalIdentityInquiryInput,
+    NationalIdentityInquiryOutput,
 )
 from src.log.models import LogType
 from src.transaction.crud import transaction as transaction_crud
@@ -134,3 +138,43 @@ async def delete_zibal(
 
         await db.commit()
     return ResultResponse(result="Transaction Check")
+
+
+# ---------------------------------------------------------------------------
+@router.post("/national/identity/verify/", response_model=NationalIdentityInquiryOutput)
+async def national_identity_verify(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_USER_REQUEST]),
+    ),
+    verify_data: NationalIdentityInquiryInput,
+) -> NationalIdentityInquiryOutput:
+    auth_token = "Bearer d3309a731ef64381be20a6a564ede39c"
+
+    res = requests.post(
+        url="https://api.zibal.ir/v1/facility/nationalIdentityInquiry/",
+        headers={
+            "Authorization": auth_token,
+        },
+        json={
+            "nationalCode": verify_data.natioal_code,
+            "birthDate": verify_data.birth_date,
+        },
+    )
+
+    res = res.json()
+
+    if res["data"]:
+        if res["data"]["matched"]:
+            return NationalIdentityInquiryOutput(
+                matched=res["data"]["matched"].matched,
+                lastName=res["data"]["matched"].lastName,
+                fatherName=res["data"]["matched"].fatherName,
+                firstName=res["data"]["matched"].firstName,
+                nationalCode=res["data"]["matched"].nationalCode,
+                isDead=res["data"]["matched"].isDead,
+                alive=res["data"]["matched"].alive,
+            )
+
+    raise InCorrectDataException()

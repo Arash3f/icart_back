@@ -84,3 +84,15 @@ class UserNotAuthenticatedException(HTTPException):
             "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
+
+
+class InvalidRegisterDataException(HTTPException):
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 206,
+            "english_message": "Invalid Register data!",
+            "persian_message": "اطلاعات وارد شده اشتباه هستند!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None

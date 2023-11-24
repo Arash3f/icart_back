@@ -173,7 +173,7 @@ async def find_user_request(
 
 # ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[UserRequestRead])
-async def get_user_request(
+async def user_request_list(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(

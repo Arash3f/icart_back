@@ -13,6 +13,7 @@ from src.auth.exception import (
     InactiveUserException,
     IncorrectUsernameOrPasswordException,
     IncorrectVerifyCodeException,
+    InvalidRegisterDataException,
 )
 from src.auth.schema import (
     ForgetPasswordIn,
@@ -30,6 +31,7 @@ from src.user.crud import user as user_crud
 from src.user.models import User
 from src.user.schema import UserRead
 from src.user_message.models import UserMessage
+from src.utils.auth import national_identity_inquiry, shahkar_inquiry
 from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
 
@@ -256,7 +258,6 @@ async def verify_register_data(
     ------
     UsernameIsDuplicatedException
     """
-    # todo: Verify verify phone number and national code with web server
 
     await user_crud.verify_not_existence_by_username_and_national_code(
         db=db,
@@ -305,8 +306,6 @@ async def register(
     current_time = datetime.now(timezone("Asia/Tehran"))
     role = await role_crud.verify_existence_by_name(db=db, name="کاربر ساده")
 
-    # todo: Verify phone number and national code with web server
-
     # ? Verify Phone Number
     verify_code_number = await verify_phone_crud.find_by_phone_number(
         db=db,
@@ -326,6 +325,22 @@ async def register(
         db=db,
         national_code=register_data.national_code,
     )
+
+    # ! Verify Data
+    verify = shahkar_inquiry(
+        natioal_code=register_data.national_code,
+        mobile=register_data.phone_number,
+    )
+    if not verify:
+        raise InvalidRegisterDataException()
+    verify = national_identity_inquiry(
+        natioal_code=register_data.national_code,
+        birth_date=register_data.birth_date,
+        request_first_name=register_data.first_name,
+        request_last_name=register_data.last_name,
+    )
+    if not verify:
+        raise InvalidRegisterDataException()
 
     # ? Create User
     created_user = User(
