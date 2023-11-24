@@ -328,7 +328,7 @@ async def register(
 
     # ! Verify Data
     verify = shahkar_inquiry(
-        natioal_code=register_data.national_code,
+        national_code=register_data.national_code,
         mobile=register_data.phone_number,
     )
     if not verify:

@@ -177,7 +177,7 @@ async def buy_card(
 
 # ---------------------------------------------------------------------------
 @router.post("/confirm", response_model=ResultResponse)
-async def buy_card(
+async def confirm_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
