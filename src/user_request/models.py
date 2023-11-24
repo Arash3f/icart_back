@@ -15,7 +15,7 @@ class UserRequest(Base, BaseMixin):
     address = Column(String, nullable=True)
     reason = Column(String, nullable=True)
 
-    status = Column(Boolean, default=False)
+    status = Column(Boolean, default=True)
 
     national_card_front_version_id = Column(String, nullable=True)
     national_card_front_name = Column(String, nullable=True)
