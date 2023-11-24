@@ -204,8 +204,6 @@ async def me_user_request(
         user_id=current_user.id,
     )
 
-    print(find_user_request)
-
     if find_user_request:
         return find_user_request
 
@@ -298,7 +296,7 @@ async def update_national_card_front(
     minio: MinioClient = Depends(deps.minio_auth),
     image_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_v2(),
     ),
 ) -> ResultResponse:
     """
@@ -357,7 +355,7 @@ async def update_national_card_back(
     minio: MinioClient = Depends(deps.minio_auth),
     image_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_v2(),
     ),
 ) -> ResultResponse:
     """
@@ -416,7 +414,7 @@ async def update_birth_certificate(
     minio: MinioClient = Depends(deps.minio_auth),
     image_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_v2(),
     ),
 ) -> ResultResponse:
     """
@@ -475,7 +473,7 @@ async def update_video(
     minio: MinioClient = Depends(deps.minio_auth),
     image_file: Annotated[UploadFile, File()],
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_v2(),
     ),
 ) -> ResultResponse:
     """
