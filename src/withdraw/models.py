@@ -12,6 +12,8 @@ from src.database.base_class import Base, BaseMixin
 
 # ---------------------------------------------------------------------------
 class Withdraw(Base, BaseMixin):
+    __tablename__ = "withdraw"
+
     amount = Column(Integer, nullable=False)
     is_verified = Column(Boolean, default=False)
     is_done = Column(Boolean, default=False)
@@ -19,7 +21,7 @@ class Withdraw(Base, BaseMixin):
     # ! Relations
     bank_card_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("bankcard.id"),
+        ForeignKey("bank_card.id"),
         index=True,
     )
     bank_card = relationship(
