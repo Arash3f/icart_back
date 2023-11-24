@@ -1,6 +1,7 @@
 import requests
 
 from src.core.config import settings
+from src.user.models import User
 
 token = settings.KAVENEGAR_TOKEN
 auth_token = "Bearer d3309a731ef64381be20a6a564ede39c"
@@ -56,6 +57,32 @@ def shahkar_inquiry(
 
     if res["data"]:
         if res["data"]["matched"]:
+            return True
+
+    return False
+
+
+def verify_bank_card(
+    user: User,
+    card_number: str,
+    shaba_number: str,
+) -> bool:
+    res = requests.post(
+        url="https://api.zibal.ir/v1/facility/cardToIban",
+        headers={
+            "Authorization": auth_token,
+        },
+        json={
+            "cardNumber": card_number,
+        },
+    )
+
+    res = res.json()
+
+    if res["data"] and res["موفق"]:
+        check_name = user.father_name + user.last_name
+        check_iban = shaba_number
+        if check_name and check_iban:
             return True
 
     return False

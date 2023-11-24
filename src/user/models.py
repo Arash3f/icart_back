@@ -135,3 +135,5 @@ class User(Base, BaseMixin):
     tickets = relationship(Ticket, back_populates="creator")
     logs = relationship(Log, back_populates="user")
     user_messages = relationship("UserMessage", back_populates="user")
+
+    bank_cards = relationship("BankCard", back_populates="user")

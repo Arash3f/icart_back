@@ -121,3 +121,10 @@ UPDATE_MERCHANT = 331
 VIEW_COOPERATION_REQUEST = 340
 UPDATE_COOPERATION_REQUEST = 341
 DELETE_COOPERATION_REQUEST = 342
+# ---------------------------------------------------------------------------
+VIEW_WITHDRAW = 350
+CREATE_WITHDRAW = 351
+UPDATE_WITHDRAW = 352
+VALIDATE_WITHDRAW = 353
+# ---------------------------------------------------------------------------
+BANK_CARD = 260

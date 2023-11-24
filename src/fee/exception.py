@@ -1,3 +1,4 @@
+import jdatetime
 from fastapi import HTTPException
 
 # !!!!!!!!!!!!!
@@ -16,6 +17,7 @@ class FeeNotFoundException(HTTPException):
             "code": 800,
             "persian_message": "کارمزد مورد نظر پیدا نشد!",
             "english_message": "Fee Not Found!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -31,6 +33,7 @@ class FeeIsDuplicatedException(HTTPException):
             "code": 801,
             "persian_message": "کارمزد تکراری است!",
             "english_message": "Fee Is Duplicated!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
 
@@ -46,5 +49,6 @@ class InValidPercentageException(HTTPException):
             "code": 802,
             "persian_message": "درصد کارمزد معتبر نیست!",
             "english_message": "Fee's Percentage Is Invalid!",
+            "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
