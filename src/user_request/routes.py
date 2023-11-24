@@ -15,6 +15,7 @@ from src.user_request.schema import (
     ApproveUserRequest,
     UpdateUserRequest,
     CreateUserRequest,
+    CreateUserRequestData,
 )
 from src.permission import permission_codes as permission
 from src.schema import IDRequest, ResultResponse
@@ -23,6 +24,61 @@ from src.utils.minio_client import MinioClient
 
 # ---------------------------------------------------------------------------
 router = APIRouter(prefix="/user_request", tags=["user_request"])
+
+
+# ---------------------------------------------------------------------------
+@router.post(path="/create", response_model=UserRequestRead)
+async def create_user_request(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_v2(),
+    ),
+    create_data: CreateUserRequestData,
+) -> UserRequestRead:
+    """
+    ! Create UserRequest
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+    create_data
+        Necessary data for create user_request
+
+    Returns
+    -------
+    obj
+        New user_request
+
+    Raises
+    ------
+    LocationNotFoundException
+    """
+    # * Check user have request ?
+    find_request = await user_request_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    # * Check location ?
+    await location_crud.verify_existence(db=db, location_id=create_data.location_id)
+    obj_in = CreateUserRequest(
+        **create_data.model_dump(),
+        user_id=current_user.id,
+    )
+    if find_request is None:
+        obj = await user_request_crud.create(db=db, obj_in=obj_in)
+    else:
+        obj = await user_request_crud.update(
+            db=db,
+            obj_new=obj_in,
+            obj_current=current_user.user_request,
+        )
+
+    return obj
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +177,7 @@ async def me_user_request(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_v2(),
     ),
 ) -> UserRequestRead:
     """
