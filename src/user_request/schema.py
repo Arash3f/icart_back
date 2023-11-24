@@ -43,7 +43,12 @@ class CreateUserRequestData(UserRequestBase):
 
 
 # ---------------------------------------------------------------------------
-class CreateUserRequest(UserRequestBase):
+class CreateUserRequest(BaseModel):
+    birth_place: str | None = None
+    postal_code: str | None = None
+    father_name: str | None = None
+    tel: str | None = None
+    address: str | None = None
     location_id: UUID | None = None
     user_id: UUID
 
