@@ -14,6 +14,7 @@ from src.user_request.schema import (
     UserRequestFilter,
     ApproveUserRequest,
     UpdateUserRequest,
+    CreateUserRequest,
 )
 from src.permission import permission_codes as permission
 from src.schema import IDRequest, ResultResponse
@@ -115,6 +116,54 @@ async def find_user_request(
 
 
 # ---------------------------------------------------------------------------
+@router.post(path="/me", response_model=UserRequestRead)
+async def me_user_request(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
+) -> UserRequestRead:
+    """
+    ! My UserRequest
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+
+    Returns
+    -------
+    obj
+        Found Item
+
+    Raises
+    ------
+    UserRequestNotFoundException
+    """
+    find_user_request = await user_request_crud.find_by_user_id(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    print(find_user_request)
+
+    if find_user_request:
+        return find_user_request
+
+    user_request = CreateUserRequest(
+        user_id=current_user.id,
+    )
+    user_request = await user_request_crud.create(
+        db=db,
+        obj_in=user_request,
+    )
+    return user_request
+
+
+# ---------------------------------------------------------------------------
 @router.post(path="/list", response_model=List[UserRequestRead])
 async def user_request_list(
     *,
@@ -146,42 +195,34 @@ async def user_request_list(
         List of ability
     """
     # * Prepare filter fields
-    filter_data.first_name = (
-        (UserRequest.first_name == filter_data.first_name)
-        if filter_data.first_name
-        else True
+    filter_data.status = (
+        (UserRequest.status == filter_data.status) if filter_data.status else True
     )
     filter_data.location_id = (
         (UserRequest.location_id == filter_data.location_id)
         if filter_data.location_id
         else True
     )
-    filter_data.last_name = (
-        (UserRequest.last_name.contains(filter_data.last_name))
-        if filter_data.last_name
-        else True
-    )
-    filter_data.gt_created_date = (
-        (UserRequest.created_at >= filter_data.gt_created_date)
-        if filter_data.gt_created_date
-        else True
-    )
-    filter_data.lt_created_date = (
-        (UserRequest.created_at <= filter_data.lt_created_date)
-        if filter_data.lt_created_date
+    filter_data.national_code = (
+        (User.national_code.contains(filter_data.national_code))
+        if filter_data.national_code
         else True
     )
 
     # * Add filter fields
-    query = select(UserRequest).filter(
-        and_(
-            filter_data.first_name,
-            filter_data.location_id,
-            filter_data.last_name,
-            filter_data.gt_created_date,
-            filter_data.lt_created_date,
-        ),
+    query = (
+        select(UserRequest)
+        .filter(
+            and_(
+                filter_data.status,
+                filter_data.location_id,
+                filter_data.national_code,
+            ),
+        )
+        .join(UserRequest.user)
+        .order_by(UserRequest.created_at.desc())
     )
+
     # * Find All agent with filters
     obj_list = await user_request_crud.get_multi(
         db=db,

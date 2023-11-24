@@ -16,10 +16,10 @@ class UserRequestBase(BaseModel):
     tel: str | None = None
     address: str | None = None
 
-    national_card_front_version_id: str | None
-    national_card_back_version_id: str | None
-    birth_certificate_version_id: str | None
-    video_version_id: str | None
+    national_card_front_version_id: str | None = None
+    national_card_back_version_id: str | None = None
+    birth_certificate_version_id: str | None = None
+    video_version_id: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -34,7 +34,6 @@ class UserRequestRead(UserRequestBase):
     updated_at: datetime | None
 
     # ! Relations
-    user: UserRead
     location: LocationRead | None = None
 
 
@@ -65,3 +64,5 @@ class ApproveUserRequest(BaseModel):
 # ---------------------------------------------------------------------------
 class UserRequestFilter(BaseModel):
     status: bool | None = None
+    location_id: UUID | None = None
+    national_code: str | None = None
