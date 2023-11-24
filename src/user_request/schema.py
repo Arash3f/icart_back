@@ -10,13 +10,17 @@ from src.user.schema import UserRead
 
 # ---------------------------------------------------------------------------
 class UserRequestBase(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
     birth_place: str | None = None
     postal_code: str | None = None
     father_name: str | None = None
     tel: str | None = None
     address: str | None = None
+
+    national_card_front_version_id: str | None
+    national_card_back_version_id: str | None
+    birth_certificate_version_id: str | None
+    video_version_id: str | None
+
     model_config = ConfigDict(extra="forbid")
 
 
@@ -60,8 +64,4 @@ class ApproveUserRequest(BaseModel):
 
 # ---------------------------------------------------------------------------
 class UserRequestFilter(BaseModel):
-    first_name: None | str = None
-    location_id: None | UUID = None
-    last_name: None | str = None
-    gt_created_date: datetime | None = None
-    lt_created_date: datetime | None = None
+    status: bool | None = None

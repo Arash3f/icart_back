@@ -38,7 +38,12 @@ class UserRead(UserBase):
     first_name: str | None
     last_name: str | None
     phone_number: str | None
+    father_name: str | None = None
     national_code: str
+    father_name: str | None = None
+    birth_place: str | None = None
+    birth_date: str
+    address: str | None = None
     is_active: bool
     is_valid: bool
 
@@ -59,6 +64,7 @@ class UserRead2(UserBase):
     postal_code: str | None = None
     father_name: str | None = None
     birth_place: str | None = None
+    birth_date: str
     address: str | None = None
     is_active: bool
     is_valid: bool
@@ -135,8 +141,6 @@ class UserFilter(BaseModel):
 
 # ---------------------------------------------------------------------------
 class UpdateUserData(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
     birth_place: str | None = None
     postal_code: str | None = None
     father_name: str | None = None

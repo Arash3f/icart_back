@@ -2,8 +2,6 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from src.role.models import Role
-from src.role.schema import RoleBase
 from src.schema import IDRequest
 
 

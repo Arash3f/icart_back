@@ -41,6 +41,7 @@ class User(Base, BaseMixin):
     father_name = Column(String, nullable=True)
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    birth_date = Column(String, nullable=True)
 
     # ? Organization Users
     personnel_number = Column(String, nullable=True)

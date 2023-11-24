@@ -351,6 +351,7 @@ async def register(
         last_name=register_data.last_name,
         national_code=register_data.national_code,
         phone_number=phone_number,
+        birth_date=register_data.birth_date,
     )
     user = await auth_crud.create_new_user(db=db, user=created_user)
 

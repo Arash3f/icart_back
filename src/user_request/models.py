@@ -8,8 +8,6 @@ from src.database.base_class import Base, BaseMixin
 class UserRequest(Base, BaseMixin):
     __tablename__ = "user_request"
 
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
     birth_place = Column(String, nullable=True)
     postal_code = Column(String, nullable=True)
     father_name = Column(String, nullable=True)
