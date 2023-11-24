@@ -85,6 +85,7 @@ class CardFilter(BaseModel):
     number: None | str = None
     type: None | CardEnum = None
     user_id: None | UUID = None
+    is_receive: None | bool = None
     order_by: CardFilterOrderBy | None = None
 
 

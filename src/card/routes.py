@@ -321,6 +321,11 @@ async def read_card_list(
     filter_data.user_id = (
         (User.id == filter_data.user_id) if filter_data.user_id else True
     )
+    filter_data.is_receive = (
+        (Card.is_receive == filter_data.is_receive)
+        if filter_data.is_receive is not None
+        else True
+    )
 
     # * Add filter fields
     query = (
@@ -332,6 +337,7 @@ async def read_card_list(
                 filter_data.number,
                 filter_data.type,
                 filter_data.user_id,
+                filter_data.is_receive,
             ),
         )
         .join(Card.wallet)

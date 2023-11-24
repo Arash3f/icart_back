@@ -20,6 +20,19 @@ class WalletCardRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class CardReadV2(BaseModel):
+    id: UUID
+    is_receive: bool
+
+
+class WalletCardReadV2(BaseModel):
+    id: UUID
+
+    # ! relations
+    cards: list[CardReadV2] = []
+
+
+# ---------------------------------------------------------------------------
 class UserBase(BaseModel):
     username: str
 
@@ -105,6 +118,7 @@ class UserMeResponse(UserRead):
     role: RoleRead
     cash: CashBalanceResponse
     credit: CreditBalanceResponse
+    wallet: WalletCardReadV2
 
     created_at: datetime
     updated_at: datetime | None
