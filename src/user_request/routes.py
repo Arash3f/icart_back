@@ -82,15 +82,15 @@ async def create_user_request(
 
 
 # ---------------------------------------------------------------------------
-@router.put(path="/approve", response_model=UserRequestRead)
-async def update_user_request(
+@router.put(path="/approve", response_model=ResultResponse)
+async def approve_user_request(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.APPROVE_USER_REQUEST]),
     ),
-    obj_data: ApproveUserRequest,
-) -> UserRequestRead:
+    approve_data: ApproveUserRequest,
+) -> ResultResponse:
     """
     ! Approve UserRequest
 
@@ -100,7 +100,7 @@ async def update_user_request(
         Target database connection
     current_user
         Requester User
-    obj_data
+    approve_data
         Necessary data for approve user_request
 
     Returns
@@ -112,26 +112,49 @@ async def update_user_request(
     ------
     LocationNotFoundException
     """
-    # * Check user
-    await user_crud.verify_existence(db=db, user_id=obj_data.data.user_id)
-
-    if obj_data.data.location_id:
-        # * Check location ?
-        await location_crud.verify_existence(
-            db=db,
-            location_id=obj_data.data.location_id,
-        )
-
-    obj_in = UpdateUserRequest(
-        **obj_data.data.model_dump(),
-    )
-    obj = await user_request_crud.update(
+    # * Verify User request
+    user_request = await user_request_crud.verify_existence(
         db=db,
-        obj_new=obj_in,
-        obj_current=current_user.user_request,
+        user_request_id=approve_data.where.id,
     )
 
-    return obj
+    if approve_data.data.is_approve:
+        user = await user_crud.verify_existence(
+            db=db,
+            user_id=user_request.user_id,
+        )
+        if user_request.father_name:
+            user.father_name == user_request.father_name
+        if user_request.birth_place:
+            user.birth_place == user_request.birth_place
+        if user_request.postal_code:
+            user.postal_code == user_request.postal_code
+        if user_request.tel:
+            user.tel == user_request.tel
+        if user_request.address:
+            user.address == user_request.address
+        if user_request.location_id:
+            user.location_id == user_request.location_id
+        if user_request.national_card_back_version_id:
+            user.national_card_back_version_id == user_request.national_card_back_version_id
+            user.national_card_back_name == user_request.national_card_back_name
+        if user_request.birth_certificate_version_id:
+            user.birth_certificate_version_id == user_request.birth_certificate_version_id
+            user.birth_certificate_name == user_request.birth_certificate_name
+        if user_request.national_card_front_version_id:
+            user.national_card_front_version_id == user_request.national_card_front_version_id
+            user.national_card_front_name == user_request.national_card_front_name
+
+        user.is_valid = True
+
+    user_request.reason = approve_data.data.reason
+    user_request.status = False
+
+    db.add(user)
+    db.add(user_request)
+    await db.commit()
+
+    return ResultResponse(result="Success")
 
 
 # ---------------------------------------------------------------------------

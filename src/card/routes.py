@@ -613,94 +613,95 @@ async def get_manage_chart(
     return chart_data
 
 
-# ---------------------------------------------------------------------------
-@router.post("/card_to_card", response_model=ResultResponse)
-async def card_to_card(
-    *,
-    db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
-    data: CardToCardInput,
-) -> ResultResponse:
-    # * Verify card existence for this user
-    transferor_card = await card_crud.verify_by_number(
-        db=db,
-        number=data.transferor_card_number,
-    )
-    receiver_card = await card_crud.verify_by_number(
-        db=db,
-        number=data.receiver_card_number,
-    )
-    receiver_user = await wallet_crud.verify_existence(
-        db=db,
-        wallet_id=receiver_card.wallet_id,
-    )
-    if (
-        transferor_card.wallet != current_user.wallet
-        or transferor_card.type != CardEnum.CREDIT
-    ):
-        raise CardNotFoundException()
-    # * Verify Card exp
-    await card_crud.check_card_exp(db=db, card_id=transferor_card.id)
-
-    verify_pass = verify_password(
-        data.dynamic_password,
-        transferor_card.dynamic_password,
-    )
-    if not verify_pass:
-        raise CardPasswordInValidException()
-
-    if transferor_card.wallet.is_lock:
-        raise LockWalletException()
-
-    # * Check user cash credit
-    if current_user.cash.balance < data.amount:
-        raise LackOfMoneyException()
-
-    await cash_crud.update_cash_by_user(
-        db=db,
-        user=current_user,
-        amount=data.amount,
-        cash_field=CashField.BALANCE,
-        type_operation=TypeOperation.DECREASE,
-    )
-    await cash_crud.update_cash_by_user(
-        db=db,
-        user=receiver_user,
-        amount=data.amount,
-        cash_field=CashField.BALANCE,
-        type_operation=TypeOperation.INCREASE,
-    )
-
-    # ? Generate transaction
-    transaction = TransactionCreate(
-        value=data.amount,
-        text="عملیات انتقال پوا از {} به {}".format(
-            transferor_card.number,
-            receiver_card.number,
-        ),
-        value_type=TransactionValueType.CASH,
-        receiver_id=receiver_card.wallet_id,
-        transferor_id=transferor_card.wallet_id,
-        code=await transaction_crud.generate_code(db=db),
-        status=TransactionStatusEnum.ACCEPTED,
-        reason=TransactionReasonEnum.CARD_TO_CARD,
-    )
-    main_tr = await transaction_crud.create(db=db, obj_in=transaction)
-    transaction_row = TransactionRowCreate(
-        transaction_id=main_tr.id,
-        value=data.amount,
-        text="عملیات انتقال پوا از {} به {}".format(
-            transferor_card.number,
-            receiver_card.number,
-        ),
-        value_type=TransactionValueType.CASH,
-        receiver_id=receiver_card.wallet_id,
-        transferor_id=transferor_card.wallet_id,
-        code=await transaction_crud.generate_code(db=db),
-        status=TransactionStatusEnum.ACCEPTED,
-        reason=TransactionReasonEnum.CARD_TO_CARD,
-    )
-    await transaction_row_crud.create(db=db, obj_in=transaction_row)
-
-    await db.commit()
-    return ResultResponse(result="Successful")
+# # ---------------------------------------------------------------------------
+# ? Note: Completed
+# @router.post("/card_to_card", response_model=ResultResponse)
+# async def card_to_card(
+#     *,
+#     db: AsyncSession = Depends(deps.get_db),
+#     current_user: User = Depends(deps.get_current_user()),
+#     data: CardToCardInput,
+# ) -> ResultResponse:
+#     # * Verify card existence for this user
+#     transferor_card = await card_crud.verify_by_number(
+#         db=db,
+#         number=data.transferor_card_number,
+#     )
+#     receiver_card = await card_crud.verify_by_number(
+#         db=db,
+#         number=data.receiver_card_number,
+#     )
+#     receiver_user = await wallet_crud.verify_existence(
+#         db=db,
+#         wallet_id=receiver_card.wallet_id,
+#     )
+#     if (
+#         transferor_card.wallet != current_user.wallet
+#         or transferor_card.type != CardEnum.CREDIT
+#     ):
+#         raise CardNotFoundException()
+#     # * Verify Card exp
+#     await card_crud.check_card_exp(db=db, card_id=transferor_card.id)
+#
+#     verify_pass = verify_password(
+#         data.dynamic_password,
+#         transferor_card.dynamic_password,
+#     )
+#     if not verify_pass:
+#         raise CardPasswordInValidException()
+#
+#     if transferor_card.wallet.is_lock:
+#         raise LockWalletException()
+#
+#     # * Check user cash credit
+#     if current_user.cash.balance < data.amount:
+#         raise LackOfMoneyException()
+#
+#     await cash_crud.update_cash_by_user(
+#         db=db,
+#         user=current_user,
+#         amount=data.amount,
+#         cash_field=CashField.BALANCE,
+#         type_operation=TypeOperation.DECREASE,
+#     )
+#     await cash_crud.update_cash_by_user(
+#         db=db,
+#         user=receiver_user,
+#         amount=data.amount,
+#         cash_field=CashField.BALANCE,
+#         type_operation=TypeOperation.INCREASE,
+#     )
+#
+#     # ? Generate transaction
+#     transaction = TransactionCreate(
+#         value=data.amount,
+#         text="عملیات انتقال پوا از {} به {}".format(
+#             transferor_card.number,
+#             receiver_card.number,
+#         ),
+#         value_type=TransactionValueType.CASH,
+#         receiver_id=receiver_card.wallet_id,
+#         transferor_id=transferor_card.wallet_id,
+#         code=await transaction_crud.generate_code(db=db),
+#         status=TransactionStatusEnum.ACCEPTED,
+#         reason=TransactionReasonEnum.CARD_TO_CARD,
+#     )
+#     main_tr = await transaction_crud.create(db=db, obj_in=transaction)
+#     transaction_row = TransactionRowCreate(
+#         transaction_id=main_tr.id,
+#         value=data.amount,
+#         text="عملیات انتقال پوا از {} به {}".format(
+#             transferor_card.number,
+#             receiver_card.number,
+#         ),
+#         value_type=TransactionValueType.CASH,
+#         receiver_id=receiver_card.wallet_id,
+#         transferor_id=transferor_card.wallet_id,
+#         code=await transaction_crud.generate_code(db=db),
+#         status=TransactionStatusEnum.ACCEPTED,
+#         reason=TransactionReasonEnum.CARD_TO_CARD,
+#     )
+#     await transaction_row_crud.create(db=db, obj_in=transaction_row)
+#
+#     await db.commit()
+#     return ResultResponse(result="Successful")

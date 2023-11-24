@@ -53,10 +53,9 @@ class CreateUserRequest(UserRequestBase):
 
 
 # ---------------------------------------------------------------------------
-class UpdateUserRequest(UserRequestBase):
-    location_id: UUID | None = None
+class UpdateUserRequest(BaseModel):
+    is_approve: bool
     reason: str | None = None
-    user_id: UUID
 
 
 # ---------------------------------------------------------------------------
