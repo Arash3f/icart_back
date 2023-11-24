@@ -166,7 +166,7 @@ async def update_ability(
     # * Verify ability existence
     obj_current = await ability_crud.verify_existence(
         db=db,
-        user_crypto_id=update_data.where.id,
+        ability_id=update_data.where.id,
     )
 
     # * Verify ability name duplicate
@@ -227,7 +227,7 @@ async def find_ability(
     AbilityNotFoundException
     """
     # * Verify ability existence
-    ability = await ability_crud.verify_existence(db=db, user_crypto_id=obj_data.id)
+    ability = await ability_crud.verify_existence(db=db, ability_id=obj_data.id)
 
     return ability
 
