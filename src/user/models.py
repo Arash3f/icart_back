@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from src.agent.models import Agent
+from src.band_card.models import BankCard
 from src.cash.models import Cash
 from src.credit.models import Credit
 from src.database.base_class import Base, BaseMixin
@@ -136,4 +137,4 @@ class User(Base, BaseMixin):
     logs = relationship(Log, back_populates="user")
     user_messages = relationship("UserMessage", back_populates="user")
 
-    bank_cards = relationship("BankCard", back_populates="user")
+    bank_cards = relationship(BankCard, back_populates="user")

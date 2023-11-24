@@ -7,6 +7,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from src.database.base_class import Base, BaseMixin
+from src.withdraw.models import Withdraw
 
 
 # -----------------------------------------------------
@@ -24,4 +25,4 @@ class BankCard(Base, BaseMixin):
         back_populates="bank_cards",
     )
 
-    withdraws = relationship("BankCard", back_populates="bank_card")
+    withdraws = relationship(Withdraw, back_populates="bank_card")
