@@ -84,7 +84,7 @@ class CreditCRUD(BaseCRUD[Credit, None, None]):
         CreditNotFoundException
         """
         response = await db.execute(
-            select(self.model).where(self.model.user.mapper.class_.id == user_id),
+            select(self.model).where(User.id == user_id).join(Credit.user),
         )
 
         obj = response.scalar_one_or_none()

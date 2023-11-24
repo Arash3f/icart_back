@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from src.card.schema import CardReadV2
 from src.schema import Duration
 from src.transaction.models import (
     TransactionValueType,
@@ -49,8 +50,8 @@ class TransactionRowRead(TransactionRowBase):
     updated_at: datetime | None
 
     # # ! Relation
-    receiver: WalletReadV2
-    transferor: WalletReadV2
+    receiver: CardReadV2
+    transferor: CardReadV2
 
 
 # ---------------------------------------------------------------------------
@@ -82,8 +83,8 @@ class TransactionRead(TransactionBase):
 
     # ! Relation
     transactions_rows: list[TransactionRowRead] | None = []
-    receiver: WalletReadV2
-    transferor: WalletReadV2
+    receiver: CardReadV2
+    transferor: CardReadV2
 
 
 # ---------------------------------------------------------------------------

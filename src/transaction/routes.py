@@ -146,7 +146,7 @@ async def find_transaction_by_id(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
-        deps.is_user_have_permission([permission.VIEW_PAYMENT]),
+        deps.is_user_have_permission([permission.VIEW_TRANSACTION]),
     ),
     input_data: IDRequest,
 ) -> TransactionRead:
@@ -183,8 +183,8 @@ async def find_transaction_by_id(
         return transaction
     # * Verify transaction receiver & transferor
     else:
-        is_receiver = transaction.receiver.user_id == verify_data.user.id
-        is_transferor = transaction.transferor.user_id == verify_data.user.id
+        is_receiver = transaction.receiver.wallet_id == verify_data.user.wallet.id
+        is_transferor = transaction.transferor.wallet_id == verify_data.user.wallet.id
         if is_receiver or is_transferor:
             return transaction
         else:

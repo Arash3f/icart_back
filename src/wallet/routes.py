@@ -64,7 +64,7 @@ async def get_wallet(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/list", response_model=List[WalletRead])
+@router.post(path="/list", response_model=List[WalletRead])
 async def get_wallet_list(
     *,
     db=Depends(deps.get_db),

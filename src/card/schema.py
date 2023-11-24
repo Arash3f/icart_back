@@ -8,6 +8,17 @@ from src.card.models import CardEnum
 
 
 # ---------------------------------------------------------------------------
+class UserReadV2(BaseModel):
+    username: str
+    first_name: str | None
+    last_name: str | None
+
+
+class WalletReadV2(BaseModel):
+    user: UserReadV2 | None = None
+
+
+# ---------------------------------------------------------------------------
 class CardBase(BaseModel):
     number: str
     cvv2: int
@@ -47,6 +58,13 @@ class CardRead(CardBase):
     id: UUID
 
     created_at: datetime
+
+
+# ---------------------------------------------------------------------------
+class CardReadV2(BaseModel):
+    id: UUID
+    number: str
+    wallet: WalletReadV2
 
 
 # ---------------------------------------------------------------------------
