@@ -127,4 +127,4 @@ CREATE_WITHDRAW = 351
 UPDATE_WITHDRAW = 352
 VALIDATE_WITHDRAW = 353
 # ---------------------------------------------------------------------------
-BANK_CARD = 260
+BANK_CARD_VIEW = 260

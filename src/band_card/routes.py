@@ -18,7 +18,7 @@ from src.band_card.schemas import (
 from src.utils.auth import verify_bank_card
 
 # -------------------------------------------------------------
-router = APIRouter("/bank_card", tags=["bank_card"])
+router = APIRouter(prefix="/bank_card", tags=["withdraw"])
 
 
 # ---------------------------------------------------------------------------
@@ -27,7 +27,7 @@ async def read_bank_card_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
-        deps.is_user_have_permission([permission_codes.BANK_CARDv]),
+        deps.is_user_have_permission([permission_codes.BANK_CARD_VIEW]),
     ),
     filter_data: BankCardFilter,
     skip: int = 0,
@@ -122,7 +122,7 @@ async def find_transaction_by_id(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
-        deps.is_user_have_permission([permission_codes.BANK_CARD]),
+        deps.is_user_have_permission([permission_codes.BANK_CARD_VIEW]),
     ),
     input_data: IDRequest,
 ) -> BankCardRead:

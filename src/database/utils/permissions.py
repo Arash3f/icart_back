@@ -217,6 +217,6 @@ permissions_in: list[PermissionCreate] = [
     # ! BANK CARD
     PermissionCreate(
         name="میتواند کارت های بانکی را ببیند",
-        code=permission.BANK_CARD,
+        code=permission.BANK_CARD_VIEW,
     ),
 ]

@@ -34,7 +34,7 @@ router = APIRouter(prefix="/zibal", tags=["zibal"])
 
 # ---------------------------------------------------------------------------
 @router.post("/cash/charging/verify/", response_model=ResultResponse)
-async def delete_zibal(
+async def cash_charging_verify(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
