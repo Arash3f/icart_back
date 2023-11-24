@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from src.auth.schema import UserBase
 from src.location.schema import LocationRead
 from src.schema import IDRequest
 
@@ -33,6 +34,7 @@ class UserRequestRead(UserRequestBase):
     updated_at: datetime | None
 
     # ! Relations
+    user: UserBase
     location: LocationRead | None = None
 
 
