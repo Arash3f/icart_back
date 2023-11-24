@@ -29,6 +29,7 @@ from src.card.schema import (
     BuyCardResponse,
     CardForgetPasswordInput,
     CardToCardInput,
+    ConfirmCardReceive,
 )
 from src.core.config import settings
 from src.core.security import hash_password, pwd_context, verify_password
@@ -172,6 +173,40 @@ async def buy_card(
     # todo: Send SMS
     await db.commit()
     return BuyCardResponse(card_number=card_number, password=str(card_password))
+
+
+# ---------------------------------------------------------------------------
+@router.post("/confirm", response_model=ResultResponse)
+async def buy_card(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    confirm_data: ConfirmCardReceive,
+) -> ResultResponse:
+    # * Verify card existence with this type
+    card = await card_crud.verify_by_number(
+        db=db,
+        number=confirm_data.card_number,
+    )
+
+    if card.wallet_id != current_user.wallet.id or card.is_active == False:
+        raise CardNotFoundException()
+
+    # ? Generate Log
+    await log_crud.auto_generate(
+        db=db,
+        log_type=LogType.BUY_CARD,
+        user_id=current_user.id,
+        detail="کارت با شماره {} با موفقیت توسط کاربر {} دریافت شد".format(
+            card.number,
+            current_user.username,
+        ),
+    )
+
+    card.is_receive == True
+    db.add(card)
+    await db.commit()
+    return ResultResponse(result="Success")
 
 
 # ---------------------------------------------------------------------------

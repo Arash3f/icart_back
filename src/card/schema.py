@@ -2,10 +2,9 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, conlist, constr
+from pydantic import BaseModel, ConfigDict, constr
 
 from src.card.models import CardEnum
-from src.schema import IDRequest
 
 
 # ---------------------------------------------------------------------------
@@ -94,8 +93,14 @@ class BuyCardResponse(BaseModel):
     card_number: str
 
 
+# ---------------------------------------------------------------------------
 class CardToCardInput(BaseModel):
     receiver_card_number: str
     transferor_card_number: str
     amount: int
     dynamic_password: constr(min_length=6, max_length=6)
+
+
+# ---------------------------------------------------------------------------
+class ConfirmCardReceive(BaseModel):
+    card_number: str

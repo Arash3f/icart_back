@@ -36,6 +36,7 @@ class Card(Base, BaseMixin):
     forget_password = Column(String, nullable=True)
     forget_password_exp = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_receive = Column(Boolean, default=False)
     type = Column(Enum(CardEnum), nullable=False)
 
     # ! Relations

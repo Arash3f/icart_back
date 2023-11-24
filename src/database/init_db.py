@@ -131,6 +131,7 @@ async def init_db(db: AsyncSession) -> None:
             type=CardEnum.BLUE,
             password=hash_password(str(card_password)),
             wallet_id=wallet.id,
+            is_receive=True,
         )
         swip_card.expiration_at = expiration_at
 
@@ -140,6 +141,7 @@ async def init_db(db: AsyncSession) -> None:
             type=CardEnum.CREDIT,
             password=hash_password(str(card_password)),
             wallet_id=wallet.id,
+            is_receive=True,
         )
         credit_card.expiration_at = expiration_at
 
