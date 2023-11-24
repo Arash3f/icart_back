@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -7,7 +7,7 @@ from src.exception import InCorrectDataException
 from src.fee.crud import fee as fee_crud
 from src.fee.models import Fee
 from src.log.crud import log as log_crud
-from src.fee.schema import FeeBase, FeeCreate, FeeRead, FeeUpdate
+from src.fee.schema import FeeBase, FeeCreate, FeeRead, FeeUpdate, FeeFilter
 from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import DeleteResponse, IDRequest
@@ -224,6 +224,7 @@ async def read_fee_list(
     current_user: User = Depends(
         deps.get_current_user_with_permissions([permission.VIEW_FEE]),
     ),
+    filter_data: FeeFilter,
     skip: int = 0,
     limit: int = 10,
 ) -> list[FeeRead]:
@@ -240,14 +241,39 @@ async def read_fee_list(
         Pagination skip
     limit
         Pagination limit
+    filter_data
+        Filter data
 
     Returns
     -------
     fee_list
         List of fee
     """
-    query = select(Fee).order_by(Fee.created_at.desc())
-    fee_list = await fee_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
+    # * Prepare filter fields
+    filter_data.user_type = (
+        (Fee.user_type == filter_data.user_type)
+        if filter_data.user_type is not None
+        else True
+    )
+    filter_data.type = (
+        (Fee.type == filter_data.type) if filter_data.type is not None else True
+    )
+    # * Add filter fields
+    query = (
+        select(Fee).filter(
+            and_(
+                filter_data.user_type,
+                filter_data.type,
+            ),
+        )
+    ).order_by(Fee.created_at.desc())
+    # * Find All agent with filters
+    fee_list = await fee_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query.distinct(),
+    )
     return fee_list
 
 

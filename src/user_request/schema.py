@@ -5,7 +5,6 @@ from pydantic import BaseModel, ConfigDict
 
 from src.location.schema import LocationRead
 from src.schema import IDRequest
-from src.user.schema import UserRead
 
 
 # ---------------------------------------------------------------------------

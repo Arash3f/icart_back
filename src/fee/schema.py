@@ -35,3 +35,9 @@ class FeeRead(FeeBase):
 
     created_at: datetime
     updated_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+class FeeFilter(BaseModel):
+    type: None | FeeTypeEnum = None
+    user_type: None | FeeUserType = None

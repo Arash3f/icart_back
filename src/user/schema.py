@@ -43,6 +43,7 @@ class UserRead(UserBase):
     father_name: str | None = None
     birth_place: str | None = None
     birth_date: str
+    postal_code: str | None = None
     address: str | None = None
     is_active: bool
     is_valid: bool
@@ -66,6 +67,7 @@ class UserRead2(UserBase):
     birth_place: str | None = None
     birth_date: str
     address: str | None = None
+    postal_code: str | None = None
     is_active: bool
     is_valid: bool
 
