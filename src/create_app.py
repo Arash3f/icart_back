@@ -37,6 +37,8 @@ from src.zibal.routes import router as zibal_router
 from src.user_request.routes import router as user_request_router
 from src.position_request.routes import router as position_request_router
 from src.log.routes import router as log_router
+from src.withdraw.routes import router as withdraw_router
+from src.band_card.routes import router as band_card_router
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +81,8 @@ def create_fastapi_app():
     app.include_router(installments_router)
     app.include_router(log_router)
     app.include_router(zibal_router)
+    app.include_router(withdraw_router)
+    app.include_router(band_card_router)
     app.include_router(cooperation_request_router)
     app.add_middleware(
         middleware_class=CORSMiddleware,
