@@ -18,7 +18,7 @@ from src.band_card.schemas import (
 from src.utils.auth import verify_bank_card
 
 # -------------------------------------------------------------
-router = APIRouter(prefix="/bank_card", tags=["withdraw"])
+router = APIRouter(prefix="/bank_card", tags=["bank_card"])
 
 
 # ---------------------------------------------------------------------------

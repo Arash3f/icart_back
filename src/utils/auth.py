@@ -79,10 +79,12 @@ def verify_bank_card(
 
     res = res.json()
 
-    if res["data"] and res["موفق"]:
-        check_name = user.father_name + user.last_name
-        check_iban = shaba_number
-        if check_name and check_iban:
-            return True
+    if res["result"] == 1:
+        if res["data"] and res["message"] == "موفق":
+            name = "{} {}".format(user.first_name, user.last_name)
+            check_name = name in res["data"]["name"]
+            check_shaba_number = shaba_number == res["data"]["IBAN"]
+            if check_name and check_shaba_number:
+                return True
 
     return False

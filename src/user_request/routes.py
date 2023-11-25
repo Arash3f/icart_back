@@ -79,8 +79,10 @@ async def create_user_request(
 
     obj.status = True
     obj.reason = None
+
     db.add(obj)
     await db.commit()
+    await db.refresh(obj)
 
     return obj
 
