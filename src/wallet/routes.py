@@ -202,7 +202,7 @@ async def get_my_wallet(
 async def verify_wallet(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user()),
+    current_user: User = Depends(deps.get_current_user_v2()),
 ) -> WalletReadV2:
     """
     ! Verify My Wallet
