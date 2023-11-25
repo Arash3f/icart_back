@@ -27,3 +27,5 @@ class Wallet(Base, BaseMixin):
     cards = relationship("Card", back_populates="wallet", lazy="selectin")
 
     cryptos = relationship(UserCrypto, back_populates="wallet")
+
+    deposits = relationship("Deposit", back_populates="wallet")

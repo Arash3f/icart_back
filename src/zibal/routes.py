@@ -3,28 +3,17 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
-from src.card.crud import CardValueType
-from src.core.config import settings
+from src.deposit.schemas import DepositCreate, DepositApprove
 from src.exception import InCorrectDataException
 from src.log.crud import log as log_crud
-from src.transaction.models import (
-    TransactionStatusEnum,
-    TransactionValueType,
-    TransactionReasonEnum,
-)
+from src.deposit.crud import deposit as deposit_crud
 from src.permission import permission_codes as permission
-from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.zibal.schema import (
-    ZibalVerifyInput,
     NationalIdentityInquiryInput,
     NationalIdentityInquiryOutput,
 )
 from src.log.models import LogType
-from src.transaction.crud import transaction as transaction_crud
-from src.user.crud import user as user_crud
-from src.card.crud import card as card_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
-from src.transaction.crud import transaction_row as transaction_row_crud
 from src.schema import ResultResponse
 from src.user.models import User
 
@@ -40,7 +29,7 @@ async def cash_charging_verify(
     current_user: User = Depends(
         deps.get_current_user(),
     ),
-    verify_data: ZibalVerifyInput,
+    verify_data: DepositApprove,
 ) -> ResultResponse:
     """
     ! Create a Transaction for zibal IPG
@@ -74,48 +63,13 @@ async def cash_charging_verify(
     response = res.json()
 
     if response["result"] == 100 and response["message"] == "success":
-        admin_user = await user_crud.verify_existence_by_username(
-            db=db,
-            username=settings.ADMIN_USERNAME,
+        create_data = DepositCreate(
+            amount=response["amount"],
+            zibal_track_id=verify_data.track_id,
+            wallet_id=current_user.wallet.id,
         )
 
-        transferor_card = await card_crud.get_active_card(
-            db=db,
-            card_value_type=CardValueType.CASH,
-            wallet=admin_user.wallet,
-        )
-        receiver_card = await card_crud.get_active_card(
-            db=db,
-            card_value_type=CardValueType.CASH,
-            wallet=current_user.wallet,
-        )
-
-        # ! Main
-        main_code = await transaction_crud.generate_code(db=db)
-        main_tr = TransactionCreate(
-            status=TransactionStatusEnum.ACCEPTED,
-            value=float(response["amount"]),
-            text="عملیات شارژ کردن کیف پول کاربر",
-            value_type=TransactionValueType.CASH,
-            receiver_id=receiver_card.id,
-            transferor_id=transferor_card.id,
-            code=main_code,
-            reason=TransactionReasonEnum.WALLET_CHARGING,
-        )
-        main_tr = await transaction_crud.create(db=db, obj_in=main_tr)
-        merchant_fee_tr = TransactionRowCreate(
-            transaction_id=main_tr.id,
-            status=TransactionStatusEnum.ACCEPTED,
-            value=float(response["amount"]),
-            text="عملیات شارژ کردن کیف پول کاربر",
-            value_type=TransactionValueType.CASH,
-            receiver_id=receiver_card.id,
-            transferor_id=transferor_card.id,
-            code=main_code,
-            zibal_track_id=str(response["trackId"]),
-            reason=TransactionReasonEnum.WALLET_CHARGING,
-        )
-        await transaction_row_crud.create(db=db, obj_in=merchant_fee_tr)
+        await deposit_crud.create(db=db, obj_in=create_data)
 
         await cash_crud.update_cash_by_user(
             db=db,
