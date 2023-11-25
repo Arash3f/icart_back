@@ -62,6 +62,9 @@ async def cash_charging_verify(
 
     response = res.json()
 
+    if response["result"] == 201:
+        return ResultResponse(result=response["message"])
+
     if response["result"] == 100 and response["message"] == "success":
         create_data = DepositCreate(
             amount=response["amount"],
