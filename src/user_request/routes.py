@@ -146,11 +146,11 @@ async def approve_user_request(
             user.national_card_front_name == user_request.national_card_front_name
 
         user.is_valid = True
+        db.add(user)
 
     user_request.reason = approve_data.data.reason
     user_request.status = False
 
-    db.add(user)
     db.add(user_request)
     await db.commit()
 
