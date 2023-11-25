@@ -158,7 +158,7 @@ async def national_identity_verify(
             "Authorization": auth_token,
         },
         json={
-            "nationalCode": verify_data.natioal_code,
+            "nationalCode": verify_data.national_code,
             "birthDate": verify_data.birth_date,
         },
     )
