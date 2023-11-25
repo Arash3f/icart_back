@@ -13,7 +13,6 @@ from src.user_request.schema import (
     UserRequestRead,
     UserRequestFilter,
     ApproveUserRequest,
-    UpdateUserRequest,
     CreateUserRequest,
     CreateUserRequestData,
 )
@@ -77,6 +76,11 @@ async def create_user_request(
             obj_new=obj_in,
             obj_current=current_user.user_request,
         )
+
+    obj.status = True
+    obj.reason = None
+    db.add(obj)
+    await db.commit()
 
     return obj
 
