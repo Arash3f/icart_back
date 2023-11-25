@@ -93,7 +93,7 @@ async def cash_charging_verify(
             ),
         )
 
-        await db.commit()
+    await db.commit()
     return ResultResponse(result="Transaction Check")
 
 

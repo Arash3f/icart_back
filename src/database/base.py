@@ -25,6 +25,7 @@ from src.ticket_message.models import TicketMessage
 from src.pos.models import Pos
 from src.card.models import Card
 from src.user_crypto.models import UserCrypto
+from src.deposit.models import Deposit
 from src.crypto.models import Crypto
 from src.cash.models import Cash
 from src.user_request.models import UserRequest
