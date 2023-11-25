@@ -98,6 +98,44 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
 
         return card_obj
 
+    async def verify_by_number_v2(
+        self,
+        *,
+        db: AsyncSession,
+        number: str,
+    ) -> Card | CardNotFoundException:
+        """
+        ! Verify Existence By Number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        number
+            Target Card Number
+
+        Returns
+        -------
+        card
+            Found Item
+
+        Raises
+        ------
+        CardNotFoundException
+        """
+        response = await db.execute(
+            select(self.model).where(
+                self.model.number == number,
+                self.model.is_active == True,
+            ),
+        )
+
+        card_obj = response.scalar_one_or_none()
+        if not card_obj:
+            raise CardNotFoundException()
+
+        return card_obj
+
     async def verify_existence_with_type(
         self,
         *,

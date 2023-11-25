@@ -184,7 +184,7 @@ async def confirm_card(
     confirm_data: ConfirmCardReceive,
 ) -> ResultResponse:
     # * Verify card existence with this type
-    card = await card_crud.verify_by_number(
+    card = await card_crud.verify_by_number_v2(
         db=db,
         number=confirm_data.card_number,
     )
