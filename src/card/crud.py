@@ -4,7 +4,7 @@ from typing import Type
 from uuid import UUID
 
 import jdatetime
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.card.exception import (
@@ -268,27 +268,21 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         card
             Found Item
         """
-        type_filter = True
+        type_filter = self.model.type == CardEnum.CREDIT
         if card_value_type == CardValueType.CASH:
             type_filter = or_(
                 self.model.type == CardEnum.BLUE,
                 self.model.type == CardEnum.GOLD,
                 # self.model.type == CardEnum.SILVER,
             )
-        else:
-            type_filter = (self.model.type == CardEnum.CREDIT,)
 
         response = await db.execute(
-            select(self.model).where(
-                self.model.wallet_id == wallet.id,
+            select(Card).filter(
+                Card.wallet == wallet,
+                Card.is_active == True,
                 type_filter,
-                self.model.is_active == True,
             ),
         )
-
-        a = response.scalars()
-        for i in a:
-            print(i.id)
 
         card_obj = response.scalar_one_or_none()
 
