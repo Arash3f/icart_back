@@ -35,9 +35,14 @@ class PosCreate(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class PosUpdateData(BaseModel):
+    number: str
+
+
+# ---------------------------------------------------------------------------
 class PosUpdate(BaseModel):
     where: IDRequest
-    data: PosBase
+    data: PosUpdateData
 
 
 # ---------------------------------------------------------------------------

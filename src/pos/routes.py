@@ -454,7 +454,7 @@ async def config(
     InactiveUserException
     PosNotFoundException
     """
-    pos = await pos_crud.find_by_number(db=db, number=config_data.terminal_number)
+    pos = await pos_crud.find_by_number(db=db, number=config_data.username)
 
     user = await auth_crud.authenticate(
         db=db,
@@ -499,8 +499,6 @@ async def balance(
     PosNotFoundException
     CardNotFoundException
     """
-    c_time = str(jdatetime.datetime.now())
-
     # * Verify pos existence
     pos = await pos_crud.find_by_number(db=db, number=card_data.terminal_number)
 
@@ -555,7 +553,6 @@ async def purchase(
     PosNotFoundException
     CardNotFoundException
     """
-    c_time = str(jdatetime.datetime.now())
     # * Verify pos existence
     pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
     # * Verify merchant number

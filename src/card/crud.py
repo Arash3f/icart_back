@@ -88,6 +88,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
             select(self.model).where(
                 self.model.number == number,
                 self.model.is_active == True,
+                self.model.is_receive == True,
             ),
         )
 

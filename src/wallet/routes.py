@@ -21,6 +21,7 @@ from src.wallet.schema import (
     WalletBalanceRead,
     WalletFilter,
     WalletFilterOrderFild,
+    WalletReadV2,
 )
 
 # ---------------------------------------------------------------------------
@@ -174,6 +175,37 @@ async def get_my_wallet(
 ) -> WalletRead:
     """
     ! Get My Wallet
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+
+    Returns
+    -------
+    wallet
+        my wallet
+
+    Raises
+    ------
+    WalletNotFoundException
+    """
+    # * Verify wallet existence
+    wallet = await wallet_crud.verify_by_user_id(db=db, user_id=current_user.id)
+    return wallet
+
+
+# ---------------------------------------------------------------------------
+@router.get(path="/verify", response_model=WalletReadV2)
+async def verify_wallet(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+) -> WalletReadV2:
+    """
+    ! Verify My Wallet
 
     Parameters
     ----------

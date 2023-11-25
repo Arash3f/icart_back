@@ -165,16 +165,17 @@ async def national_identity_verify(
 
     res = res.json()
 
-    if res["data"]:
-        if res["data"]["matched"]:
-            return NationalIdentityInquiryOutput(
-                matched=res["data"]["matched"].matched,
-                lastName=res["data"]["matched"].lastName,
-                fatherName=res["data"]["matched"].fatherName,
-                firstName=res["data"]["matched"].firstName,
-                nationalCode=res["data"]["matched"].nationalCode,
-                isDead=res["data"]["matched"].isDead,
-                alive=res["data"]["matched"].alive,
-            )
+    if res["result"] == 1:
+        if res["data"]:
+            if res["data"]["matched"]:
+                return NationalIdentityInquiryOutput(
+                    matched=res["data"]["matched"].matched,
+                    lastName=res["data"]["matched"].lastName,
+                    fatherName=res["data"]["matched"].fatherName,
+                    firstName=res["data"]["matched"].firstName,
+                    nationalCode=res["data"]["matched"].nationalCode,
+                    isDead=res["data"]["matched"].isDead,
+                    alive=res["data"]["matched"].alive,
+                )
 
     raise InCorrectDataException()
