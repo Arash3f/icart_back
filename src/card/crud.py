@@ -275,7 +275,7 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
                 self.model.type == CardEnum.GOLD,
                 # self.model.type == CardEnum.SILVER,
             )
-        elif card_value_type == CardValueType.CREDIT:
+        else:
             type_filter = (self.model.type == CardEnum.CREDIT,)
 
         response = await db.execute(

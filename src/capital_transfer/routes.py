@@ -41,7 +41,6 @@ from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
 from src.transaction.crud import transaction as transaction_crud
-from src.transaction.crud import transaction_row as transaction_row_crud
 from src.log.crud import log as log_crud
 from src.card.crud import card as card_crud, CardValueType
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
