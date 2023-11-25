@@ -55,9 +55,10 @@ def shahkar_inquiry(
 
     res = res.json()
 
-    if res["data"]:
-        if res["data"]["matched"]:
-            return True
+    if res["result"] == 1:
+        if res["data"]:
+            if res["data"]["matched"]:
+                return True
 
     return False
 
