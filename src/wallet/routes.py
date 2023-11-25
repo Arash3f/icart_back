@@ -8,6 +8,7 @@ from src import deps
 from src.permission import permission_codes as permission
 from src.schema import IDRequest
 from src.user.models import User
+from src.user.schema import WalletCardReadV2
 from src.wallet.crud import wallet as wallet_crud
 from src.agent.crud import agent as agent_crud
 from src.credit.crud import credit as credit_crud
@@ -198,12 +199,12 @@ async def get_my_wallet(
 
 
 # ---------------------------------------------------------------------------
-@router.get(path="/verify", response_model=WalletReadV2)
+@router.get(path="/verify", response_model=WalletCardReadV2)
 async def verify_wallet(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user_v2()),
-) -> WalletReadV2:
+) -> WalletCardReadV2:
     """
     ! Verify My Wallet
 
