@@ -278,12 +278,11 @@ class CardCRUD(BaseCRUD[Card, CreateCard, CardUpdatePassword]):
         else:
             type_filter = (self.model.type == CardEnum.CREDIT,)
 
-        print(self.model.wallet == wallet)
+        print(wallet.id)
         print(type_filter)
-        print(self.model.is_active == True)
         response = await db.execute(
             select(self.model).where(
-                self.model.wallet == wallet,
+                self.model.wallet_id == wallet.id,
                 type_filter,
                 self.model.is_active == True,
             ),
