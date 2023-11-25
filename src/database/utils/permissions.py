@@ -219,4 +219,9 @@ permissions_in: list[PermissionCreate] = [
         name="میتواند کارت های بانکی را ببیند",
         code=permission.BANK_CARD_VIEW,
     ),
+    # ! DEPOSIT
+    PermissionCreate(
+        name="میتواند واریز پول را ببیند",
+        code=permission.DEPOSIT_VIEW,
+    ),
 ]

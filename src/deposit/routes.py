@@ -4,14 +4,10 @@ from src import deps
 from src.auth.exception import AccessDeniedException
 from src.band_card.models import BankCard
 from src.schema import IDRequest, VerifyUserDep
-from src.user.models import User
-from src.wallet.exception import LackOfMoneyException
 from src.deposit.crud import deposit as deposit_crud
 from src.permission import permission_codes
-from src.band_card.crud import bank_card as bank_card_crud
 from src.deposit.models import Deposit
 from src.deposit.schemas import (
-    DepositCreate,
     DepositFilter,
     DepositRead,
 )
