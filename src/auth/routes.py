@@ -32,6 +32,7 @@ from src.user.models import User
 from src.user.schema import UserRead
 from src.user_message.models import UserMessage
 from src.utils.auth import national_identity_inquiry, shahkar_inquiry
+from src.utils.general import add_arabic_word
 from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
 
@@ -301,6 +302,9 @@ async def register(
     IncorrectVerifyCodeException
     UsernameIsDuplicatedException
     """
+    register_data.first_name = add_arabic_word(register_data.first_name)
+    register_data.last_name = add_arabic_word(register_data.last_name)
+
     phone_number = register_data.phone_number
     verify_code = register_data.phone_verify_code
     current_time = datetime.now(timezone("Asia/Tehran"))
