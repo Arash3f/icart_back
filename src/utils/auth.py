@@ -27,13 +27,14 @@ def national_identity_inquiry(
 
     res = res.json()
 
-    if res["data"]:
-        if res["data"]["matched"]:
-            if (
-                res["data"]["firstName"] == request_first_name
-                and res["data"]["lastName"] == request_last_name
-            ):
-                return True
+    if res["result"] == 1:
+        if res["data"]:
+            if res["data"]["matched"]:
+                if (
+                    request_first_name in res["data"]["firstName"]
+                    and request_last_name in res["data"]["lastName"]
+                ):
+                    return True
 
     return False
 
