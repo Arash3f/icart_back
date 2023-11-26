@@ -31,8 +31,8 @@ def national_identity_inquiry(
         if res["data"]:
             if res["data"]["matched"]:
                 if (
-                    request_first_name in res["data"]["firstName"]
-                    and request_last_name in res["data"]["lastName"]
+                    request_first_name.replace(" ", "") in res["data"]["firstName"]
+                    and request_last_name.replace(" ", "") in res["data"]["lastName"]
                 ):
                     return True
 
