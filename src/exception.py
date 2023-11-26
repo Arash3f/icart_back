@@ -32,3 +32,39 @@ class TechnicalProblemException(HTTPException):
             "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
+
+
+class InvalidName(HTTPException):
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 2,
+            "persian_message": "مشکلی در تایید اطلاعات نام شما اتفاق افتاده است!",
+            "english_message": "There is a problem in verify your name!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None
+
+
+class InvalidNationalBirthDate(HTTPException):
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 2,
+            "persian_message": "مشکلی در تایید اطلاعات کد ملی و تاریخ تولد شما اتفاق افتاده است!",
+            "english_message": "There is a problem in verify your national code and birth day!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None
+
+
+class InvalidNationalMobile(HTTPException):
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 2,
+            "persian_message": "مشکلی در تایید اطلاعات کد ملی و شماره مبایل شما اتفاق افتاده است!",
+            "english_message": "There is a problem in verify your national code and mobile!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None

@@ -1,6 +1,7 @@
 import requests
 
 from src.core.config import settings
+from src.exception import InvalidName, InvalidNationalBirthDate, InvalidNationalMobile
 from src.user.models import User
 
 token = settings.KAVENEGAR_TOKEN
@@ -35,6 +36,10 @@ def national_identity_inquiry(
                     and request_last_name.replace(" ", "") in res["data"]["lastName"]
                 ):
                     return True
+                else:
+                    raise InvalidName()
+            else:
+                raise InvalidNationalBirthDate()
 
     return False
 
@@ -60,6 +65,8 @@ def shahkar_inquiry(
         if res["data"]:
             if res["data"]["matched"]:
                 return True
+            else:
+                raise InvalidNationalMobile()
 
     return False
 
