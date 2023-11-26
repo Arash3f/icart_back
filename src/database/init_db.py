@@ -165,17 +165,23 @@ async def init_db(db: AsyncSession) -> None:
 
     # ? Add default role permissions
     for obj in default_role_permission:
-        role_exist = await role_crud.verify_existence_by_name(db=db, name=obj.name)
-        for perm_code in obj.permissions:
-            permission = await permission_crud.find_by_code(
-                db=db,
-                code=perm_code,
-            )
-            role_permission_in = RolePermissionCreate(
-                role_id=role_exist.id,
-                permission_id=permission.id,
-            )
-            await role_permission_crud.create(db=db, obj_in=role_permission_in)
+        role_exist = await role_crud.find_by_name(db=db, name=obj.name)
+        if role_exist:
+            role_exist.permissions = []
+            db.add(role_exist)
+            await db.commit()
+            await db.refresh(role_exist)
+
+            for perm_code in obj.permissions:
+                permission = await permission_crud.find_by_code(
+                    db=db,
+                    code=perm_code,
+                )
+                role_permission_in = RolePermissionCreate(
+                    role_id=role_exist.id,
+                    permission_id=permission.id,
+                )
+                await role_permission_crud.create(db=db, obj_in=role_permission_in)
     # ! Generate all project locations
     for location in location_in:
         # Check if location exists or not

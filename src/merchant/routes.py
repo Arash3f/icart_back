@@ -168,7 +168,7 @@ async def get_merchant_list(
         else True
     )
     filter_data.national_code = (
-        (User.national_code.contains(filter_data.national_code),)
+        (User.national_code.contains(filter_data.national_code))
         if filter_data.national_code is not None
         else True
     )

@@ -27,4 +27,22 @@ default_role_permission: list[DefaultRolePermission] = [
             permission.VIEW_MERCHANT,
         ],
     ),
+    DefaultRolePermission(
+        name="کارشناس",
+        permissions=[
+            permission.VIEW_MERCHANT,
+            permission.UPDATE_MERCHANT,
+            permission.UPDATE_POSITION_REQUEST,
+            permission.VIEW_POSITION_REQUEST,
+            permission.VIEW_USER,
+            permission.VIEW_USER_REQUEST,
+        ],
+    ),
+    DefaultRolePermission(
+        name="مرکز تماس",
+        permissions=[
+            permission.VIEW_TICKET,
+            permission.RESPONSE_TICKET,
+        ],
+    ),
 ]
