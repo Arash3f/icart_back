@@ -204,6 +204,7 @@ async def confirm_card(
     )
 
     card.is_receive = True
+    card.password = hash_password(confirm_data.password)
     db.add(card)
     await db.commit()
     return ResultResponse(result="Success")
