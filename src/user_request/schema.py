@@ -26,15 +26,15 @@ class UserRequestBase(BaseModel):
 
 # ---------------------------------------------------------------------------
 class UserRequestRead(UserRequestBase):
-    id: UUID
+    id: UUID | None = None
     reason: str | None = None
     status: bool | None = None
 
-    created_at: datetime
+    created_at: datetime | None = None
     updated_at: datetime | None
 
     # ! Relations
-    user: UserBase
+    user: UserBase | None = None
     location: LocationRead | None = None
 
 
