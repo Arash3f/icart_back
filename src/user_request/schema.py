@@ -31,7 +31,7 @@ class UserRequestRead(UserRequestBase):
     status: bool | None = None
 
     created_at: datetime | None = None
-    updated_at: datetime | None
+    updated_at: datetime | None = None
 
     # ! Relations
     user: UserBase | None = None
