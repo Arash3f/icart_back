@@ -202,6 +202,11 @@ async def get_merchant_list(
         if filter_data.agent_id is not None
         else True
     )
+    filter_data.agent_user_id = (
+        (Agent.user_id == filter_data.agent_user_id)
+        if filter_data.agent_user_id is not None
+        else True
+    )
 
     # * Add filter fields
     query = (
@@ -216,9 +221,11 @@ async def get_merchant_list(
                 filter_data.user_id,
                 filter_data.agent_id,
                 filter_data.field_of_work,
+                filter_data.agent_user_id,
             ),
         )
         .join(Merchant.user)
+        .join(Merchant.agent)
         .join(Merchant.contract)
     ).order_by(Merchant.created_at)
 
