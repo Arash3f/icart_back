@@ -103,7 +103,7 @@ def get_current_user_v2() -> Type[User]:
         )
         token_data = TokenData(username=payload["username"], role=payload["role"])
         # ? Verify User
-        user = await user_crud.verify_existence_by_username(
+        user = await user_crud.find_by_username(
             db=db,
             username=token_data.username,
         )
