@@ -7,6 +7,7 @@ from src.schema import IDRequest
 
 # ---------------------------------------------------------------------------
 class UserBase(BaseModel):
+    id: UUID
     username: str
     national_code: str
     first_name: str | None = None

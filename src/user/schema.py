@@ -75,7 +75,6 @@ class UserRead2(UserBase):
     phone_number: str | None
     national_code: str
     tel: str | None = None
-    postal_code: str | None = None
     father_name: str | None = None
     birth_place: str | None = None
     birth_date: str

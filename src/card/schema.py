@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, constr
 
 from src.card.models import CardEnum
+from src.location.schema import LocationComplex
 
 
 # ---------------------------------------------------------------------------
@@ -14,8 +15,27 @@ class UserReadV2(BaseModel):
     last_name: str | None
 
 
+# ---------------------------------------------------------------------------
 class WalletReadV2(BaseModel):
     user: UserReadV2 | None = None
+
+
+# ---------------------------------------------------------------------------
+class UserReadV3(BaseModel):
+    username: str
+    first_name: str | None
+    last_name: str | None
+    phone_number: str | None
+    national_code: str
+    tel: str | None = None
+    father_name: str | None = None
+    address: str | None = None
+    postal_code: str | None = None
+    location: LocationComplex | None
+
+
+class WalletReadV3(BaseModel):
+    user: UserReadV3 | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +77,7 @@ class CardUpdatePassword(BaseModel):
 class CardRead(CardBase):
     id: UUID
 
+    wallet: WalletReadV3
     created_at: datetime
 
 

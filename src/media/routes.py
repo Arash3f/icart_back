@@ -8,6 +8,7 @@ from src.capital_transfer.crud import capital_transfer as capital_transfer_crud
 from src.contract.crud import contract as contract_crud
 from src.media.schema import UserId
 from src.user.crud import user as user_crud
+from src.user.models import User
 from src.user_request.crud import user_request as user_request_crud
 from src.core.config import settings
 from src.schema import IDRequest, ResultResponse
@@ -203,6 +204,9 @@ async def get_image_file(
 async def get_national_card_front_file(
     *,
     db=Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
     minio: MinioClient = Depends(deps.minio_auth),
     where_data: UserId,
 ):
@@ -213,6 +217,7 @@ async def get_national_card_front_file(
     ----------
     db
         Target database connection
+    current_user
     minio
         Minio dep
     where_data
@@ -249,6 +254,9 @@ async def get_national_card_front_file(
 @router.post(path="/user_request/national_card_back/find")
 async def get_national_card_back_file(
     *,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
     db=Depends(deps.get_db),
     minio: MinioClient = Depends(deps.minio_auth),
     where_data: UserId,
@@ -258,6 +266,7 @@ async def get_national_card_back_file(
 
     Parameters
     ----------
+    current_user
     db
         Target database connection
     minio
@@ -296,6 +305,9 @@ async def get_national_card_back_file(
 @router.post(path="/user_request/birth_certificate/find")
 async def get_birth_certificate_file(
     *,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
     db=Depends(deps.get_db),
     minio: MinioClient = Depends(deps.minio_auth),
     where_data: UserId,
@@ -305,6 +317,7 @@ async def get_birth_certificate_file(
 
     Parameters
     ----------
+    current_user
     db
         Target database connection
     minio
@@ -343,6 +356,9 @@ async def get_birth_certificate_file(
 @router.post(path="/user_request/video/find")
 async def get_video_file(
     *,
+    current_user: User = Depends(
+        deps.get_current_user(),
+    ),
     db=Depends(deps.get_db),
     minio: MinioClient = Depends(deps.minio_auth),
     where_data: UserId,
@@ -352,6 +368,7 @@ async def get_video_file(
 
     Parameters
     ----------
+    current_user
     db
         Target database connection
     minio
