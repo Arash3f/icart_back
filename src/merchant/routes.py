@@ -193,7 +193,7 @@ async def get_merchant_list(
         else True
     )
     filter_data.user_id = (
-        (Merchant.user_id == filter_data.national_code)
+        (Merchant.user_id == filter_data.user_id)
         if filter_data.user_id is not None
         else True
     )
@@ -302,7 +302,7 @@ async def get_stores(
         else True
     )
     filter_data.user_id = (
-        (Merchant.user_id == filter_data.national_code)
+        (Merchant.user_id == filter_data.user_id)
         if filter_data.user_id is not None
         else True
     )
