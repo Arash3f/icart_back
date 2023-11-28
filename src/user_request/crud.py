@@ -99,7 +99,7 @@ class UserRequestCRUD(BaseCRUD[UserRequest, CreateUserRequest, UpdateUserRequest
             Found user request
         """
         response = await db.execute(
-            select(self.model).where(self.model.user_id == user_id),
+            select(self.model).filter(self.model.user_id == user_id),
         )
 
         found_item = response.scalar_one_or_none()
