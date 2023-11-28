@@ -136,6 +136,7 @@ async def get_additional_info(
         .select_from(Agent)
         .filter(
             Agent.is_main == True,
+            Agent.is_active == True,
         ),
     )
     main_agent_count = response.scalar()
@@ -145,17 +146,26 @@ async def get_additional_info(
         .select_from(Agent)
         .filter(
             Agent.is_main == False,
+            Agent.is_active == True,
         ),
     )
     sales_agent_count = response.scalar()
 
     response = await db.execute(
-        select(func.count()).select_from(Organization),
+        select(func.count())
+        .select_from(Organization)
+        .filter(
+            Organization.is_active == True,
+        ),
     )
     organization_count = response.scalar()
 
     response = await db.execute(
-        select(func.count()).select_from(Merchant),
+        select(func.count())
+        .select_from(Merchant)
+        .filter(
+            Merchant.is_active == True,
+        ),
     )
     merchant_count = response.scalar()
 
