@@ -233,6 +233,8 @@ async def me_user_request(
         user_id=current_user.id,
     )
 
+    print(find_user_request)
+
     if find_user_request:
         return find_user_request
 
