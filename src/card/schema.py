@@ -2,7 +2,6 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-import jdatetime
 from pydantic import BaseModel, ConfigDict, constr
 
 from src.card.models import CardEnum
@@ -43,7 +42,7 @@ class WalletReadV3(BaseModel):
 class CardBase(BaseModel):
     number: str
     cvv2: int
-    expiration_at: jdatetime | None = None
+    expiration_at: str | datetime | None = None
     type: CardEnum
 
     model_config = ConfigDict(extra="forbid")
