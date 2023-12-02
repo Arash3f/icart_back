@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from random import randint
+
+import jdatetime
 from fastapi import APIRouter, Depends
 from pytz import timezone
 from sqlalchemy import select, func, and_
@@ -412,6 +414,10 @@ async def get_my_wallet(
         .order_by(Card.created_at.desc())
     )
     card_list = await card_crud.get_multi(db=db, query=query)
+    for card in card_list:
+        card.expiration_at = jdatetime.datetime.fromtimestamp(
+            card.expiration_at.timestamp(),
+        )
     return card_list
 
 
