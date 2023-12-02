@@ -415,8 +415,10 @@ async def get_my_wallet(
     )
     card_list = await card_crud.get_multi(db=db, query=query)
     for card in card_list:
-        card.expiration_at = jdatetime.datetime.fromtimestamp(
-            card.expiration_at.timestamp(),
+        card.expiration_at = str(
+            jdatetime.datetime.fromtimestamp(
+                card.expiration_at.timestamp(),
+            ),
         )
     return card_list
 
