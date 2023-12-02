@@ -40,6 +40,7 @@ from src.log.routes import router as log_router
 from src.withdraw.routes import router as withdraw_router
 from src.band_card.routes import router as band_card_router
 from src.deposit.routes import router as deposit_router
+from src.capital_transfer.routes import router as capital_transfer_router
 
 
 # ---------------------------------------------------------------------------
@@ -85,6 +86,7 @@ def create_fastapi_app():
     app.include_router(withdraw_router)
     app.include_router(deposit_router)
     app.include_router(band_card_router)
+    app.include_router(capital_transfer_router)
     app.include_router(cooperation_request_router)
     app.add_middleware(
         middleware_class=CORSMiddleware,
