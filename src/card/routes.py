@@ -406,7 +406,7 @@ async def get_my_wallet(
     query = (
         select(Card)
         .filter(
-            Wallet.user_id == current_user.wallet.id,
+            Wallet.id == current_user.wallet.id,
         )
         .join(Card.wallet)
         .order_by(Card.created_at.desc())
