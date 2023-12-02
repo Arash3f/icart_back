@@ -40,6 +40,7 @@ from src.log.routes import router as log_router
 from src.withdraw.routes import router as withdraw_router
 from src.band_card.routes import router as band_card_router
 from src.deposit.routes import router as deposit_router
+from src.graphql.base import graphql_app
 
 
 # ---------------------------------------------------------------------------
@@ -86,6 +87,7 @@ def create_fastapi_app():
     app.include_router(deposit_router)
     app.include_router(band_card_router)
     app.include_router(cooperation_request_router)
+    app.include_router(graphql_app, prefix="/graphql")
     app.add_middleware(
         middleware_class=CORSMiddleware,
         allow_origins=["*"],

@@ -4,6 +4,7 @@ location_in: list[LocationInitCreate] = [
     LocationInitCreate(name="فارس", parent_name=None),
     LocationInitCreate(name="شیراز", parent_name="فارس"),
     LocationInitCreate(name="مرودشت", parent_name="فارس"),
+    LocationInitCreate(name="مرودشت", parent_name="فارس"),
     LocationInitCreate(name="جهرم", parent_name="فارس"),
     LocationInitCreate(name="فسا", parent_name="فارس"),
     LocationInitCreate(name="کازرون", parent_name="فارس"),

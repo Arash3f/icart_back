@@ -38,6 +38,22 @@ class InactiveUserException(HTTPException):
         self.headers = None
 
 
+class InvalidUserException(HTTPException):
+    """
+    ? Exception When User is Invalid
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 203,
+            "english_message": "User Is Invalid!",
+            "persian_message": "کاربر مورد نظر نامعتبر است!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None
+
+
 class IncorrectVerifyCodeException(HTTPException):
     """
     ? Exception When Verify Code is Incorrect
