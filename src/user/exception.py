@@ -54,6 +54,22 @@ class UsernameIsDuplicatedException(HTTPException):
         self.headers = None
 
 
+class UsernameOrNationalCodeIsDuplicatedException(HTTPException):
+    """
+    ? Exception When Username or national code Is Duplicated
+    """
+
+    def __init__(self):
+        self.status_code = 400
+        self.detail = {
+            "code": 102,
+            "english_message": "Username or national code is duplicated!",
+            "persian_message": "نام کاربری یا کد ملی تکراری است!",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None
+
+
 class NationalCodeIsDuplicatedException(HTTPException):
     """
     ? Exception When National Code Is Duplicated

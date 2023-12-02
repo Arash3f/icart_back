@@ -378,6 +378,44 @@ async def read_card_list(
 
 
 # ---------------------------------------------------------------------------
+@router.get(path="/my", response_model=list[CardRead])
+async def get_my_wallet(
+    *,
+    db=Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+) -> list[CardRead]:
+    """
+    ! Get My Cards
+
+    Parameters
+    ----------
+    db
+        Target database connection
+    current_user
+        Requester User
+
+    Returns
+    -------
+    card_list
+        my card list
+
+    Raises
+    ------
+    WalletNotFoundException
+    """
+    query = (
+        select(Card)
+        .filter(
+            Wallet.user_id == current_user.wallet.id,
+        )
+        .join(Card.wallet)
+        .order_by(Card.created_at.desc())
+    )
+    card_list = await card_crud.get_multi(db=db, query=query)
+    return card_list
+
+
+# ---------------------------------------------------------------------------
 @router.post("/find", response_model=CardRead)
 async def find_card(
     *,

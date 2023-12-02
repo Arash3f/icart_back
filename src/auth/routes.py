@@ -257,7 +257,7 @@ async def verify_register_data(
 
     Raises
     ------
-    UsernameIsDuplicatedException
+    UsernameOrNationalCodeIsDuplicatedException
     """
 
     await user_crud.verify_not_existence_by_username_and_national_code(

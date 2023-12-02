@@ -28,6 +28,7 @@ class UserRequestBase(BaseModel):
 class UserRequestRead(UserRequestBase):
     id: UUID | None = None
     reason: str | None = None
+    detail: str | None = None
     status: bool | None = None
 
     created_at: datetime | None = None
@@ -58,6 +59,7 @@ class CreateUserRequest(UserRequestBase):
 class UpdateUserRequest(BaseModel):
     is_approve: bool
     reason: str | None = None
+    detail: str | None = None
 
 
 # ---------------------------------------------------------------------------

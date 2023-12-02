@@ -9,6 +9,7 @@ from src.user.exception import (
     NationalCodeIsDuplicatedException,
     UsernameIsDuplicatedException,
     UserNotFoundException,
+    UsernameOrNationalCodeIsDuplicatedException,
 )
 from src.user.models import User
 
@@ -76,7 +77,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
         db: AsyncSession,
         username=str,
         national_code=str,
-    ) -> Type[User] | UsernameIsDuplicatedException:
+    ) -> Type[User] | UsernameOrNationalCodeIsDuplicatedException:
         """
         ! Verify user existence with username & national code
 
@@ -106,7 +107,7 @@ class UserCRUD(BaseCRUD[User, None, None]):
 
         user = response.scalar_one_or_none()
         if user:
-            raise UsernameIsDuplicatedException()
+            raise UsernameOrNationalCodeIsDuplicatedException()
 
         return user
 

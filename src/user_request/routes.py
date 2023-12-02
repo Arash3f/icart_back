@@ -79,6 +79,7 @@ async def create_user_request(
 
     obj.status = True
     obj.reason = None
+    obj.detail = None
 
     db.add(obj)
     await db.commit()
@@ -161,6 +162,7 @@ async def approve_user_request(
         db.add(user)
 
     user_request.reason = approve_data.data.reason
+    user_request.detail = approve_data.data.detail
     user_request.status = False
 
     db.add(user_request)

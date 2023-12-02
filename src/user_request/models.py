@@ -14,6 +14,7 @@ class UserRequest(Base, BaseMixin):
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
     reason = Column(String, nullable=True)
+    detail = Column(String, nullable=True)
 
     status = Column(Boolean, default=False)
 

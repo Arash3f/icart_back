@@ -77,7 +77,7 @@ class CardUpdatePassword(BaseModel):
 class CardRead(CardBase):
     id: UUID
 
-    wallet: WalletReadV3
+    # wallet: WalletReadV3
     created_at: datetime
 
 
