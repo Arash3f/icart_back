@@ -36,6 +36,7 @@ class PositionRequestBase(BaseModel):
     received_money: str | None = None
     tracking_code: str | None = None
     reason: str | None = None
+    detail: str | None = None
     geo: str | None = None
     target_position: PositionRequestType
 
@@ -70,6 +71,7 @@ class PositionRequestApproveIn(BaseModel):
     position_request_id: uuid.UUID
     is_approve: bool
     reason: str | None = None
+    detail: str | None = None
 
 
 # ---------------------------------------------------------------------------

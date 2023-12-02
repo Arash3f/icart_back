@@ -412,6 +412,7 @@ async def approve_position_request(
             obj_current.status = PositionRequestStatusType.CLOSE
             obj_current.is_approve = False
             obj_current.reason = approve_data.reason
+            obj_current.detail = approve_data.detail
 
     # ? must approve from admin
     elif obj_current.status == PositionRequestStatusType.OPEN:
@@ -506,6 +507,7 @@ async def approve_position_request(
                 obj_current.status = PositionRequestStatusType.CLOSE
                 obj_current.is_approve = False
                 obj_current.reason = approve_data.reason
+                obj_current.detail = approve_data.detail
 
         else:
             raise ApproveAccessDeniedException()

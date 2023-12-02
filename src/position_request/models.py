@@ -107,6 +107,7 @@ class PositionRequest(Base, BaseMixin):
     received_money = Column(String, nullable=True)
     tracking_code = Column(String, nullable=True)
     reason = Column(String, nullable=True)
+    detail = Column(String, nullable=True)
     geo = Column(String, nullable=True)
     profit_rate = Column(Integer, default=0)
     status = Column(
