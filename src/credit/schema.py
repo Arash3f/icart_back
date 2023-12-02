@@ -51,4 +51,5 @@ class CreditFilter(BaseModel):
     national_code: None | str = None
     phone_number: None | str = None
     name: str | None = None
+    last_name: str | None = None
     order_by: CreditFilterOrderBy | None = None

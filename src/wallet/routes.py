@@ -110,9 +110,15 @@ async def get_wallet_list(
     filter_data.name = (
         or_(
             User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
+        else True
+    )
+    filter_data.last_name = (
+        or_(
+            User.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.last_name is not None
         else True
     )
     filter_data.national_code = (
@@ -127,6 +133,7 @@ async def get_wallet_list(
             and_(
                 filter_data.number,
                 filter_data.name,
+                filter_data.last_name,
                 filter_data.is_lock,
                 filter_data.national_code,
             ),

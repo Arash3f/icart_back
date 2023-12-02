@@ -130,26 +130,32 @@ async def approve_user_request(
             user_id=user_request.user_id,
         )
         if user_request.father_name:
-            user.father_name == user_request.father_name
+            user.father_name = user_request.father_name
         if user_request.birth_place:
-            user.birth_place == user_request.birth_place
+            user.birth_place = user_request.birth_place
         if user_request.postal_code:
-            user.postal_code == user_request.postal_code
+            user.postal_code = user_request.postal_code
         if user_request.tel:
-            user.tel == user_request.tel
+            user.tel = user_request.tel
         if user_request.address:
-            user.address == user_request.address
+            user.address = user_request.address
         if user_request.location_id:
-            user.location_id == user_request.location_id
+            user.location_id = user_request.location_id
         if user_request.national_card_back_version_id:
-            user.national_card_back_version_id == user_request.national_card_back_version_id
-            user.national_card_back_name == user_request.national_card_back_name
+            user.national_card_back_version_id = (
+                user_request.national_card_back_version_id
+            )
+            user.national_card_back_name = user_request.national_card_back_name
         if user_request.birth_certificate_version_id:
-            user.birth_certificate_version_id == user_request.birth_certificate_version_id
-            user.birth_certificate_name == user_request.birth_certificate_name
+            user.birth_certificate_version_id = (
+                user_request.birth_certificate_version_id
+            )
+            user.birth_certificate_name = user_request.birth_certificate_name
         if user_request.national_card_front_version_id:
-            user.national_card_front_version_id == user_request.national_card_front_version_id
-            user.national_card_front_name == user_request.national_card_front_name
+            user.national_card_front_version_id = (
+                user_request.national_card_front_version_id
+            )
+            user.national_card_front_name = user_request.national_card_front_name
 
         user.is_valid = True
         db.add(user)

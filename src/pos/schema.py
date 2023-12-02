@@ -70,6 +70,7 @@ class PosFilterOrderBy(BaseModel):
 class PosFilter(BaseModel):
     merchant_id: UUID | None = None
     name: None | str = None
+    last_name: None | str = None
     national_code: None | str = None
     number: None | str = None
     merchant_number: None | str = None

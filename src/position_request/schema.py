@@ -98,6 +98,7 @@ class PositionRequestFilter(BaseModel):
     status: PositionRequestStatusType | None = None
     position_request_name: str | None = None
     name: str | None = None
+    last_name: str | None = None
     national_code: str | None = None
     order_by: PositionRequestFilterOrderBy | None = None
 

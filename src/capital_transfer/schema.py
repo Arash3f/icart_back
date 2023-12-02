@@ -63,6 +63,7 @@ class CapitalTransferFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class CapitalTransferFilter(BaseModel):
     name: None | str = None
+    last_name: None | str = None
     national_code: None | str = None
     gt_value: float | None = None
     lt_value: float | None = None

@@ -9,12 +9,11 @@ from sqlalchemy.sql.operators import or_
 from src import deps
 from src.auth.exception import AccessDeniedException
 from src.card.crud import card as card_crud, CardValueType
-from src.card.exception import CardNotFoundException, CardPasswordInValidException
+from src.card.exception import CardNotFoundException
 from src.log.models import LogType
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
 from src.user.crud import user as user_crud
 from src.log.crud import log as log_crud
-from src.wallet.crud import wallet as wallet_crud
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.important_data.crud import important_data as important_data_crud
 from src.transaction.crud import transaction as transaction_crud
@@ -26,13 +25,11 @@ from src.card.schema import (
     CardUpdatePassword,
     CardFilter,
     CardFilterOrderFild,
-    BuyCardResponse,
     CardForgetPasswordInput,
-    CardToCardInput,
     ConfirmCardReceive,
 )
 from src.core.config import settings
-from src.core.security import hash_password, pwd_context, verify_password
+from src.core.security import hash_password, verify_password
 from src.exception import InCorrectDataException
 from src.permission import permission_codes as permission
 from src.schema import (
@@ -56,7 +53,7 @@ from src.utils.card_number import (
     CreditType,
     CompanyType,
 )
-from src.wallet.exception import LackOfMoneyException, LockWalletException
+from src.wallet.exception import LackOfMoneyException
 from src.wallet.models import Wallet
 
 # ---------------------------------------------------------------------------
@@ -64,12 +61,12 @@ router = APIRouter(prefix="/card", tags=["card"])
 
 
 # ---------------------------------------------------------------------------
-@router.post("/buy/blue", response_model=BuyCardResponse)
+@router.post("/buy/blue", response_model=ResultResponse)
 async def buy_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
-) -> BuyCardResponse:
+) -> ResultResponse:
     # todo: set validation for type card
     # * Verify card existence with this type
     await card_crud.verify_existence_with_type(
@@ -172,7 +169,7 @@ async def buy_card(
 
     # todo: Send SMS
     await db.commit()
-    return BuyCardResponse(card_number=card_number, password=str(card_password))
+    return ResultResponse(result="Success")
 
 
 # ---------------------------------------------------------------------------
@@ -305,9 +302,15 @@ async def read_card_list(
     filter_data.name = (
         or_(
             User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
+        else True
+    )
+    filter_data.last_name = (
+        or_(
+            User.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.last_name is not None
         else True
     )
     filter_data.national_code = (
@@ -334,6 +337,7 @@ async def read_card_list(
         .filter(
             and_(
                 filter_data.name,
+                filter_data.last_name,
                 filter_data.national_code,
                 filter_data.number,
                 filter_data.type,

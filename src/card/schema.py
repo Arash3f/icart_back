@@ -120,17 +120,13 @@ class CardFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class CardFilter(BaseModel):
     name: None | str = None
+    last_name: None | str = None
     national_code: None | str = None
     number: None | str = None
     type: None | CardEnum = None
     user_id: None | UUID = None
     is_receive: None | bool = None
     order_by: CardFilterOrderBy | None = None
-
-
-# ---------------------------------------------------------------------------
-class BuyCardResponse(BaseModel):
-    card_number: str
 
 
 # ---------------------------------------------------------------------------

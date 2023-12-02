@@ -36,6 +36,9 @@ default_role_permission: list[DefaultRolePermission] = [
             permission.VIEW_POSITION_REQUEST,
             permission.VIEW_USER,
             permission.VIEW_USER_REQUEST,
+            permission.UPDATE_AGENT,
+            permission.UPDATE_ORGANIZATION,
+            permission.CHANGE_USER_ACTIVITY,
         ],
     ),
     DefaultRolePermission(

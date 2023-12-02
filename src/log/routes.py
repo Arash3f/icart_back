@@ -91,9 +91,15 @@ async def get_log(
     filter_data.name = (
         or_(
             User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
+        else True
+    )
+    filter_data.last_name = (
+        or_(
+            User.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.last_name is not None
         else True
     )
     filter_data.national_code = (
@@ -109,6 +115,7 @@ async def get_log(
         .filter(
             and_(
                 filter_data.name,
+                filter_data.last_name,
                 filter_data.national_code,
                 filter_data.type,
             ),

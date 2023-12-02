@@ -75,6 +75,7 @@ class WalletFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class WalletFilter(BaseModel):
     name: str | bool | None = None
+    last_name: str | bool | None = None
     national_code: str | bool | None = None
     number: str | bool | None = None
     is_lock: bool | None = None

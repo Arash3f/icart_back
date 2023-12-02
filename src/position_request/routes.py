@@ -638,9 +638,15 @@ async def list_position_request(
     filter_data.name = (
         or_(
             User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
+        else True
+    )
+    filter_data.last_name = (
+        or_(
+            User.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.last_name is not None
         else True
     )
     filter_data.national_code = (
@@ -659,6 +665,7 @@ async def list_position_request(
                 filter_data.is_approve,
                 filter_data.status,
                 filter_data.name,
+                filter_data.last_name,
                 filter_data.national_code,
             ),
         )
@@ -775,9 +782,15 @@ async def get_must_approve_position_request(
     filter_data.name = (
         or_(
             User.first_name.contains(filter_data.name),
-            User.last_name.contains(filter_data.name),
         )
         if filter_data.name is not None
+        else True
+    )
+    filter_data.last_name = (
+        or_(
+            User.last_name.contains(filter_data.last_name),
+        )
+        if filter_data.last_name is not None
         else True
     )
     filter_data.national_code = (
@@ -796,6 +809,7 @@ async def get_must_approve_position_request(
                 filter_data.is_approve,
                 filter_data.status,
                 filter_data.name,
+                filter_data.last_name,
                 filter_data.national_code,
             ),
         )

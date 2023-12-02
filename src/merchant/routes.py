@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import deps
 from src.agent.models import Agent
 from src.contract.models import Contract
+from src.location.models import Location
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
 from src.log.crud import log as log_crud
@@ -289,7 +290,12 @@ async def get_stores(
         else True
     )
     filter_data.location_id = (
-        (Merchant.location_id == filter_data.location_id)
+        (
+            or_(
+                Location.id == filter_data.location_id,
+                Location.parent_id == filter_data.location_id,
+            )
+        )
         if filter_data.location_id is not None
         else True
     )
@@ -336,6 +342,7 @@ async def get_stores(
         )
         .join(Merchant.user)
         .join(Merchant.contract)
+        .join(Merchant.location)
     ).order_by(Merchant.created_at)
 
     # * Prepare order fields

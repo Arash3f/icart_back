@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from src.card.schema import CardRead
+from src.card.schema import CardBase
 from src.cash.schema import CashBase, CashBalanceResponse
 from src.credit.schema import CreditBase, CreditBalanceResponse
 from src.location.schema import LocationRead, LocationComplex
@@ -16,7 +16,7 @@ class WalletCardRead(BaseModel):
     id: UUID
 
     # ! relations
-    cards: list[CardRead] = []
+    cards: list[CardBase] = []
 
 
 # ---------------------------------------------------------------------------
@@ -146,6 +146,7 @@ class UserFilter(BaseModel):
     national_code: None | str = None
     phone_number: None | str = None
     name: str | None = None
+    last_name: str | None = None
     is_active: bool | None = None
     is_valid: bool | None = None
     father_name: str | None = None

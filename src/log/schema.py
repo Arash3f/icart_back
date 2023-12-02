@@ -51,6 +51,7 @@ class LogFilterOrderBy(BaseModel):
 # ---------------------------------------------------------------------------
 class LogFilter(BaseModel):
     name: None | str = None
+    last_name: None | str = None
     national_code: None | str = None
     type: LogType | None = None
     order_by: LogFilterOrderBy | None = None
