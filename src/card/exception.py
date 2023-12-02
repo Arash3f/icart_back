@@ -3,7 +3,7 @@ from fastapi import HTTPException
 
 
 # !!!!!!!!!!!!!
-# ! Code 32XX !
+# ! Code 32XX
 # !!!!!!!!!!!!!
 
 

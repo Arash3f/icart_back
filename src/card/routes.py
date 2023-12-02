@@ -376,6 +376,12 @@ async def read_card_list(
         query.where(Card.wallet_id == verify_data.user.wallet.id)
 
     card_list = await card_crud.get_multi(db=db, skip=skip, limit=limit, query=query)
+    for card in card_list:
+        card.expiration_at = str(
+            jdatetime.datetime.fromtimestamp(
+                card.expiration_at.timestamp(),
+            ).strftime("%Y/%m/%d"),
+        )
     return card_list
 
 
@@ -418,7 +424,7 @@ async def get_my_wallet(
         card.expiration_at = str(
             jdatetime.datetime.fromtimestamp(
                 card.expiration_at.timestamp(),
-            ),
+            ).strftime("%Y/%m/%d"),
         )
     return card_list
 
