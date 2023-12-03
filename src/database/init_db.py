@@ -188,7 +188,7 @@ async def init_db(db: AsyncSession) -> None:
         print("***************************")
         print(location.parent_name)
         print(location.name)
-        if location.parent_name:
+        if location.parent_name is not None:
             parent = await location_crud.find_by_name(
                 db=db,
                 name=location.parent_name,
