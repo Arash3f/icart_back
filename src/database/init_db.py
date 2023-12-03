@@ -185,7 +185,23 @@ async def init_db(db: AsyncSession) -> None:
     # ! Generate all project locations
     for location in location_in:
         # Check if location exists or not
-        location_exist = await location_crud.find_by_name(db=db, name=location.name)
+        if location.parent_name:
+            parent = await location_crud.find_by_name(
+                db=db,
+                name=location.parent_name,
+                parent=True,
+            )
+            location_exist = await location_crud.find_by_name_and_parent(
+                db=db,
+                name=location.name,
+                parent_id=parent.id,
+            )
+        else:
+            location_exist = await location_crud.find_by_name(
+                db=db,
+                name=location.name,
+                parent=True,
+            )
         if not location_exist:
             parent_id = None
             if location.parent_name:

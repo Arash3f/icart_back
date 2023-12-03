@@ -54,7 +54,13 @@ class LocationCRUD(BaseCRUD[Location, LocationCreate, LocationUpdate]):
 
         return obj
 
-    async def find_by_name(self, *, db: AsyncSession, name: str) -> Location:
+    async def find_by_name(
+        self,
+        *,
+        db: AsyncSession,
+        name: str,
+        parent: bool = False,
+    ) -> Location:
         """
         ! Find Location by name
 
@@ -64,13 +70,60 @@ class LocationCRUD(BaseCRUD[Location, LocationCreate, LocationUpdate]):
             Target database connection
         name
             Target Parent name
+        parent
 
         Returns
         -------
         obj
             Found Item
         """
-        response = await db.execute(select(self.model).where(Location.name == name))
+        query = select(self.model).filter(
+            Location.name == name,
+        )
+        if parent:
+            query = query.filter(
+                Location.parent_id == None,
+            )
+        else:
+            query = query.filter(
+                Location.parent_id != None,
+            )
+
+        response = await db.execute(query)
+
+        obj = response.scalar_one_or_none()
+
+        return obj
+
+    async def find_by_name_and_parent(
+        self,
+        *,
+        db: AsyncSession,
+        name: str,
+        parent_id: UUID,
+    ) -> Location:
+        """
+        ! Find Location by name
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        name
+            Target Parent name
+        parent_id
+
+        Returns
+        -------
+        obj
+            Found Item
+        """
+        response = await db.execute(
+            select(self.model).where(
+                Location.name == name,
+                Location.parent_id == parent_id,
+            ),
+        )
 
         obj = response.scalar_one_or_none()
 
