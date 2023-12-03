@@ -1,7 +1,9 @@
 import requests
 
+from src.auth.exception import InvalidRegisterDataException
 from src.core.config import settings
 from src.exception import InvalidName, InvalidNationalBirthDate, InvalidNationalMobile
+from src.schema import UserNameInfo
 from src.user.models import User
 
 token = settings.KAVENEGAR_TOKEN
@@ -42,6 +44,37 @@ def national_identity_inquiry(
                 raise InvalidNationalBirthDate()
 
     return False
+
+
+def national_identity_inquiry_v2(
+    natioal_code: str,
+    birth_date: str,
+) -> UserNameInfo:
+    res = requests.post(
+        url="https://api.zibal.ir/v1/facility/nationalIdentityInquiry/",
+        headers={
+            "Authorization": auth_token,
+        },
+        json={
+            "nationalCode": natioal_code,
+            "birthDate": birth_date,
+        },
+    )
+
+    res = res.json()
+
+    if res["result"] == 1:
+        if res["data"]:
+            if res["data"]["matched"]:
+                return UserNameInfo(
+                    first_name=res["data"]["firstName"],
+                    last_name=res["data"]["lastName"],
+                    father_name=res["data"]["fatherName"],
+                )
+            else:
+                raise InvalidNationalBirthDate()
+
+    raise InvalidRegisterDataException()
 
 
 def shahkar_inquiry(

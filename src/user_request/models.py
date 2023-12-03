@@ -10,7 +10,6 @@ class UserRequest(Base, BaseMixin):
 
     birth_place = Column(String, nullable=True)
     postal_code = Column(String, nullable=True)
-    father_name = Column(String, nullable=True)
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
     reason = Column(String, nullable=True)

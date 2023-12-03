@@ -31,7 +31,7 @@ from src.user.crud import user as user_crud
 from src.user.models import User
 from src.user.schema import UserRead
 from src.user_message.models import UserMessage
-from src.utils.auth import national_identity_inquiry, shahkar_inquiry
+from src.utils.auth import shahkar_inquiry, national_identity_inquiry_v2
 from src.utils.general import add_arabic_word
 from src.utils.sms import send_one_time_password_sms, send_welcome_sms
 from src.verify_phone.crud import verify_phone as verify_phone_crud
@@ -337,22 +337,19 @@ async def register(
     )
     if not verify:
         raise InvalidRegisterDataException()
-    verify = national_identity_inquiry(
+    user_name_info = national_identity_inquiry_v2(
         natioal_code=register_data.national_code,
         birth_date=register_data.birth_date,
-        request_first_name=register_data.first_name,
-        request_last_name=register_data.last_name,
     )
-    if not verify:
-        raise InvalidRegisterDataException()
 
     # ? Create User
     created_user = User(
         username=phone_number,
         password=hash_password(register_data.password),
         role_id=role.id,
-        first_name=register_data.first_name,
-        last_name=register_data.last_name,
+        first_name=user_name_info.first_name,
+        last_name=user_name_info.last_name,
+        father_name=user_name_info.father_name,
         national_code=register_data.national_code,
         phone_number=phone_number,
         birth_date=register_data.birth_date,

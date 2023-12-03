@@ -30,8 +30,8 @@ class LoginResponse(BaseModel):
 
 # ---------------------------------------------------------------------------
 class UserRegisterIn(BaseModel):
-    first_name: str
-    last_name: str
+    # first_name: str
+    # last_name: str
     password: str
     national_code: str
     phone_number: str

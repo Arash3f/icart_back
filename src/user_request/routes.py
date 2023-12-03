@@ -130,8 +130,6 @@ async def approve_user_request(
             db=db,
             user_id=user_request.user_id,
         )
-        if user_request.father_name:
-            user.father_name = user_request.father_name
         if user_request.birth_place:
             user.birth_place = user_request.birth_place
         if user_request.postal_code:

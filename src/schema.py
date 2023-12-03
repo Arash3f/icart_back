@@ -22,6 +22,13 @@ class ResultResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class UserNameInfo(BaseModel):
+    first_name: str
+    last_name: str
+    father_name: str
+
+
+# ---------------------------------------------------------------------------
 class VerifyUserDep(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

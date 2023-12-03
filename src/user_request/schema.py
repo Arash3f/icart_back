@@ -12,7 +12,6 @@ from src.schema import IDRequest
 class UserRequestBase(BaseModel):
     birth_place: str | None = None
     postal_code: str | None = None
-    father_name: str | None = None
     tel: str | None = None
     address: str | None = None
 
@@ -43,7 +42,6 @@ class UserRequestRead(UserRequestBase):
 class CreateUserRequestData(BaseModel):
     birth_place: str | None = None
     postal_code: str | None = None
-    father_name: str | None = None
     tel: str | None = None
     address: str | None = None
     location_id: UUID | None = None
