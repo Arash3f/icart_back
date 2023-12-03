@@ -10,7 +10,7 @@ from src.position_request.models import PositionRequest
 class Location(Base, BaseMixin):
     __tablename__ = "location"
 
-    name = Column(String, index=True, unique=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
 
     # ! Relations
     parent_id = Column(UUID(as_uuid=True), ForeignKey("location.id"), nullable=True)
