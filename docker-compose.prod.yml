@@ -46,8 +46,11 @@ services:
       - "9001:9000"
     env_file:
       - ".env.prod"
+    volumes:
+      - icart_minio_prod_data:/data
     container_name: icartbackminioprod
     command: "server /data --address ':9000' --console-address ':9090'"
 
 volumes:
   icart_back_database_prod_data:
+  icart_minio_prod_data:
