@@ -302,9 +302,6 @@ async def register(
     IncorrectVerifyCodeException
     UsernameIsDuplicatedException
     """
-    register_data.first_name = add_arabic_word(register_data.first_name)
-    register_data.last_name = add_arabic_word(register_data.last_name)
-
     phone_number = register_data.phone_number
     verify_code = register_data.phone_verify_code
     current_time = datetime.now(timezone("Asia/Tehran"))
