@@ -12,7 +12,6 @@ from src.transaction.models import (
     TransactionReasonEnum,
     TransactionStatusEnum,
 )
-from src.wallet.schema import WalletReadV2
 
 
 class TransactionChartType(enum.Enum):
@@ -107,9 +106,6 @@ class TransactionFilter(BaseModel):
     gt_created_date: datetime | None = None
     lt_created_date: datetime | None = None
     card_number: None | str = None
-    name: None | str = None
-    national_code: None | str = None
-    reason: TransactionReasonEnum | None = None
     order_by: TransactionFilterOrderBy | None = None
 
 

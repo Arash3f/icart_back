@@ -81,9 +81,6 @@ async def read_transaction_list(
         if filter_data.value_type
         else True
     )
-    filter_data.reason = (
-        (Transaction.reason == filter_data.reason) if filter_data.reason else True
-    )
     filter_data.gt_created_date = (
         (Transaction.created_at >= filter_data.gt_created_date)
         if filter_data.gt_created_date
@@ -94,23 +91,24 @@ async def read_transaction_list(
         if filter_data.lt_created_date
         else True
     )
+    if filter_data.card_number:
+        filter_data.card_number = or_(
+            Transaction.receiver.mapper.class_.number == filter_data.card_number,
+            Transaction.transferor.mapper.class_.number == filter_data.card_number,
+        )
+    else:
+        filter_data.card_number = True
 
     # * Add filter fields
     query = (
         select(Transaction)
         .filter(
             and_(
-                or_(
-                    filter_data.value_type,
-                ),
-                and_(
-                    filter_data.gt_value,
-                    filter_data.lt_value,
-                ),
-                and_(
-                    filter_data.gt_created_date,
-                    filter_data.lt_created_date,
-                ),
+                filter_data.value_type,
+                filter_data.gt_value,
+                filter_data.lt_value,
+                filter_data.gt_created_date,
+                filter_data.lt_created_date,
                 filter_data.reason,
             ),
         )
@@ -127,8 +125,10 @@ async def read_transaction_list(
         )
     # * Verify transaction receiver & transferor
     else:
-        q1 = Transaction.receiver_id == verify_data.user.wallet.id
-        q2 = Transaction.transferor_id == verify_data.user.wallet.id
+        q1 = Transaction.receiver.mapper.class_.wallet_id == verify_data.user.wallet.id
+        q2 = (
+            Transaction.transferor.mapper.class_.wallet_id == verify_data.user.wallet.id
+        )
         query = query.where(or_(q1, q2)).order_by(desc(Transaction.created_at))
         transaction_list = await transaction_crud.get_multi(
             db=db,
