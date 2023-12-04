@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     id: UUID
     username: str
     national_code: str
+    father_name: str
     first_name: str | None = None
     last_name: str | None = None
 
