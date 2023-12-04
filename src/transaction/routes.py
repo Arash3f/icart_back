@@ -130,6 +130,7 @@ async def read_transaction_list(
             user_id=verify_data.user.id,
         )
         for card in user_wallet.cards:
+            print(card.id)
             query = query.where(
                 Transaction.receiver_id == card.id,
                 Transaction.transferor_id == card.id,
