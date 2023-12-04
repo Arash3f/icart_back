@@ -109,7 +109,6 @@ async def read_transaction_list(
                 filter_data.lt_value,
                 filter_data.gt_created_date,
                 filter_data.lt_created_date,
-                filter_data.reason,
             ),
         )
         .order_by(Transaction.created_at.desc())
