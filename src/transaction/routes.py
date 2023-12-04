@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, or_, select, func, desc
+from sqlalchemy import and_, or_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
@@ -15,6 +15,7 @@ from src.schema import (
     ChartFilterInput,
 )
 from src.transaction.crud import transaction as transaction_crud
+from src.wallet.crud import wallet as wallet_crud
 from src.transaction.models import (
     Transaction,
     TransactionValueType,
@@ -27,7 +28,6 @@ from src.transaction.schema import (
     TransactionAggregateResponse,
     TransactionChartFilter,
     TransactionChartType,
-    TransactionRowRead,
 )
 from src.user.models import User
 
@@ -109,6 +109,7 @@ async def read_transaction_list(
                 filter_data.lt_value,
                 filter_data.gt_created_date,
                 filter_data.lt_created_date,
+                filter_data.card_number,
             ),
         )
         .order_by(Transaction.created_at.desc())
@@ -124,11 +125,15 @@ async def read_transaction_list(
         )
     # * Verify transaction receiver & transferor
     else:
-        q1 = Transaction.receiver.mapper.class_.wallet_id == verify_data.user.wallet.id
-        q2 = (
-            Transaction.transferor.mapper.class_.wallet_id == verify_data.user.wallet.id
+        user_wallet = await wallet_crud.find_by_user_id(
+            db=db,
+            user_id=verify_data.user.id,
         )
-        query = query.where(or_(q1, q2)).order_by(desc(Transaction.created_at))
+        for card in user_wallet.cards:
+            query = query.filter(
+                Transaction.receiver_id == card.id,
+                Transaction.transferor_id == card.id,
+            )
         transaction_list = await transaction_crud.get_multi(
             db=db,
             skip=skip,
