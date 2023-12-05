@@ -244,7 +244,7 @@ async def get_location_list(
                 filter_data.name,
             ),
         )
-        .order_by(Location.created_at.desc())
+        .order_by(Location.name.asc())
     )
     # * Prepare order fields
     if filter_data.order_by:
@@ -330,7 +330,7 @@ async def get_compelete_location_list(
                 filter_data.name,
             ),
         )
-        .order_by(Location.created_at.desc())
+        .order_by(Location.name.asc())
     ).options(selectinload(Location.children))
     # * Prepare order fields
     if filter_data.order_by:
