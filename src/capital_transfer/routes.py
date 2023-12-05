@@ -367,12 +367,12 @@ async def approve_capital_transfer(
         transferor_card = await card_crud.get_active_card(
             db=db,
             card_value_type=CardValueType.CASH,
-            wallet=user_wallet,
+            wallet=admin_user.wallet,
         )
         receiver_card = await card_crud.get_active_card(
             db=db,
             card_value_type=CardValueType.CASH,
-            wallet=admin_user.wallet,
+            wallet=user_wallet,
         )
 
         # * Update capital transfer

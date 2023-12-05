@@ -42,5 +42,6 @@ class BankCardFilter(BaseModel):
     card_number: None | bool = None
     shaba_number: None | bool = None
     name: None | str = None
+    last_name: None | str = None
     national_code: None | str = None
     order_by: BankCardFilterOrderBy | None = None
