@@ -208,6 +208,7 @@ async def init_db(db: AsyncSession) -> None:
                 parent_location_exist = await location_crud.find_by_name(
                     db=db,
                     name=location.parent_name,
+                    parent=True,
                 )
                 if not parent_location_exist:
                     parent_created = await location_crud.create(
