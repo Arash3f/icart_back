@@ -11,7 +11,7 @@ from src.card.crud import card as card_crud, CardValueType
 from src.deposit.crud import deposit as deposit_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.user.crud import user as user_crud
-from src.band_card.crud import band_card as band_card_crud, bank_card
+from src.band_card.crud import bank_card as band_card_crud
 from src.permission import permission_codes as permission
 from src.transaction.models import (
     TransactionStatusEnum,
@@ -78,7 +78,7 @@ async def cash_charging_verify(
         return ResultResponse(result=response["message"])
 
     if response["result"] == 100 and response["message"] == "success":
-        user_bank_card = await bank_card.find_by_bank_card_number(
+        user_bank_card = await band_card_crud.find_by_bank_card_number(
             db=db,
             card_number=response["cardNumber"],
         )
