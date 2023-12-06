@@ -229,5 +229,5 @@ async def delete_bank_card(
             bank_card_id=where.id,
         )
 
-    bank_card_crud.delete(db=db, item_id=bank_card.id)
+    await bank_card_crud.delete(db=db, item_id=bank_card.id)
     return ResultResponse(result="Card Deleted Successfully")
