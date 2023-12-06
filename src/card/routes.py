@@ -29,6 +29,7 @@ from src.card.schema import (
     CardFilterOrderFild,
     CardForgetPasswordInput,
     ConfirmCardReceive,
+    ReferralCode,
 )
 from src.core.config import settings
 from src.core.security import hash_password, verify_password
@@ -68,6 +69,7 @@ async def buy_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
+    data: ReferralCode,
 ) -> ResultResponse:
     # todo: set validation for type card
     # * Verify card existence with this type
@@ -130,18 +132,56 @@ async def buy_card(
         reason=TransactionReasonEnum.PURCHASE,
     )
     main_tr = await transaction_crud.create(db=db, obj_in=transaction)
-    transaction_row = TransactionRowCreate(
-        transaction_id=main_tr.id,
-        value=buy_cost,
-        text="خرید کارت {}".format(card_number),
-        value_type=TransactionValueType.CASH,
-        receiver_id=receiver_card.id,
-        transferor_id=card.id,
-        code=await transaction_crud.generate_code(db=db),
-        status=TransactionStatusEnum.ACCEPTED,
-        reason=TransactionReasonEnum.PURCHASE,
-    )
-    await transaction_row_crud.create(db=db, obj_in=transaction_row)
+
+    if not data.referral_code:
+        referrer_user = await user_crud.find_referral_icart_member(db=db)
+        current_user.referrer_id = referrer_user.id
+        await important_data_crud.update_referral_user_number(db=db)
+    else:
+        important_data = await important_data_crud.get_last_obj(db=db)
+        referrer_user = await user_crud.find_by_referral_code(
+            db=db,
+            referral_code=data.referral_code,
+        )
+        referrer_user_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=referrer_user.wallet,
+        )
+
+        buy_cost -= important_data.referral_discount
+
+        transaction_row = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            value=buy_cost,
+            text="خرید کارت {}".format(card_number),
+            value_type=TransactionValueType.CASH,
+            receiver_id=receiver_card.id,
+            transferor_id=card.id,
+            code=await transaction_crud.generate_code(db=db),
+            status=TransactionStatusEnum.ACCEPTED,
+            reason=TransactionReasonEnum.PURCHASE,
+        )
+        await transaction_row_crud.create(db=db, obj_in=transaction_row)
+        referrer_transaction = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            value=important_data.referral_reward,
+            text=" سود خرید کارت بلو با کد معرف",
+            value_type=TransactionValueType.CASH,
+            receiver_id=referrer_user_card.id,
+            transferor_id=receiver_card.id,
+            code=await transaction_crud.generate_code(db=db),
+            status=TransactionStatusEnum.ACCEPTED,
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=referrer_transaction)
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=referrer_user,
+            amount=important_data.referral_reward,
+            cash_field=CashField.CASH_BACK,
+            type_operation=TypeOperation.INCREASE,
+        )
 
     await cash_crud.update_cash_by_user(
         db=db,
@@ -170,6 +210,8 @@ async def buy_card(
     )
 
     # todo: Send SMS
+    current_user.referrer_id = referrer_user.id
+    await db.add(current_user)
     await db.commit()
     return ResultResponse(result="Success")
 

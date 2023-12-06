@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta
 from random import randint
 
@@ -14,6 +15,7 @@ from src.auth.exception import (
     IncorrectUsernameOrPasswordException,
     IncorrectVerifyCodeException,
     InvalidRegisterDataException,
+    ReferralCodeDoesNotExistException,
 )
 from src.auth.schema import (
     ForgetPasswordIn,
@@ -302,6 +304,14 @@ async def register(
     IncorrectVerifyCodeException
     UsernameIsDuplicatedException
     """
+    referral_exist = None
+    if register_data.referral_code:
+        referral_exist = await user_crud.find_by_referral_code(
+            db=db,
+            referral_code=register_data.referral_code,
+        )
+        if not referral_exist:
+            raise ReferralCodeDoesNotExistException()
     phone_number = register_data.phone_number
     verify_code = register_data.phone_verify_code
     current_time = datetime.now(timezone("Asia/Tehran"))
@@ -339,6 +349,11 @@ async def register(
         birth_date=register_data.birth_date,
     )
 
+    if not register_data.referral_code:
+        # todo
+        pass
+
+    random_referral_code = random.randint(1000000, 9999999)
     # ? Create User
     created_user = User(
         username=phone_number,
@@ -350,6 +365,8 @@ async def register(
         national_code=register_data.national_code,
         phone_number=phone_number,
         birth_date=register_data.birth_date,
+        referral_code=str(random_referral_code),
+        referrer_id=referral_exist.id if referral_exist else None,
     )
     user = await auth_crud.create_new_user(db=db, user=created_user)
 

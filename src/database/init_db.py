@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta
 from pytz import timezone
 
@@ -34,7 +35,14 @@ from src.wallet.models import Wallet
 # ---------------------------------------------------------------------------
 admin_role = RoleCreate(name="ادمین")
 
-important_data_in = ImportantDataCreate(registration_fee=490000)
+important_data_in = ImportantDataCreate(
+    registration_fee=490000,
+    blue_card_cost=590000,
+    icart_members=7,
+    referral_user_number=1,
+    referral_transactions=20,
+    referral_transaction_percentage=4,
+)
 
 roles_in: list[RoleCreate] = [
     RoleCreate(name="ادمین"),
@@ -79,6 +87,7 @@ async def init_db(db: AsyncSession) -> None:
             password=hash_password(settings.ADMIN_PASSWORD),
             national_code=settings.ADMIN_NATIONAL_CODE,
             role_id=role_admin.id,
+            referral_code=str(random.randint(1000000, 9999999)),
         )
         created_user = await user_crud.create(db=db, obj_in=admin_in_db)
 

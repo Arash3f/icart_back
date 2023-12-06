@@ -53,13 +53,14 @@ class UserRead(UserBase):
     phone_number: str | None
     father_name: str | None = None
     national_code: str
-    father_name: str | None = None
     birth_place: str | None = None
     birth_date: str
     postal_code: str | None = None
     address: str | None = None
     is_active: bool
     is_valid: bool
+    referral_code: str | None = None
+    referrer_id: UUID | None = None
 
     # ! Relation
     role: RoleBase
@@ -83,6 +84,8 @@ class UserRead2(UserBase):
     is_active: bool
     is_valid: bool
 
+    referral_code: str | None = None
+    referrer_id: UUID | None = None
     # ! Relation
     wallet: WalletCardRead
     role: RoleBase

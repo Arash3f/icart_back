@@ -14,6 +14,7 @@ from src.band_card.schemas import (
     BankCardRead,
     BankCardCreate,
     BankCardFilter,
+    BankCardBase,
 )
 from src.utils.auth import verify_bank_card
 
@@ -180,7 +181,7 @@ async def create_bank_card(
     current_user: User = Depends(
         deps.get_current_user_v3(),
     ),
-    bank_card_in: BankCardCreate,
+    bank_card_in: BankCardBase,
 ):
     card_exist = await bank_card_crud.find_by_bank_card_number(
         db=db,
@@ -195,13 +196,17 @@ async def create_bank_card(
     )
     if not verify:
         raise InValidBankCard()
-    bank_card_created = await bank_card_crud.create(db=db, obj_in=bank_card_in)
+
+    create_data = BankCardCreate(
+        **bank_card_in.model_dump(),
+        user_id=current_user.id,
+    )
+    bank_card_created = await bank_card_crud.create(db=db, obj_in=create_data)
+
     return bank_card_created
 
 
 # -------------------------------------------------------------
-
-
 @router.delete("/delete", response_model=ResultResponse)
 async def delete_bank_card(
     *,

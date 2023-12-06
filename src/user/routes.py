@@ -21,6 +21,7 @@ from src.user.schema import (
     UpdateUserActivityRequest,
     UserFilterOrderFild,
     UserRoleUpdate,
+    UserReadV2,
 )
 from src.utils.minio_client import MinioClient
 from typing import Annotated, List
@@ -389,6 +390,26 @@ async def user_list(
             )
             i.location.parent = loc
     return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post("my/referrer", response_model=list[UserReadV2])
+async def my_referrer(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user()),
+    skip: int = 0,
+    limit: int = 10,
+) -> list[UserReadV2]:
+    query = (
+        select(User)
+        .filter(
+            User.referrer_id == current_user.id,
+        )
+        .order_by(User.created_at.desc())
+    )
+    user_list = await db.execute(query)
+    return user_list
 
 
 # ---------------------------------------------------------------------------

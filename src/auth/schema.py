@@ -38,6 +38,7 @@ class UserRegisterIn(BaseModel):
     phone_number: str
     phone_verify_code: int
     birth_date: str
+    referral_code: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +56,7 @@ class VerifyUsernameAndNationalCode(BaseModel):
 class UserInDB(UserBase):
     password: str
     role_id: UUID
+    referral_code: str
 
 
 # ---------------------------------------------------------------------------

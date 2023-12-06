@@ -12,6 +12,7 @@ from src.user.exception import (
     UsernameOrNationalCodeIsDuplicatedException,
 )
 from src.user.models import User
+from src.important_data.crud import important_data as important_data_crud
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +150,43 @@ class UserCRUD(BaseCRUD[User, None, None]):
         user = response.scalar_one_or_none()
         if user:
             raise UsernameIsDuplicatedException()
+
+        return user
+
+    async def verify_by_icart_member_number(
+        self,
+        *,
+        db: AsyncSession,
+        icart_member_number: str,
+    ) -> User | UserNotFoundException:
+        """
+        ! Verify by icart member number
+
+        Parameters
+        ----------
+        db
+            Target database connection
+        icart_member_number
+            Target number
+
+        Returns
+        -------
+        user
+            Found user
+
+        Raises
+        ------
+        UserNotFoundException
+        """
+        response = await db.execute(
+            select(self.model).where(
+                User.icart_member_number == icart_member_number,
+            ),
+        )
+
+        user = response.scalar_one_or_none()
+        if user:
+            raise UserNotFoundException()
 
         return user
 
@@ -367,6 +405,25 @@ class UserCRUD(BaseCRUD[User, None, None]):
         user = response.scalar_one_or_none()
 
         return user
+
+    async def find_by_referral_code(
+        self,
+        db: AsyncSession,
+        referral_code: str,
+    ) -> Type[User] | None:
+        result = await db.execute(
+            select(self.model).where(self.model.referral_code == referral_code),
+        )
+        return result.scalar_one_or_none()
+
+    async def find_referral_icart_member(self, db: AsyncSession) -> User:
+        important_data = await important_data_crud.get_last_obj(db=db)
+        target_member = important_data.referral_user_number
+        member = await self.verify_by_icart_member_number(
+            db=db,
+            icart_member_number=target_member,
+        )
+        return member
 
 
 # ---------------------------------------------------------------------------

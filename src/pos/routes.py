@@ -18,7 +18,7 @@ from src.fee.models import Fee, FeeTypeEnum, FeeUserType
 from src.installments.schema import InstallmentsCreate
 from src.log.models import LogType
 from src.merchant.crud import merchant as merchant_crud
-from src.agent.crud import agent as agent_crud
+from src.important_data.crud import important_data as important_data_crud
 from src.card.crud import card as card_crud, CardValueType
 from src.merchant.models import Merchant
 from src.transaction.exception import TransactionLimitException
@@ -560,6 +560,11 @@ async def purchase(
     PosNotFoundException
     CardNotFoundException
     """
+
+    # TODO Add referral code profit
+    # TODO Check if user has referrer id
+    # TODO If there is a referrer id,10% of icart profit returns to referrer user
+
     # * Verify pos existence
     pos = await pos_crud.find_by_number(db=db, number=input_data.terminal_number)
     # * Verify merchant number
@@ -784,6 +789,43 @@ async def purchase(
 
     # ! Profit and cost
     if input_data.type == PosPurchaseType.DIRECT:
+        if requester_user.referrer_id:
+            important_data = await important_data_crud.get_last_obj(db=db)
+            referrer_user = user_card.get(db=db, item_id=requester_user.referrer_id)
+            if (
+                requester_user.referral_transactions
+                <= important_data.referral_transactions
+            ):
+                referrer_user_profit = (
+                    important_data.referral_transaction_percentage / 100
+                ) * icart_profit
+                icart_profit -= -referrer_user_profit
+                referrer_card = await card_crud.get_active_card(
+                    db=db,
+                    card_value_type=CardValueType.CASH,
+                    wallet=referrer_user.wallet,
+                )
+                referrer_transaction = TransactionRowCreate(
+                    transaction_id=main_tr.id,
+                    status=TransactionStatusEnum.ACCEPTED,
+                    value=referrer_user_profit,
+                    text="دریافت سود از کد معرف",
+                    value_type=TransactionValueType.CASH,
+                    receiver_id=referrer_user.id,
+                    transferor_id=referrer_card.id,
+                    code=await transaction_crud.generate_code(db=db),
+                    reason=TransactionReasonEnum.PROFIT,
+                )
+                await transaction_row_crud.create(db=db, obj_in=referrer_transaction)
+                await cash_crud.update_cash_by_user(
+                    db=db,
+                    user=referrer_user,
+                    amount=referrer_user_profit,
+                    cash_field=CashField.CASH_BACK,
+                    type_operation=TypeOperation.INCREASE,
+                )
+                requester_user.referral_transactions += 1
+
         cost = input_data.amount - requester_user.cash.cash_back
         cost_cash_back = input_data.amount - cost
         await cash_crud.update_cash_by_user(

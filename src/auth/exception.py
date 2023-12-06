@@ -96,3 +96,15 @@ class InvalidRegisterDataException(HTTPException):
             "time": str(jdatetime.datetime.now()),
         }
         self.headers = None
+
+
+class ReferralCodeDoesNotExistException(HTTPException):
+    def __init__(self):
+        self.status_code = 404
+        self.detail = {
+            "code": 207,
+            "english_message": "Referral code does not exist",
+            "persian_message": "کد معرف یافت نشد",
+            "time": str(jdatetime.datetime.now()),
+        }
+        self.headers = None

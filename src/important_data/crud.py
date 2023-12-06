@@ -81,6 +81,23 @@ class ImportantDataCRUD(BaseCRUD[ImportantData, None, ImportantDataUpdate]):
 
         return data.blue_card_cost
 
+    async def get_last_obj(self, *, db: AsyncSession) -> ImportantData:
+        response = await db.execute(select(self.model))
+        data = response.scalars().first()
+
+        return data
+
+    async def update_referral_user_number(self, *, db: AsyncSession) -> bool:
+        response = await db.execute(select(self.model))
+        data = response.scalars().first()
+        if data.referral_user_number + 1 > data.icart_members:
+            data.referral_user_number = 1
+        else:
+            data.referral_user_number += 1
+        db.add(data)
+        await db.commit()
+        return True
+
     async def get_register_cost(self, *, db: AsyncSession) -> int:
         """
         ! Get register credit card cost

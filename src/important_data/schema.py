@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, confloat
 
 from src.schema import IDRequest
 
@@ -10,6 +10,10 @@ from src.schema import IDRequest
 class ImportantDataBase(BaseModel):
     registration_fee: int
     blue_card_cost: int | None = None
+    icart_members: int
+    referral_user_number: int
+    referral_transactions: int
+    referral_transaction_percentage: confloat(ge=0, le=100) | None = None
     model_config = ConfigDict(extra="forbid")
 
 

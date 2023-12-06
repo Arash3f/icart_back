@@ -1,3 +1,4 @@
+import random
 from sqlalchemy import (
     UUID,
     Boolean,
@@ -5,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     String,
+    Integer,
 )
 from sqlalchemy.orm import relationship
 
@@ -42,6 +44,9 @@ class User(Base, BaseMixin):
     tel = Column(String, nullable=True)
     address = Column(String, nullable=True)
     birth_date = Column(String, nullable=True)
+    icart_member_number = Column(Integer, nullable=True)
+    referral_code = Column(String, unique=True, index=True, default=None)
+    referral_transactions = Column(Integer, default=0)
 
     # ? Organization Users
     personnel_number = Column(String, nullable=True)
@@ -139,3 +144,18 @@ class User(Base, BaseMixin):
     user_messages = relationship("UserMessage", back_populates="user")
 
     bank_cards = relationship(BankCard, back_populates="user")
+
+    referrer_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("user.id"),
+        index=True,
+        nullable=True,
+    )
+    referrer = relationship(
+        "User",
+        back_populates="invitations",
+        remote_side="User.id",
+        lazy="selectin",
+    )
+
+    invitations = relationship("User", back_populates="referrer", lazy="selectin")

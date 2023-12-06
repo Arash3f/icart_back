@@ -141,3 +141,8 @@ class CardToCardInput(BaseModel):
 class ConfirmCardReceive(BaseModel):
     card_number: str
     password: constr(min_length=4, max_length=4)
+
+
+# ---------------------------------------------------------------------------
+class ReferralCode(BaseModel):
+    referral_code: int

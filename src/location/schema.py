@@ -30,7 +30,7 @@ class LocationComplex(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # ! Relations
-    parent_id: UUID | None = None
+    parent: LocationBaseV2 | None = None
 
 
 # ---------------------------------------------------------------------------

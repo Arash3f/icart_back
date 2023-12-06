@@ -12,7 +12,7 @@ class BankCardBase(BaseModel):
 
 # --------------------------------------------------------
 class BankCardCreate(BankCardBase):
-    pass
+    user_id: UUID
 
 
 # --------------------------------------------------------
