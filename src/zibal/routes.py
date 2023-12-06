@@ -76,6 +76,8 @@ async def cash_charging_verify(
 
     response = res.json()
 
+    print(response)
+
     if response["result"] == 201:
         return ResultResponse(result=response["message"])
 
