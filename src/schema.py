@@ -17,6 +17,11 @@ class IDRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class UserIDRequest(BaseModel):
+    user_id: UUID
+
+
+# ---------------------------------------------------------------------------
 class ResultResponse(BaseModel):
     result: str
 

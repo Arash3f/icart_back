@@ -19,6 +19,8 @@ from src.transaction.models import (
     TransactionReasonEnum,
 )
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
+from src.utils.auth import national_card_ocr
+from src.utils.minio_client import MinioClient
 from src.zibal.exception import InvalidBankCardException
 from src.zibal.schema import (
     NationalIdentityInquiryInput,
@@ -26,7 +28,7 @@ from src.zibal.schema import (
 )
 from src.log.models import LogType
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
-from src.schema import ResultResponse
+from src.schema import ResultResponse, UserIDRequest
 from src.user.models import User
 
 # ---------------------------------------------------------------------------
@@ -195,3 +197,37 @@ async def national_identity_verify(
                 )
 
     raise InCorrectDataException()
+
+
+# ---------------------------------------------------------------------------
+@router.post("/national/ocr/", response_model=ResultResponse)
+async def national_identity_verify(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(
+        deps.get_current_user_with_permissions([permission.UPDATE_USER_REQUEST]),
+    ),
+    data: UserIDRequest,
+    minio: MinioClient = Depends(deps.minio_auth),
+) -> ResultResponse:
+    user = await user_crud.verify_existence(
+        db=db,
+        user_id=data.user_id,
+    )
+    front = minio.client.get_object(
+        bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+        object_name=user.national_card_front_name,
+        version_id=user.national_card_front_version_id,
+    )
+    back = minio.client.get_object(
+        bucket_name=settings.MINIO_PROFILE_IMAGE_BUCKET,
+        object_name=user.national_card_back_name,
+        version_id=user.national_card_back_version_id,
+    )
+
+    await national_card_ocr(
+        front=front,
+        back=back,
+    )
+
+    return ResultResponse(result="Success")

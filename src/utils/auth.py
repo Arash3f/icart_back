@@ -130,3 +130,25 @@ def verify_bank_card(
                 return True
 
     return False
+
+
+async def national_card_ocr(
+    front: any,
+    back: any,
+):
+    files = [
+        ("nationalCardFront", ("1.jpg", front.read(), "image/jpeg")),
+        ("nationalCardBack", ("2.jpg", back.read(), "image/jpeg")),
+    ]
+    res = requests.post(
+        url="https://api.zibal.ir/v1/facility/nationalCardOcr",
+        files=files,
+        headers={
+            "Authorization": auth_token,
+        },
+        data={},
+    )
+
+    res = res.json()
+    print(res)
+    print("res")
