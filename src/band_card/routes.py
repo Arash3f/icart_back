@@ -211,16 +211,23 @@ async def create_bank_card(
 async def delete_bank_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user(),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission_codes.BANK_CARD_DELETE]),
     ),
     where: IDRequest,
 ) -> ResultResponse:
-    bank_card = await bank_card_crud.verify_existence_by_id_and_user_id(
-        db=db,
-        user_id=current_user.id,
-        bank_card_id=where.id,
-    )
-    bank_card_crud.delete(db=db, item_id=bank_card.id)
+    # * Have permissions
+    if verify_data.is_valid:
+        bank_card = await bank_card_crud.verify_existence(
+            db=db,
+            bank_card_id=where.id,
+        )
+    else:
+        bank_card = await bank_card_crud.verify_existence_by_id_and_user_id(
+            db=db,
+            user_id=verify_data.user.id,
+            bank_card_id=where.id,
+        )
 
+    bank_card_crud.delete(db=db, item_id=bank_card.id)
     return ResultResponse(result="Card Deleted Successfully")
