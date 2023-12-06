@@ -28,7 +28,7 @@ async def read_bank_card_list(
     *,
     db: AsyncSession = Depends(deps.get_db),
     verify_data: VerifyUserDep = Depends(
-        deps.is_user_have_permission([permission_codes.BANK_CARD_VIEW]),
+        deps.is_user_have_permission_v2([permission_codes.BANK_CARD_VIEW]),
     ),
     filter_data: BankCardFilter,
     skip: int = 0,

@@ -242,6 +242,47 @@ def is_user_have_permission(required_permissions: list[int]) -> VerifyUserDep | 
 
 
 # ---------------------------------------------------------------------------
+def is_user_have_permission_v2(required_permissions: list[int]) -> VerifyUserDep | None:
+    async def is_user_have_permission(
+        db: AsyncSession = Depends(get_db),
+        token: str = Depends(oauth2_scheme),
+    ) -> VerifyUserDep:
+        if not token:
+            raise UserNotAuthenticatedException()
+        result = VerifyUserDep()
+
+        # ? Verify Token
+        payload = jwt.decode(
+            token=token,
+            key=settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        token_data = TokenData(username=payload["username"], role=payload["role"])
+
+        # ? Verify User
+        user = await user_crud.verify_existence_by_username(
+            db=db,
+            username=token_data.username,
+        )
+
+        result.user = user
+
+        # ? Verify Permissions
+        role = await role_crud.verify_existence(db=db, role_id=user.role.id)
+
+        user_permission_set = {permission.code for permission in role.permissions}
+        required_permission_set = set(required_permissions)
+        if not required_permission_set.issubset(user_permission_set):
+            result.is_valid = False
+            return result
+
+        result.is_valid = True
+        return result
+
+    return is_user_have_permission
+
+
+# ---------------------------------------------------------------------------
 def minio_auth() -> MinioClient:
     minio_client = MinioClient(
         url=settings.MINIO_URL,

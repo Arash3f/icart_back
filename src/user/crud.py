@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.exception import ReferralCodeDoesNotExistException
 from src.database.base_crud import BaseCRUD
 from src.user.exception import (
     NationalCodeIsDuplicatedException,
@@ -415,6 +416,20 @@ class UserCRUD(BaseCRUD[User, None, None]):
             select(self.model).where(self.model.referral_code == referral_code),
         )
         return result.scalar_one_or_none()
+
+    async def verify_existence_by_referral_code(
+        self,
+        db: AsyncSession,
+        referral_code: str,
+    ) -> Type[User] | None:
+        result = await db.execute(
+            select(self.model).where(self.model.referral_code == referral_code),
+        )
+        user = result.scalar_one_or_none()
+        if not user:
+            raise ReferralCodeDoesNotExistException()
+
+        return user
 
     async def find_referral_icart_member(self, db: AsyncSession) -> User:
         important_data = await important_data_crud.get_last_obj(db=db)

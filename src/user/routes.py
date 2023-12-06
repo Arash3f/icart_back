@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.auth.exception import AccessDeniedException
+from src.card.schema import ReferralCode
 from src.core.config import settings
 from src.exception import TechnicalProblemException
 from src.log.models import LogType
@@ -408,8 +409,27 @@ async def my_referrer(
         )
         .order_by(User.created_at.desc())
     )
-    user_list = await db.execute(query)
-    return user_list
+    obj_list = await user_crud.get_multi(
+        db=db,
+        skip=skip,
+        limit=limit,
+        query=query,
+    )
+    return obj_list
+
+
+# ---------------------------------------------------------------------------
+@router.post("verify/referral_code", response_model=ResultResponse)
+async def verify_referral_code(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    data: ReferralCode,
+) -> ResultResponse:
+    await user_crud.verify_existence_by_referral_code(
+        db=db,
+        referral_code=data.referral_code,
+    )
+    return ResultResponse(result="Success")
 
 
 # ---------------------------------------------------------------------------
