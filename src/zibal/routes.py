@@ -76,15 +76,18 @@ async def cash_charging_verify(
 
     response = res.json()
 
-    print(response)
-
     if response["result"] == 201:
         return ResultResponse(result=response["message"])
 
     if response["result"] == 100 and response["message"] == "success":
-        user_bank_card = await band_card_crud.find_by_bank_card_number(
+        if (
+            verify_data.card_number[:5] != response["cardNumber"][:5]
+            or verify_data.card_number[-4:] != response["cardNumber"][-4:]
+        ):
+            raise InvalidBankCardException()
+        user_bank_card = await band_card_crud.verify_existence_by_bank_card_number(
             db=db,
-            card_number=response["cardNumber"],
+            card_number=verify_data.card_number,
         )
         if user_bank_card.user_id != current_user.id:
             raise InvalidBankCardException()
