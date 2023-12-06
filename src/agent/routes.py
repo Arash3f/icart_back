@@ -6,6 +6,7 @@ from sqlalchemy import select, and_, func, or_
 from src import deps
 from src.ability.crud import ability as ability_crud
 from src.agent.crud import agent as agent_crud
+from src.auth.exception import AccessDeniedException
 from src.contract.models import Contract
 from src.location.models import Location
 from src.log.models import LogType
@@ -21,7 +22,7 @@ from src.agent.schema import (
     AgentPublicResponse,
     AgentPublicRead,
 )
-from src.schema import IDRequest, ResultResponse, UpdateActivityRequest
+from src.schema import IDRequest, ResultResponse, UpdateActivityRequest, VerifyUserDep
 from src.transaction.models import TransactionRow, TransactionReasonEnum
 from src.user.models import User
 from src.permission import permission_codes as permission
@@ -448,8 +449,8 @@ async def me(
 async def update_user_activity(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(
-        deps.get_current_user_with_permissions([permission.UPDATE_AGENT]),
+    verify_data: VerifyUserDep = Depends(
+        deps.is_user_have_permission([permission.UPDATE_AGENT]),
     ),
     update_data: UpdateActivityRequest,
 ) -> ResultResponse:
@@ -460,7 +461,7 @@ async def update_user_activity(
     ----------
     db
         Target database connection
-    current_user
+    verify_data
         Requester User
     update_data
         Necessary data for update agent
@@ -480,18 +481,32 @@ async def update_user_activity(
         agent_id=update_data.where.id,
     )
 
-    obj.is_active = update_data.data.is_active
-    db.add(obj)
-    await db.commit()
+    # * Have permissions
+    if verify_data.is_valid:
+        obj.is_active = update_data.data.is_active
+        db.add(obj)
+        await db.commit()
+
+    else:
+        parent_agent = await agent_crud.find_by_user_id(
+            db=db,
+            user_id=verify_data.user.id,
+        )
+        if obj.parent_id == parent_agent.id:
+            obj.is_active = update_data.data.is_active
+            db.add(obj)
+            await db.commit()
+        else:
+            raise AccessDeniedException()
 
     # ? Generate Log
     await log_crud.auto_generate(
         db=db,
-        user_id=current_user.id,
+        user_id=verify_data.user.id,
         log_type=LogType.UPDATE_USER_ACTIVITY,
         detail="وضعیت نماینده {} با موفقیت توسط کاربر {} ویرایش شد".format(
             obj.contract.position_request.name,
-            current_user.username,
+            verify_data.user.username,
         ),
     )
 

@@ -32,7 +32,7 @@ from src.organization.schema import (
     OrganizationPublicResponse,
     ExcellResult,
 )
-from src.schema import IDRequest, ResultResponse, UpdateActivityRequest
+from src.schema import IDRequest, ResultResponse, UpdateActivityRequest, VerifyUserDep
 from src.transaction.models import (
     TransactionValueType,
     TransactionReasonEnum,
@@ -811,7 +811,7 @@ async def user_activation(
 async def update_user_activity(
     *,
     db=Depends(deps.get_db),
-    current_user: User = Depends(
+    verify_data: VerifyUserDep = Depends(
         deps.get_current_user_with_permissions([permission.UPDATE_ORGANIZATION]),
     ),
     update_data: UpdateActivityRequest,
@@ -823,7 +823,7 @@ async def update_user_activity(
     ----------
     db
         Target database connection
-    current_user
+    verify_data
         Requester User
     update_data
         Necessary data for update organization
@@ -843,18 +843,32 @@ async def update_user_activity(
         organization_id=update_data.where.id,
     )
 
-    obj.is_active = update_data.data.is_active
-    db.add(obj)
-    await db.commit()
+    # * Have permissions
+    if verify_data.is_valid:
+        obj.is_active = update_data.data.is_active
+        db.add(obj)
+        await db.commit()
+
+    else:
+        agent = await agent_crud.find_by_user_id(
+            db=db,
+            user_id=verify_data.user.id,
+        )
+        if obj.agent_id == agent.id:
+            obj.is_active = update_data.data.is_active
+            db.add(obj)
+            await db.commit()
+        else:
+            raise AccessDeniedException()
 
     # ? Generate Log
     await log_crud.auto_generate(
         db=db,
-        user_id=current_user.id,
+        user_id=verify_data.username.id,
         log_type=LogType.UPDATE_USER_ACTIVITY,
         detail="وضعیت سازمان {} با موفقیت توسط کاربر {} ویرایش شد".format(
             obj.contract.position_request.name,
-            current_user.username,
+            verify_data.user.username,
         ),
     )
 

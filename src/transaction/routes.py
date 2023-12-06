@@ -136,12 +136,24 @@ async def read_transaction_list(
                     Transaction.transferor_id == card.id,
                 ),
             )
-        transaction_list = await transaction_crud.get_multi(
+        transaction_list: list[Transaction] = await transaction_crud.get_multi(
             db=db,
             skip=skip,
             limit=limit,
             query=query,
         )
+
+    for tr in transaction_list:
+        tr_row = []
+        for tr_r in tr.transactions_rows:
+            if verify_data.user.role.name == "پذیرنده":
+                if tr_r.reason == TransactionReasonEnum.PROFIT:
+                    continue
+            else:
+                if tr_r.reason == TransactionReasonEnum.CONTRACT:
+                    continue
+            tr_row.append(tr_r)
+        tr.transactions_rows = tr_row
 
     return transaction_list
 
