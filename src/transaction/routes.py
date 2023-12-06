@@ -149,7 +149,7 @@ async def read_transaction_list(
         for tr_r in tr.transactions_rows:
             if (
                 tr_r.receiver.wallet_id != user_wallet.id
-                or tr_r.transferor.wallet_id != user_wallet.id
+                and tr_r.transferor.wallet_id != user_wallet.id
             ):
                 continue
             if verify_data.user.role.name == "پذیرنده":
