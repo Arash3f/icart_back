@@ -115,6 +115,11 @@ async def read_transaction_list(
         .order_by(Transaction.created_at.desc())
     )
 
+    user_wallet = await wallet_crud.find_by_user_id(
+        db=db,
+        user_id=verify_data.user.id,
+    )
+
     # * Have permissions
     if verify_data.is_valid:
         transaction_list = await transaction_crud.get_multi(
@@ -125,10 +130,6 @@ async def read_transaction_list(
         )
     # * Verify transaction receiver & transferor
     else:
-        user_wallet = await wallet_crud.find_by_user_id(
-            db=db,
-            user_id=verify_data.user.id,
-        )
         for card in user_wallet.cards:
             query = query.filter(
                 or_(
@@ -146,6 +147,11 @@ async def read_transaction_list(
     for tr in transaction_list:
         tr_row = []
         for tr_r in tr.transactions_rows:
+            if (
+                tr_r.receiver.wallet_id != user_wallet.id
+                or tr_r.transferor.wallet_id != user_wallet.id
+            ):
+                continue
             if verify_data.user.role.name == "پذیرنده":
                 if tr_r.reason == TransactionReasonEnum.PROFIT:
                     continue
