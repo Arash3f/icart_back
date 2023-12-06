@@ -178,7 +178,7 @@ async def create_bank_card(
     *,
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(
-        deps.get_current_user(),
+        deps.get_current_user_v3(),
     ),
     bank_card_in: BankCardCreate,
 ):
