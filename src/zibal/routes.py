@@ -100,46 +100,6 @@ async def cash_charging_verify(
 
         await deposit_crud.create(db=db, obj_in=create_data)
 
-        # Create Transaction
-        admin_user = await user_crud.verify_existence_by_username(
-            db=db,
-            username=settings.ADMIN_USERNAME,
-        )
-
-        transferor_card = await card_crud.get_active_card(
-            db=db,
-            card_value_type=CardValueType.CASH,
-            wallet=admin_user.wallet,
-        )
-        receiver_card = await card_crud.get_active_card(
-            db=db,
-            card_value_type=CardValueType.CASH,
-            wallet=current_user.wallet,
-        )
-        transaction_create = TransactionCreate(
-            status=TransactionStatusEnum.ACCEPTED,
-            value=response["amount"],
-            text="واریز پول با کد پیگیری {}".format(verify_data.track_id),
-            value_type=TransactionValueType.CASH,
-            receiver_id=receiver_card.id,
-            transferor_id=transferor_card.id,
-            code=await transaction_crud.generate_code(db=db),
-            reason=TransactionReasonEnum.WALLET_CHARGING,
-        )
-        main_tr = await transaction_crud.create(db=db, obj_in=transaction_create)
-        transaction_row_create = TransactionRowCreate(
-            transaction_id=main_tr.id,
-            status=TransactionStatusEnum.ACCEPTED,
-            value=response["amount"],
-            text="واریز پول با کد پیگیری {}".format(verify_data.track_id),
-            value_type=TransactionValueType.CASH,
-            receiver_id=receiver_card.id,
-            transferor_id=transferor_card.id,
-            code=await transaction_crud.generate_code(db=db),
-            reason=TransactionReasonEnum.WALLET_CHARGING,
-        )
-        await transaction_crud.create(db=db, obj_in=transaction_row_create)
-
         await cash_crud.update_cash_by_user(
             db=db,
             user=current_user,
