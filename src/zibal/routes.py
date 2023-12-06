@@ -11,6 +11,7 @@ from src.card.crud import card as card_crud, CardValueType
 from src.deposit.crud import deposit as deposit_crud
 from src.transaction.crud import transaction as transaction_crud
 from src.user.crud import user as user_crud
+from src.band_card.crud import band_card as band_card_crud, bank_card
 from src.permission import permission_codes as permission
 from src.transaction.models import (
     TransactionStatusEnum,
@@ -18,6 +19,7 @@ from src.transaction.models import (
     TransactionReasonEnum,
 )
 from src.transaction.schema import TransactionCreate, TransactionRowCreate
+from src.zibal.exception import InvalidBankCardException
 from src.zibal.schema import (
     NationalIdentityInquiryInput,
     NationalIdentityInquiryOutput,
@@ -76,6 +78,13 @@ async def cash_charging_verify(
         return ResultResponse(result=response["message"])
 
     if response["result"] == 100 and response["message"] == "success":
+        user_bank_card = await bank_card.find_by_bank_card_number(
+            db=db,
+            card_number=response["cardNumber"],
+        )
+        if user_bank_card.user_id != current_user.id:
+            raise InvalidBankCardException()
+
         create_data = DepositCreate(
             amount=response["amount"],
             zibal_track_id=verify_data.track_id,
