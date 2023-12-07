@@ -104,9 +104,9 @@ async def buy_card(
     )
 
     # ? Generate Card
-    expiration_at = datetime.now(timezone("Asia/Tehran")) + timedelta(
-        days=360,
-    )
+    a = jdatetime.datetime.now()
+    b = jdatetime.datetime(a.year + 1, a.month + 1, 1, 23, 59) - timedelta(days=1)
+    expiration_at = datetime.fromtimestamp(b.timestamp())
     card_password = randint(1000, 9999)
     card = Card(
         number=card_number,
@@ -422,7 +422,7 @@ async def read_card_list(
         card.expiration_at = str(
             jdatetime.datetime.fromtimestamp(
                 card.expiration_at.timestamp(),
-            ).strftime("%Y/%m/%d"),
+            ).strftime("%Y/%m"),
         )
     return card_list
 
