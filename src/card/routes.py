@@ -429,7 +429,7 @@ async def read_card_list(
 
 # ---------------------------------------------------------------------------
 @router.get(path="/my", response_model=list[CardRead])
-async def get_my_wallet(
+async def my(
     *,
     db=Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user()),
@@ -466,7 +466,7 @@ async def get_my_wallet(
         card.expiration_at = str(
             jdatetime.datetime.fromtimestamp(
                 card.expiration_at.timestamp(),
-            ).strftime("%Y/%m/%d"),
+            ).strftime("%Y/%m"),
         )
     return card_list
 
