@@ -145,4 +145,4 @@ class ConfirmCardReceive(BaseModel):
 
 # ---------------------------------------------------------------------------
 class ReferralCode(BaseModel):
-    referral_code: int
+    referral_code: str
