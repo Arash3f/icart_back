@@ -144,22 +144,22 @@ async def read_transaction_list(
             query=query,
         )
 
-    for tr in transaction_list:
-        tr_row = []
-        for tr_r in tr.transactions_rows:
-            if (
-                tr_r.receiver.wallet_id != user_wallet.id
-                and tr_r.transferor.wallet_id != user_wallet.id
-            ):
-                continue
-            if verify_data.user.role.name == "پذیرنده":
-                if tr_r.reason == TransactionReasonEnum.PROFIT:
+        for tr in transaction_list:
+            tr_row = []
+            for tr_r in tr.transactions_rows:
+                if (
+                    tr_r.receiver.wallet_id != user_wallet.id
+                    and tr_r.transferor.wallet_id != user_wallet.id
+                ):
                     continue
-            else:
-                if tr_r.reason == TransactionReasonEnum.CONTRACT:
-                    continue
-            tr_row.append(tr_r)
-        tr.transactions_rows = tr_row
+                if verify_data.user.role.name == "پذیرنده":
+                    if tr_r.reason == TransactionReasonEnum.PROFIT:
+                        continue
+                else:
+                    if tr_r.reason == TransactionReasonEnum.CONTRACT:
+                        continue
+                tr_row.append(tr_r)
+            tr.transactions_rows = tr_row
 
     return transaction_list
 
