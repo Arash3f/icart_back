@@ -51,4 +51,5 @@ class CapitalTransfer(Base, BaseMixin):
     receiver = relationship(
         "Wallet",
         back_populates="capital_transfer_receiver",
+        lazy="selectin",
     )
