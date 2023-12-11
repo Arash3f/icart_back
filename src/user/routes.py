@@ -5,13 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import deps
 from src.auth.exception import AccessDeniedException
+from src.card.crud import CardValueType
 from src.card.schema import ReferralCode
+from src.cash.crud import CashField, TypeOperation
 from src.core.config import settings
-from src.exception import TechnicalProblemException
 from src.log.models import LogType
 from src.organization.models import Organization
-from src.role.exception import RoleNotFoundException, CanNotChantUserWithMainRole
+from src.role.exception import CanNotChantUserWithMainRole
 from src.schema import ResultResponse, ChartResponse, ChartFilterInput, Duration
+from src.transaction.models import (
+    TransactionValueType,
+    TransactionStatusEnum,
+    TransactionReasonEnum,
+)
+from src.transaction.schema import TransactionRowCreate, TransactionCreate
 from src.user.models import User
 from src.user.schema import (
     UserMeResponse,
@@ -29,6 +36,11 @@ from typing import Annotated, List
 from src.user.crud import user as user_crud
 from src.organization.crud import organization as organization_crud
 from src.role.crud import role as role_crud
+from src.transaction.crud import transaction as transaction_crud
+from src.cash.crud import cash as cash_crud
+from src.card.crud import card as card_crud
+from src.transaction.crud import transaction_row as transaction_row_crud
+from src.important_data.crud import important_data as important_data_crud
 from src.location.crud import location as location_crud
 from src.log.crud import log as log_crud
 from src.permission import permission_codes as permission
@@ -394,7 +406,7 @@ async def user_list(
 
 
 # ---------------------------------------------------------------------------
-@router.post("my/referrer", response_model=list[UserReadV2])
+@router.post("/my/referrer", response_model=list[UserReadV2])
 async def my_referrer(
     *,
     db: AsyncSession = Depends(deps.get_db),
@@ -419,16 +431,75 @@ async def my_referrer(
 
 
 # ---------------------------------------------------------------------------
-@router.post("verify/referral_code", response_model=ResultResponse)
+@router.post("/verify/referral_code", response_model=ResultResponse)
 async def verify_referral_code(
     *,
     db: AsyncSession = Depends(deps.get_db),
     data: ReferralCode,
+    current_user: User = Depends(
+        deps.get_current_user_v3(),
+    ),
 ) -> ResultResponse:
     await user_crud.verify_existence_by_referral_code(
         db=db,
         referral_code=data.referral_code,
     )
+
+    if not current_user.referrer_id:
+        admin_user = await user_crud.verify_existence_by_username(
+            db=db,
+            username=settings.ADMIN_USERNAME,
+        )
+        admin_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=admin_user.wallet,
+        )
+        important_data = await important_data_crud.get_last_obj(db=db)
+        referrer_user = await user_crud.find_by_referral_code(
+            db=db,
+            referral_code=data.referral_code,
+        )
+        referrer_user_card = await card_crud.get_active_card(
+            db=db,
+            card_value_type=CardValueType.CASH,
+            wallet=referrer_user.wallet,
+        )
+        # ? Generate transaction
+        transaction = TransactionCreate(
+            value=important_data.referral_reward,
+            text=" سود خرید کارت بلو با کد معرف",
+            value_type=TransactionValueType.CASH,
+            receiver_id=referrer_user_card.id,
+            transferor_id=admin_card.id,
+            code=await transaction_crud.generate_code(db=db),
+            status=TransactionStatusEnum.ACCEPTED,
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        main_tr = await transaction_crud.create(db=db, obj_in=transaction)
+        referrer_transaction = TransactionRowCreate(
+            transaction_id=main_tr.id,
+            value=important_data.referral_reward,
+            text=" سود خرید کارت بلو با کد معرف",
+            value_type=TransactionValueType.CASH,
+            receiver_id=referrer_user_card.id,
+            transferor_id=admin_card.id,
+            code=await transaction_row_crud.generate_code(db=db),
+            status=TransactionStatusEnum.ACCEPTED,
+            reason=TransactionReasonEnum.PROFIT,
+        )
+        await transaction_row_crud.create(db=db, obj_in=referrer_transaction)
+        await cash_crud.update_cash_by_user(
+            db=db,
+            user=referrer_user,
+            amount=important_data.referral_reward,
+            cash_field=CashField.CASH_BACK,
+            type_operation=TypeOperation.INCREASE,
+        )
+
+        current_user.referrer_id = referrer_user.id
+        await db.add(current_user)
+        await db.commit()
     return ResultResponse(result="Success")
 
 
