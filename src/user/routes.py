@@ -498,7 +498,7 @@ async def verify_referral_code(
         )
 
         current_user.referrer_id = referrer_user.id
-        await db.add(current_user)
+        db.add(current_user)
         await db.commit()
     return ResultResponse(result="Success")
 
