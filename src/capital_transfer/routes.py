@@ -30,19 +30,10 @@ from src.core.config import settings
 from src.log.models import LogType
 from src.permission import permission_codes as permission
 from src.schema import IDRequest, VerifyUserDep
-from src.transaction.models import (
-    TransactionValueType,
-    TransactionReasonEnum,
-    TransactionStatusEnum,
-)
-from src.transaction.schema import TransactionCreate, TransactionRowCreate
-from src.user.crud import user as user_crud
 from src.user.models import User
 from src.utils.minio_client import MinioClient
 from src.wallet.crud import wallet as wallet_crud
-from src.transaction.crud import transaction as transaction_crud
 from src.log.crud import log as log_crud
-from src.card.crud import card as card_crud, CardValueType
 from src.cash.crud import cash as cash_crud, CashField, TypeOperation
 from src.credit.crud import credit as credit_crud, CreditField
 from src.wallet.models import Wallet
@@ -355,30 +346,14 @@ async def approve_capital_transfer(
         obj_current.status = CapitalTransferStatusEnum.FAILED
 
     else:
-        admin_user = await user_crud.verify_existence_by_username(
-            db=db,
-            username=settings.ADMIN_USERNAME,
-        )
         user_wallet: Wallet = await wallet_crud.get(
             db=db,
             item_id=obj_current.receiver_id,
         )
 
-        transferor_card = await card_crud.get_active_card(
-            db=db,
-            card_value_type=CardValueType.CASH,
-            wallet=admin_user.wallet,
-        )
-        receiver_card = await card_crud.get_active_card(
-            db=db,
-            card_value_type=CardValueType.CASH,
-            wallet=user_wallet,
-        )
-
         # * Update capital transfer
         obj_current.finish = True
         if obj_current.transfer_type == CapitalTransferEnum.Credit:
-            tr_type = TransactionValueType.CREDIT
             await credit_crud.update_credit_by_user(
                 db=db,
                 credit_field=CreditField.BALANCE,
@@ -387,7 +362,6 @@ async def approve_capital_transfer(
                 amount=obj_current.value,
             )
         elif obj_current.transfer_type == CapitalTransferEnum.Cash:
-            tr_type = TransactionValueType.CASH
             await cash_crud.update_cash_by_user(
                 db=db,
                 cash_field=CashField.BALANCE,
@@ -395,31 +369,6 @@ async def approve_capital_transfer(
                 user=user_wallet.user,
                 amount=obj_current.value,
             )
-
-        # ? Create Transaction
-        transaction_create = TransactionCreate(
-            status=TransactionStatusEnum.ACCEPTED,
-            value=obj_current.value,
-            text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
-            value_type=tr_type,
-            receiver_id=receiver_card.id,
-            transferor_id=transferor_card.id,
-            code=await transaction_crud.generate_code(db=db),
-            reason=TransactionReasonEnum.WALLET_CHARGING,
-        )
-        main_tr = await transaction_crud.create(db=db, obj_in=transaction_create)
-        transaction_row_create = TransactionRowCreate(
-            transaction_id=main_tr.id,
-            status=TransactionStatusEnum.ACCEPTED,
-            value=obj_current.value,
-            text="انتقال دارایی با کد پیگیری {}".format(obj_current.code),
-            value_type=tr_type,
-            receiver_id=receiver_card.id,
-            transferor_id=transferor_card.id,
-            code=await transaction_crud.generate_code(db=db),
-            reason=TransactionReasonEnum.WALLET_CHARGING,
-        )
-        await transaction_crud.create(db=db, obj_in=transaction_row_create)
 
     await db.commit()
     await db.refresh(obj_current)

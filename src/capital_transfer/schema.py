@@ -7,6 +7,12 @@ from pydantic import BaseModel, ConfigDict
 
 from src.capital_transfer.models import CapitalTransferEnum, CapitalTransferStatusEnum
 from src.schema import IDRequest
+from src.user.schema import UserReadV22
+
+
+# ---------------------------------------------------------------------------
+class WalletRead(BaseModel):
+    user: UserReadV22 | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -20,7 +26,6 @@ class CapitalTransferBase(BaseModel):
 
     # ! Relations
     receiver_id: uuid.UUID | None = None
-    transaction_id: uuid.UUID | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -43,6 +48,8 @@ class CapitalTransferRead(CapitalTransferBase):
 
     created_at: datetime
     updated_at: datetime | None
+
+    receiver: WalletRead
 
 
 # ---------------------------------------------------------------------------

@@ -52,14 +52,3 @@ class CapitalTransfer(Base, BaseMixin):
         "Wallet",
         back_populates="capital_transfer_receiver",
     )
-
-    transaction_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("transaction.id"),
-        nullable=True,
-    )
-    transaction = relationship(
-        Transaction,
-        foreign_keys=[transaction_id],
-        back_populates="capital_transfer",
-    )

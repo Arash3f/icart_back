@@ -45,6 +45,14 @@ class UserReadV2(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+class UserReadV22(BaseModel):
+    username: str
+    first_name: str | None
+    last_name: str | None
+    national_code: str
+
+
+# ---------------------------------------------------------------------------
 class UserRead(UserBase):
     id: UUID
     username: str

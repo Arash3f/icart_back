@@ -96,6 +96,7 @@ async def cash_charging_verify(
             amount=response["amount"],
             zibal_track_id=verify_data.track_id,
             wallet_id=current_user.wallet.id,
+            card_number=verify_data.card_number,
         )
 
         await deposit_crud.create(db=db, obj_in=create_data)

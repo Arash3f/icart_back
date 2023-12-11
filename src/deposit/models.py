@@ -16,6 +16,7 @@ class Deposit(Base, BaseMixin):
 
     amount = Column(Integer, nullable=False)
     zibal_track_id = Column(String, nullable=False)
+    card_number = Column(String, nullable=True)
 
     # ! Relations
     wallet_id = Column(

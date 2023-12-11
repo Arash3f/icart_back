@@ -2,12 +2,15 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, conint
 
+from src.capital_transfer.schema import WalletRead
+
 
 # ---------------------------------------------------------------------------
 class DepositBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     amount: conint(ge=0)
     zibal_track_id: str
+    card_number: str | None = None
     wallet_id: UUID
 
 
@@ -28,6 +31,8 @@ class DepositRead(DepositBase):
 
     updated_at: datetime | None
     created_at: datetime | None
+
+    wallet: WalletRead | None = None
 
 
 # ---------------------------------------------------------------------------
