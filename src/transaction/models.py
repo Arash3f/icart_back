@@ -63,12 +63,6 @@ class Transaction(Base, BaseMixin):
         back_populates="transaction",
     )
 
-    capital_transfer = relationship(
-        "CapitalTransfer",
-        uselist=False,
-        back_populates="transaction",
-    )
-
     transactions_rows = relationship(
         "TransactionRow",
         back_populates="transaction",
