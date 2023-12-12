@@ -119,6 +119,7 @@ class TicketFilterOrderBy(BaseModel):
 class TicketFilter(BaseModel):
     creator_id: UUID | None = None
     name: str | None = None
+    last_name: str | None = None
     national_code: str | None = None
     type: None | TicketType = None
     admin_visited: bool = False
