@@ -370,6 +370,7 @@ async def approve_capital_transfer(
                 amount=obj_current.value,
             )
 
+    db.add(obj_current)
     await db.commit()
     await db.refresh(obj_current)
 
