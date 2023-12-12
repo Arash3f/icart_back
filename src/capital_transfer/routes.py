@@ -353,6 +353,7 @@ async def approve_capital_transfer(
 
         # * Update capital transfer
         obj_current.finish = True
+        obj_current.status = CapitalTransferStatusEnum.ACCEPTED
         if obj_current.transfer_type == CapitalTransferEnum.Credit:
             await credit_crud.update_credit_by_user(
                 db=db,
