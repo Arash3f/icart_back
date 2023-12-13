@@ -250,7 +250,7 @@ async def create_position_request(
     AbilityNotFoundException
     """
     # * Verify creator existence and verify role
-    if current_user.role.name != "نماینده" and current_user.role.name != "نماینده":
+    if current_user.role.name != "نماینده" and current_user.role.name != "ادمین":
         raise AccessDeniedException()
 
     # * Verify requester existence and verify role
