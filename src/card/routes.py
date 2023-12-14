@@ -133,11 +133,12 @@ async def buy_card(
     main_tr = await transaction_crud.create(db=db, obj_in=transaction)
 
     if not current_user.referrer_id:
-        referrer_user = await user_crud.find_referral_icart_member(db=db)
-        current_user.referrer_id = referrer_user.id
-        await important_data_crud.update_referral_user_number(db=db)
-        await db.add(current_user)
-        await db.commit()
+        pass
+        # referrer_user = await user_crud.find_referral_icart_member(db=db)
+        # current_user.referrer_id = referrer_user.id
+        # await important_data_crud.update_referral_user_number(db=db)
+        # await db.add(current_user)
+        # await db.commit()
     else:
         important_data = await important_data_crud.get_last_obj(db=db)
         buy_cost -= important_data.referral_discount
